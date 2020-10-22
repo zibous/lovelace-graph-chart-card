@@ -1,0 +1,279 @@
+## ######################################################
+##
+##   CHART TESTCASES
+##
+## ######################################################
+
+title: Chart Testcases
+icon: 'mdi:ab-testing'
+id: testcharts
+panel: true
+path: testcharts
+
+cards:
+  - type: custom:layout-card
+    layout: horizontal
+    column_num: 1
+    column_width: 2700
+    max_width: 2700
+
+    cards:
+      ## ###############################################
+      - type: custom:layout-card
+        max_width: 1020
+        column_num: 1
+        max_columns: 1
+        layout: horizontal
+        cards:
+          - type: horizontal-stack
+            cards:
+              - type: 'custom:button-card'
+                name: '❖ Ernährung'
+                template: headline
+          - break
+
+      - type: custom:layout-card
+        max_width: 720
+        column_num: 1
+        max_columns: 2
+        layout: horizontal
+
+        cards:
+          - type: custom:layout-card
+            max_width: 360
+            column_num: 1
+            max_columns: 2
+            layout: horizontal
+            cards:
+              ## PIE CHART ---------------
+              - type: 'custom:chartjs-card'
+                title: 'Makro Nährstoffe'
+                icon: 'mdi:home'
+                height: 240
+                chart: 'pie'
+                unit: 'kal'
+                options:
+                  title:
+                    display: true
+                    fontStyle: normal
+                    text: 'Aufteilung Nährstoffe (kal) pro Tag'
+                entities:
+                  - entity: sensor.peter_eiweis_makronahrstoff
+                    name: Eiweis
+                    _color: '#FECB2E'
+                  - entity: sensor.peter_fett_makronahrstoff
+                    name: Fett
+                    _color: '#FC3158'
+                  - entity: sensor.peter_kohlenhydrate_makronahrstoff
+                    name: Kohlenhydrate
+                    _color: '#53BBDA'
+
+              ## BAR CHART ---------------
+              - type: 'custom:chartjs-card'
+                title: 'Makro Nährstoffe'
+                chartTitle: 'Aufstellung der Nährstoffe'
+                height: 240
+                chart: 'bar'
+                unit: 'kal'
+                options:
+                  title:
+                    text: 'Aufstellung der Nährstoffe'
+                  scales:
+                    yAxes:
+                      - display: true
+                        stacked: false
+                        position: left
+                        ticks:
+                          autoSkip: true
+                          maxTicksLimit: 8
+                        scaleLabel:
+                          display: true
+                          labelString: kal
+                          fontStyle: bold
+                        gridLines:
+                          display: true
+                          color: 'red'
+                          lineWidth: 0.1
+                          zeroLineColor: 'black'
+                          zeroLineWidth: 0.42
+                    xAxes:
+                      - display: true
+                        stacked: false
+                        ticks:
+                          autoSkip: true
+                          maxTicksLimit: 8
+                        gridLines:
+                          display: true
+                          color: 'red'
+                          lineWidth: 0.1
+                          zeroLineColor: '#666'
+                          zeroLineWidth: 0.42
+                entities:
+                  - entity: sensor.peter_eiweis_makronahrstoff
+                    name: Eiweis
+                    color: '#FECB2E'
+                  - entity: sensor.peter_fett_makronahrstoff
+                    name: Fett
+                    color: '#FC3158'
+                  - entity: sensor.peter_kohlenhydrate_makronahrstoff
+                    name: Kohlenhydrate
+                    color: '#53BBDA'
+
+              ## RADAR CHART ---------------
+              - type: 'custom:chartjs-card'
+                title: 'Körperwerte'
+                icon: 'mdi:home'
+                height: 320
+                chart: 'radar'
+                colorscheme: 'brewer.Paired12'
+                options:
+                  title:
+                    display: true
+                    text: 'Aktuelle Werte'
+                  scale:
+                    pointLabels:
+                      fontSize: 12
+                    ticks:
+                      fontColor: '#93a1a1'
+                      backdropColor: 'rgb(28,28,28)'
+                      fontStyle: bold
+                    gridLines:
+                      display: true
+                      color:
+                        - '#03a9f4'
+                        - '#00bcd4'
+                        - '#8bc34a'
+                        - '#cddc39'
+                        - '#ff9800'
+                        - '#ff5722'
+                        - '#e51400'
+                    angleLines:
+                      color: '#5ac8fa'
+                entities:
+                  - entity: sensor.peter_koperfett
+                    name: Fett
+                  - entity: sensor.peter_korperwasser
+                    name: Wasser
+                  - entity: sensor.peter_muskeln
+                    name: Muskeln
+                  - entity: sensor.peter_fettfreie_korpermasse
+                    name: Fettfreie Masse
+                  - entity: sensor.peter_gewicht
+                    name: Gewicht
+                  - entity: sensor.peter_viszerales_fett
+                    name: Viszerales Fett
+
+              ## POLAR AREA CHART ---------------
+              - type: 'custom:chartjs-card'
+                title: 'Körperwerte'
+                icon: 'mdi:home'
+                height: 320
+                chart: 'polarArea'
+                colorscheme: 'brewer.Paired12'
+                options:
+                  title:
+                    display: true
+                    fontStyle: normal
+                    text: 'Aktuelle Werte'
+                  legend:
+                    position: bottom
+                    display: true
+                    lineWidth: 0
+                  scale:
+                    pointLabels:
+                      fontSize: 12
+                    ticks:
+                      fontColor: '#93a1a1'
+                      backdropColor: 'rgb(28, 28, 28)'
+                    gridLines:
+                      color: '#839496'
+                    angleLines:
+                      color: '#5ac8fa'
+                entities:
+                  - entity: sensor.peter_koperfett
+                    name: Fett
+                  - entity: sensor.peter_korperwasser
+                    name: Wasser
+                  - entity: sensor.peter_muskeln
+                    name: Muskeln
+                  - entity: sensor.peter_fettfreie_korpermasse
+                    name: Fettfreie Masse
+                  - entity: sensor.peter_viszerales_fett
+                    name: Viszerales Fett
+
+      - type: custom:layout-card
+        max_width: 720
+        column_num: 1
+        max_columns: 2
+        layout: horizontal
+        cards:
+          - type: custom:layout-card
+            max_width: 720
+            column_num: 1
+            max_columns: 1
+            layout: horizontal
+            cards:
+              ## LINE CHART ---------------
+              - type: 'custom:chartjs-card'
+                title: 'Temperaturverlauf'
+                height: 320
+                chart: 'line'
+                unit: '°C'
+                locale: 'de-DE'
+                hours_to_show: 72
+                group_by: 'hour'
+                options:
+                  title:
+                    display: true
+                    fontStyle: normal
+                    text: 'Temperatur der letzten 3 Tage'
+                  chartArea:
+                    backgroundColor: 'rgba(30, 30, 30, 0.1)'
+                  scales:
+                    yAxes:
+                      - display: true
+                        stacked: false
+                        position: left
+                        ticks:
+                          autoSkip: true
+                          maxTicksLimit: 8
+                          format: number
+                        scaleLabel:
+                          display: true
+                          labelString: Temperatur °C
+                          fontStyle: bold
+                        gridLines:
+                          display: false
+
+                    xAxes:
+                      - display: true
+                        stacked: false
+                        type: time
+                        time:
+                          unit: 'day'
+                          locale: 'de-DE'
+                        ticks:
+                          autoSkip: true
+                          maxTicksLimit: 12
+                          format: date
+                        scaleLabel:
+                          display: true
+                          labelString: 'Zeitraum'
+                          fontStyle: normal
+                        gridLines:
+                          display: false
+
+                entities:
+                  - entity: sensor.temp_sensor_temperature_aussen
+                    borderwidth: 1
+                    color: '#ff5722'
+                    bordercolor: 'white'
+                    fill: true
+                    name: Aussen
+                    pointHitRadius: 0.25
+                  - entity: sensor.temp_sensor_temperature_kuche
+                    name: Küche
+                  - entity: sensor.temp_sensor_temperature_bad
+                    name: Bad
+                  - entity: sensor.temp_sensor_temperature_eingang
+                    name: Eingang
