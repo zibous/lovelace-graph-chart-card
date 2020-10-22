@@ -46,12 +46,12 @@ cards:
             layout: horizontal
             cards:
               ## PIE CHART ---------------
-              - type: 'custom:chartjs-card'
+              - type: 'custom:graph-chartjs-card'
                 title: 'Makro Nährstoffe'
-                icon: 'mdi:home'
                 height: 240
-                chart: 'pie'
-                unit: 'kal'
+                chart: 'doughnut'
+                units: 'kal'
+                colorschemes: 'brewer.Paired12'
                 options:
                   title:
                     display: true
@@ -60,21 +60,21 @@ cards:
                 entities:
                   - entity: sensor.peter_eiweis_makronahrstoff
                     name: Eiweis
-                    _color: '#FECB2E'
+                    unit: 'kal'
                   - entity: sensor.peter_fett_makronahrstoff
                     name: Fett
-                    _color: '#FC3158'
+                    unit: 'kal'
                   - entity: sensor.peter_kohlenhydrate_makronahrstoff
                     name: Kohlenhydrate
-                    _color: '#53BBDA'
+                    unit: 'kal'
 
               ## BAR CHART ---------------
-              - type: 'custom:chartjs-card'
+              - type: 'custom:graph-chartjs-card'
                 title: 'Makro Nährstoffe'
                 chartTitle: 'Aufstellung der Nährstoffe'
                 height: 240
                 chart: 'bar'
-                unit: 'kal'
+                units: 'kal'
                 options:
                   title:
                     text: 'Aufstellung der Nährstoffe'
@@ -87,40 +87,43 @@ cards:
                           autoSkip: true
                           maxTicksLimit: 8
                         scaleLabel:
-                          display: true
+                          display: false
                           labelString: kal
                           fontStyle: bold
                         gridLines:
                           display: true
-                          color: 'red'
+                          color: '#5ac8fa'
                           lineWidth: 0.1
-                          zeroLineColor: 'black'
+                          zeroLineColor: '#ffcc00'
                           zeroLineWidth: 0.42
                     xAxes:
                       - display: true
-                        stacked: false
+                        stacked: true
                         ticks:
                           autoSkip: true
                           maxTicksLimit: 8
                         gridLines:
                           display: true
-                          color: 'red'
+                          color: '#5ac8fa'
                           lineWidth: 0.1
-                          zeroLineColor: '#666'
+                          zeroLineColor: '#007aff'
                           zeroLineWidth: 0.42
                 entities:
                   - entity: sensor.peter_eiweis_makronahrstoff
                     name: Eiweis
                     color: '#FECB2E'
+                    unit: 'kal'
                   - entity: sensor.peter_fett_makronahrstoff
                     name: Fett
                     color: '#FC3158'
+                    unit: 'kal'
                   - entity: sensor.peter_kohlenhydrate_makronahrstoff
                     name: Kohlenhydrate
                     color: '#53BBDA'
+                    unit: 'kal'
 
               ## RADAR CHART ---------------
-              - type: 'custom:chartjs-card'
+              - type: 'custom:graph-chartjs-card'
                 title: 'Körperwerte'
                 icon: 'mdi:home'
                 height: 320
@@ -133,10 +136,6 @@ cards:
                   scale:
                     pointLabels:
                       fontSize: 12
-                    ticks:
-                      fontColor: '#93a1a1'
-                      backdropColor: 'rgb(28,28,28)'
-                      fontStyle: bold
                     gridLines:
                       display: true
                       color:
@@ -164,7 +163,7 @@ cards:
                     name: Viszerales Fett
 
               ## POLAR AREA CHART ---------------
-              - type: 'custom:chartjs-card'
+              - type: 'custom:graph-chartjs-card'
                 title: 'Körperwerte'
                 icon: 'mdi:home'
                 height: 320
@@ -182,9 +181,6 @@ cards:
                   scale:
                     pointLabels:
                       fontSize: 12
-                    ticks:
-                      fontColor: '#93a1a1'
-                      backdropColor: 'rgb(28, 28, 28)'
                     gridLines:
                       color: '#839496'
                     angleLines:
@@ -214,11 +210,11 @@ cards:
             layout: horizontal
             cards:
               ## LINE CHART ---------------
-              - type: 'custom:chartjs-card'
+              - type: 'custom:graph-chartjs-card'
                 title: 'Temperaturverlauf'
                 height: 320
                 chart: 'line'
-                unit: '°C'
+                units: '°C'
                 locale: 'de-DE'
                 hours_to_show: 72
                 group_by: 'hour'
@@ -228,7 +224,7 @@ cards:
                     fontStyle: normal
                     text: 'Temperatur der letzten 3 Tage'
                   chartArea:
-                    backgroundColor: 'rgba(30, 30, 30, 0.1)'
+                    backgroundColor: 'rgba(255,255,255,0.5)'
                   scales:
                     yAxes:
                       - display: true
@@ -270,10 +266,14 @@ cards:
                     bordercolor: 'white'
                     fill: true
                     name: Aussen
+                    unit: '°C'
                     pointHitRadius: 0.25
                   - entity: sensor.temp_sensor_temperature_kuche
                     name: Küche
+                    unit: '°C'
                   - entity: sensor.temp_sensor_temperature_bad
                     name: Bad
+                    unit: '°C'
                   - entity: sensor.temp_sensor_temperature_eingang
                     name: Eingang
+                    unit: '°C'
