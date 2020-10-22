@@ -24812,15 +24812,23 @@
 			const index = this.entities.findIndex((x) => x.entity === entity);
 			if (index !== -1) {
 				if (name === "name") {
-					val = this.entityNames[index];
+					val = this.entities[index][name] || this.hassEntities[index].name;
 				} else {
 					val = this.entities[index][name] ? this.entities[index][name] : val;
-					if(name==='unit' && !val){
-						val = this.hassEntities[index].attributes.unit_of_measurement || '';
+					if (name === "unit" && !val) {
+						val = this.hassEntities[index].unit || "";
 					}
 				}
 			}
 			return val;
+		}
+
+		_getEntityProperties(entity) {
+			const index = this.entities.findIndex((x) => x.entity === entity);
+			if (index !== -1) {
+				let allData = { ...this.entities[index], ...this.hassEntities[index] };
+				console.log(allData);
+			}
 		}
 
 		/**
@@ -24870,16 +24878,28 @@
 			// The key is the entity_id, the value is the state object.
 			this.hassEntities = this._config.entities.map((x) => hass.states[x.entity]);
 
+			if (this.hassEntities) {
+				this.hassEntities.forEach(function (item) {
+					if (item.attributes) {
+						item.name = item.attributes.friendly_name || item.entity_id;
+						item.unit = item.attributes.unit_of_measurement || "";
+						delete item.attributes;
+					}
+				});
+			}
+
+			// all states for all entities
 			this.entityData = this.hassEntities.map((x) =>
 				x === undefined ? 0 : x.state
 			);
-
+			// all entities names
+			// this.entityNames = this._config.entities.map((x) =>
+			// 	x.name !== undefined
+			// 		? x.name : hass.states[x.entity]["attributes"]["friendly_name"] !== undefined
+			// 		? hass.states[x.entity]["attributes"]["friendly_name"]: x.entity
+			// );
 			this.entityNames = this._config.entities.map((x) =>
-				x.name !== undefined
-					? x.name
-					: hass.states[x.entity]["attributes"]["friendly_name"] !== undefined
-					? hass.states[x.entity]["attributes"]["friendly_name"]
-					: x.entity
+				x.name !== undefined ? x.name : x.entity
 			);
 
 			this.renderCardHeader();
@@ -25078,7 +25098,7 @@
 						);
 						const id = list[0].entity_id;
 						let _optval = null;
-						let axisId  = null;
+						let axisId = null;
 						// default options
 						let _options = {
 							label: this._getEntityProperty(id, "name", id),
@@ -25087,16 +25107,19 @@
 							pointRadius: this._getEntityProperty(id, "pointRadius", 0.25),
 							fill: this._getEntityProperty(id, "fill", false),
 							unit: this._getEntityProperty(id, "unit", ""),
-							data: items.map((d) => d.y),						
+							data: items.map((d) => d.y),
 						};
+
+						this._getEntityProperties(id);
+
 						// secondary axis
 						axisId = this._getEntityProperty(id, "yAxisID", null);
-						if(axisId){
-						   _options.yAxisID=axisId;
+						if (axisId) {
+							_options.yAxisID = axisId;
 						}
 						axisId = this._getEntityProperty(id, "xAxisID", null);
-						if(axisId){
-						   _options.xAxisID=axisId;
+						if (axisId) {
+							_options.xAxisID = axisId;
 						}
 						// mixed chart
 						_optval = this._getEntityProperty(id, "type", null);
@@ -25149,7 +25172,7 @@
 			Chart.defaults.global.elements.maintainAspectRatio = false;
 			Chart.defaults.global.responsive = true;
 			Chart.defaults.global.maintainAspectRatio = false;
-			
+
 			Chart.defaults.global.chartArea = {
 				backgroundColor: "transparent",
 			};
@@ -25189,7 +25212,7 @@
 				data
 			) {
 				let dataset = data.datasets[tooltipItem.datasetIndex];
-				let datasetLabel = (dataset.label)? dataset.label+ ": ":"";
+				let datasetLabel = dataset.label ? dataset.label + ": " : "";
 				datasetLabel += data.labels[tooltipItem.index] || "";
 				let suffix = dataset.unit || "";
 				return (
@@ -25363,20 +25386,6 @@
 					},
 				});
 			}
-
-			if(this.secundaryAxis){
-				
-				console.log(this.graphData.data.datasets);
-
-			}
-			// Chart.helpers.merge(Chart.defaults.global, {
-			//     tooltips: false,
-			//     layout: {
-			//         padding: {
-			//             top: 32
-			//         }
-			//     },
-			// })
 		}
 
 		/**
