@@ -183,6 +183,14 @@ The following theme variables can be set in your HA theme to customize the appea
    ```
 - Migration to Chart.js 3.0, see [Chart.js Version 3.0](https://www.chartjs.org/docs/master/getting-started/v3-migration/)
 
+<br>
+<hr>
+<br>
+
+## Helper
+- [YAML to JSON Online](https://www.convertjson.com/yaml-to-json.htm) - Use this online tool to convert YAML into JSON. 
+- [JSON to YAML Online](https://www.convertjson.com/json-to-yaml.htm) - Use this online tool to convert JSON into YAML. 
+
 ## Resources
 - [Chart.js Version 2.9.4](https://chartjs.org) - Chart.js - Simple yet flexible JavaScript charting for designers & developers
 - [Chart.js Official Guide](https://chartjs.org/docs) - The user guide and documentation site.

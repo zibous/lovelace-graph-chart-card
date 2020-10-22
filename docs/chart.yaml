@@ -209,6 +209,54 @@ cards:
             max_columns: 1
             layout: horizontal
             cards:
+              ## MIXED CHART (LINE & BAR) ------
+              - type: 'custom:graph-chartjs-card'
+                title: 'Gewichtsverlauf'
+                height: 320
+                chart: 'line'
+                locale: 'de-DE'
+                hours_to_show: 192 ## last 8 days..
+                group_by: 'day'
+                options:
+                  scales:
+                    yAxes:
+                      - id: 'left'
+                        type: linear
+                        position: 'left'
+                        ticks:
+                          autoSkip: true
+                          maxTicksLimit: 10
+                      - id: 'right'
+                        type: linear
+                        position: 'right'
+                        min: 0
+                        max: 30
+                        ticks:
+                          autoSkip: true
+                          maxTicksLimit: 5
+                entities:
+                  - entity: sensor.peter_muskeln
+                    yAxisID: 'left'
+                    type: 'line'
+                  - entity: sensor.peter_gewicht
+                    yAxisID: 'left'
+                    type: 'line'
+                  - entity: sensor.peter_bmi
+                    yAxisID: 'right'
+                    type: 'bar'
+
+      - type: custom:layout-card
+        max_width: 720
+        column_num: 1
+        max_columns: 2
+        layout: horizontal
+        cards:
+          - type: custom:layout-card
+            max_width: 720
+            column_num: 1
+            max_columns: 1
+            layout: horizontal
+            cards:
               ## LINE CHART ---------------
               - type: 'custom:graph-chartjs-card'
                 title: 'Temperaturverlauf'
@@ -240,7 +288,6 @@ cards:
                           fontStyle: bold
                         gridLines:
                           display: false
-
                     xAxes:
                       - display: true
                         stacked: false

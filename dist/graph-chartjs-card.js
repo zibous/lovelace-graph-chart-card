@@ -24768,7 +24768,6 @@
 				this.data_group_by = this._config.group_by || "day";
 				this.data_dateGroup = dtFormat(this.data_group_by);
 				this.data_units = this._config.units || "";
-
 				this.setChartConfig();
 
 				// all entities
@@ -24816,6 +24815,9 @@
 					val = this.entityNames[index];
 				} else {
 					val = this.entities[index][name] ? this.entities[index][name] : val;
+					if(name==='unit' && !val){
+						val = this.hassEntities[index].attributes.unit_of_measurement || '';
+					}
 				}
 			}
 			return val;
@@ -25076,6 +25078,7 @@
 						);
 						const id = list[0].entity_id;
 						let _optval = null;
+						let axisId  = null;
 						// default options
 						let _options = {
 							label: this._getEntityProperty(id, "name", id),
@@ -25084,8 +25087,20 @@
 							pointRadius: this._getEntityProperty(id, "pointRadius", 0.25),
 							fill: this._getEntityProperty(id, "fill", false),
 							unit: this._getEntityProperty(id, "unit", ""),
-							data: items.map((d) => d.y),
+							data: items.map((d) => d.y),						
 						};
+						// secondary axis
+						axisId = this._getEntityProperty(id, "yAxisID", null);
+						if(axisId){
+						   _options.yAxisID=axisId;
+						}
+						axisId = this._getEntityProperty(id, "xAxisID", null);
+						if(axisId){
+						   _options.xAxisID=axisId;
+						}
+						// mixed chart
+						_optval = this._getEntityProperty(id, "type", null);
+						if (_optval) _options.type = _optval;
 						// optional options from the entity
 						_optval = this._getEntityProperty(id, "color", null);
 						if (_optval) _options.backgroundColor = _optval;
@@ -25349,6 +25364,11 @@
 				});
 			}
 
+			if(this.secundaryAxis){
+				
+				console.log(this.graphData.data.datasets);
+
+			}
 			// Chart.helpers.merge(Chart.defaults.global, {
 			//     tooltips: false,
 			//     layout: {
