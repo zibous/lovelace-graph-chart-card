@@ -185,6 +185,8 @@ The following theme variables can be set in your HA theme to customize the appea
 - Optimize the data provider Historydata (data mapping, grouping)
 - Chart - Scatter, Bubble Charts
     ```json
+
+    # scatter -----------------
     "datasets": [{
             "data": [
                 {"x": 0, "y": 3},
@@ -197,10 +199,24 @@ The following theme variables can be set in your HA theme to customize the appea
                 {"x": 7, "y": 3},
                 {"x": 8, "y": 3},
                 {"x": 9, "y": 3}
-      ],
+      ] 
+
+    # bubble -----------------
+    datasets: [
+        {
+          label: 'Label',
+          data: [
+            {
+              x: 3,
+              y: 7,
+              r: 10
+            }
+          ],
+          backgroundColor:"#ff6384",
+          hoverBackgroundColor: "#ff6384"
    ```
 - Migration to Chart.js 3.0, see [Chart.js Version 3.0](https://www.chartjs.org/docs/master/getting-started/v3-migration/)
-
+- Wait for Bugfix [Home-Assistant Fronend Bug](https://github.com/home-assistant/frontend/issues/7246)
 <br>
 <hr>
 <br>
@@ -212,6 +228,7 @@ The following theme variables can be set in your HA theme to customize the appea
 ## Resources
 - [Chart.js Version 2.9.4](https://chartjs.org) - Chart.js - Simple yet flexible JavaScript charting for designers & developers
 - [Chart.js Official Guide](https://chartjs.org/docs) - The user guide and documentation site.
+- [Chart.js Samples](https://www.chartjs.org/samples/latest/) - Simple yet flexible JavaScript charting for designers & developers
 
 
 ## Used Plugins

@@ -1,10 +1,14 @@
 // npm run-script build
-
 import Chart from "chart.js";
 import "chartjs-plugin-colorschemes";
 import ColorSchemesPlugin from "chartjs-plugin-colorschemes";
-import "chartjs-plugin-style";
 import { dtFormat, formatDate, datavalue, mergedata, num } from "./tools";
+
+// import "chartjs-plugin-style";
+
+// chartjs-plugin-gradient
+// This plugin requires Chart.js 3.0.0 or later. Could work with v2, but it is not supported.	
+// import gradient from 'chartjs-plugin-gradient';
 
 console.info(
 	"%c CHARTJS-CARD-DEV %c ".concat("0.0.4", " "),
@@ -106,7 +110,7 @@ class GraphChartjsCard extends HTMLElement {
 				this._evaluateCssVariable("--light-primary-color") || "#DCDCDC",
 			zeroLineColor:
 				this._evaluateCssVariable("--dark-primary-color") || "#555555",
-			tooltipsBackground: "#d3d7cf",
+			tooltipsBackground: "#ecf0f1",
 			tooltipsFontColor: "#647687",
 		};
 	}
@@ -171,6 +175,7 @@ class GraphChartjsCard extends HTMLElement {
 				);
 			}
 			this.chart_colorschemes = this._config.colorschemes || null;
+			this.chart_styles = this._config.style || null;
 			this.chart_locale = GLOBAL.LOCALE = this.chart_locale || "de-DE";
 
 			// setting for data handling
@@ -203,6 +208,9 @@ class GraphChartjsCard extends HTMLElement {
 	 *
 	 */
 	set hass(hass) {
+		
+		if (hass === undefined) return;
+		
 		if (this.theme && this.theme !== hass.selectedTheme) {
 			// theme change, update chart
 			this.theme = hass.selectedTheme;
@@ -568,6 +576,7 @@ class GraphChartjsCard extends HTMLElement {
 		Chart.defaults.global.tooltips.cornerRadius = 3;
 		Chart.defaults.global.tooltips.enabled = true;
 
+
 		// Interaction Modes
 		Chart.defaults.global.hover.mode = "nearest";
 		Chart.defaults.global.hover.intersect = true;
@@ -690,6 +699,7 @@ class GraphChartjsCard extends HTMLElement {
 		}
 
 		if (this.chart_type == "radar") {
+			// Chart.defaults.ticks.backdropColor = 'red'
 			Chart.defaults.radar.scale.gridLines = {
 				display: true,
 				color: this.themeSettings.gridlineColor,
@@ -726,6 +736,8 @@ class GraphChartjsCard extends HTMLElement {
 		if (this.chart_colorschemes)
 			Chart.defaults.global.plugins.colorschemes.scheme = this.chart_colorschemes;
 
+		// Chart.pluginService.register(gradient);
+
 		// plugin chardbackground
 		if (
 			this.chartconfig &&
@@ -754,6 +766,9 @@ class GraphChartjsCard extends HTMLElement {
 					}
 				},
 			});
+		}
+		if(this.chart_styles){
+			console.log("STYLES", this.chart_styles)
 		}
 	}
 
