@@ -3,6 +3,7 @@ yarn-error.log
 .archiv
 .history
 .DS_Store
+tests/
 
 # Logs
 logs

@@ -1,8 +1,25 @@
 # Lovelace - graph-chartjs-card
 Chart.js card for Home Assistant -  Visualize your data in 8 different ways; each of them animated and customisable.
 
+#DEVELOPER PREVIEW VERSION
+
 ![](docs/graph-chartjs-card.png)
 
+## Requirements
+
+- Home Assistant 0.116.4
+  - Frontend-Version: 20201001.2 - latest
+  - Lovelace Mode
+
+- Tested Browser
+  - Chrome Version 86.0.4240.111 
+  - Safari Version 13.1.2 (13609.3.5.1.5)
+  - Firefox 82.0 (64-Bit)
+  - Vivaldi 3.4.2066.76 (Stable channel) (x86_64)
+  - Android Browser (Chrome, Firefox, Vivaldi)
+- Lovelace graph-chartjs-card
+
+<br>
 
 ## Installation through HACS
 This card isn't in HACS, but you can add it manually through `Custom repositories`
@@ -48,6 +65,7 @@ properties of the Entity object detailed in the following table (as per `sensor.
 | name | string |  | Set a custom display name, defaults to entity's friendly_name.
 | color | string |  | Set a custom color, overrides all other color options including thresholds.
 | unit | string |  | Set a custom unit of measurement, overrides `unit` set in base config.
+| ... | optional |  | Set a custom option  see: [Chart.js documentation](https://www.chartjs.org/docs/latest/).|
 
 ### Theme variables
 The following theme variables can be set in your HA theme to customize the appearence of the card.

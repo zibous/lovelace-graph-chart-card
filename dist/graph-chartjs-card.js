@@ -24595,10 +24595,9 @@
 	// npm run-script build
 
 	console.info(
-		`%c  CHARTJS-CARD-DEV  \n%c   Version:  0.0.1  `,
-		"color: white background: #2980b9 font-weight: bold",
-		"color: white background: #e74c3c font-weight: bold",
-		""
+		"%c CHARTJS-CARD-DEV %c ".concat("0.0.4", " "),
+		"color: white; background: #2980b9; font-weight: 700;",
+		"color: white; background: #e74c3c; font-weight: 700;"
 	);
 
 	let GLOBAL = {
@@ -24769,20 +24768,6 @@
 				this.data_dateGroup = dtFormat(this.data_group_by);
 				this.data_units = this._config.units || "";
 				this.setChartConfig();
-
-				// all entities
-				for (const entity of this._config.entities) {
-					if (typeof entity == "string") {
-						this.entities.push({
-							entity: entity,
-						});
-						this.entity_ids.push(entity);
-					} else {
-						this.entities.push(entity);
-						this.entity_ids.push(entity.entity);
-					}
-				}
-				this.ready = (this.entity_ids && this.entity_ids.length) !== 0;
 			} catch (err) {
 				showErrorCard(err.message, config);
 			}
@@ -24802,74 +24787,44 @@
 		}
 
 		/**
-		 * Get Entity Property
-		 * Find the Entity and return the Entity Property value
-		 * @param {*} entity
-		 * @param {*} name
-		 * @param {*} val
-		 */
-		_getEntityProperty(entity, name, val) {
-			const index = this.entities.findIndex((x) => x.entity === entity);
-			if (index !== -1) {
-				if (name === "name") {
-					val = this.entities[index][name] || this.hassEntities[index].name;
-				} else {
-					val = this.entities[index][name] ? this.entities[index][name] : val;
-					if (name === "unit" && !val) {
-						val = this.hassEntities[index].unit || "";
-					}
-				}
-			}
-			return val;
-		}
-
-		_getEntityProperties(entity) {
-			const index = this.entities.findIndex((x) => x.entity === entity);
-			if (index !== -1) {
-				let allData = { ...this.entities[index], ...this.hassEntities[index] };
-				console.log(allData);
-			}
-		}
-
-		/**
-		 * find the entity data in the entities dictionary list
-		 * @param {*} name
-		 */
-		_getEntityByName(name) {
-			const index = this.entities.findIndex((x) => x.entity === name);
-			if (index !== -1) return this.entities[index];
-			return null;
-		}
-
-		/**
 		 * HASS settings
 		 *
 		 */
 		set hass(hass) {
-			if (!this.ready) {
-				console.error("No entity found, check card configuration");
-				return;
-			}
-
 			if (this.theme && this.theme !== hass.selectedTheme) {
 				// theme change, update chart
 				this.theme = hass.selectedTheme;
 				this._updateGraph();
+				if (this.skipRender) return;
 			}
 
-			// check update chart
 			// TODO : find a better methode ??
-			let endTime = new Date();
-			let elapsed = (endTime.getTime() - this.startTime.getTime()) / 1000;
-			if (elapsed > this.updateInterval) {
-				this._updateGraph();
-				this.startTime = new Date();
+			if (this.updateInterval) {
+				let endTime = new Date();
+				let elapsed = (endTime.getTime() - this.startTime.getTime()) / 1000;
+				if (elapsed > this.updateInterval) {
+					// refresh and update the graph
+					this._updateGraph();
+					this.startTime = new Date();
+					if (this.skipRender) return;
+				}
 			}
 
-			// TODO: find better performace ??
-			if (this.skipRender) return;
+			// check if the Entities has changed
+			if (this.skipRender && this.hassEntities && this.hassEntities.length) {
+				let changed = false;
+				this.hassEntities.forEach((entity) => {
+					changed =
+						changed ||
+						Boolean(
+							this.hass && hass.states[entity] !== this._hass.states[entity]
+						);
+				});
+				if (changed) {
+					console.log("NEW DATA !!!!");
+				}
+			}
 
-			this.skipRender = true;
 			this._hass = hass;
 			this.currentUser = hass.user;
 			this.theme = hass.selectedTheme;
@@ -24877,35 +24832,51 @@
 			// An object list containing the states of all entities in Home Assistant.
 			// The key is the entity_id, the value is the state object.
 			this.hassEntities = this._config.entities.map((x) => hass.states[x.entity]);
+			if (!this.hassEntities || this.hassEntities.length === 0) return;
 
-			if (this.hassEntities) {
-				this.hassEntities.forEach(function (item) {
-					if (item.attributes) {
-						item.name = item.attributes.friendly_name || item.entity_id;
-						item.unit = item.attributes.unit_of_measurement || "";
-						delete item.attributes;
-					}
-				});
-			}
-
-			// all states for all entities
+			// all entity data
 			this.entityData = this.hassEntities.map((x) =>
 				x === undefined ? 0 : x.state
 			);
-			// all entities names
-			// this.entityNames = this._config.entities.map((x) =>
-			// 	x.name !== undefined
-			// 		? x.name : hass.states[x.entity]["attributes"]["friendly_name"] !== undefined
-			// 		? hass.states[x.entity]["attributes"]["friendly_name"]: x.entity
-			// );
+
+			// all entities
+			if (
+				this.ready === false &&
+				this.entities.length !== this.hassEntities.length
+			) {
+				this.entities = [];
+				for (let entity of this._config.entities) {
+					const h = this.hassEntities.find((x) => x.entity_id === entity.entity);
+					let item = Object.assign({}, entity);
+					if (h.attributes) {
+						item.name = item.name || h.attributes.friendly_name || item.name;
+						item.unit = item.unit || h.attributes.unit_of_measurement || "";
+					}
+					if (h) {
+						item.last_changed = h.last_changed;
+						item.state = h.state;
+					}
+					this.entities.push(item);
+					this.entity_ids.push(entity.entity);
+				}
+				this.ready = (this.entity_ids && this.entity_ids.length) !== 0;
+			}
+
+			// all entity names
 			this.entityNames = this._config.entities.map((x) =>
-				x.name !== undefined ? x.name : x.entity
+				x.name !== undefined
+					? x.name
+					: hass.states[x.entity]["attributes"]["friendly_name"] !== undefined
+					? hass.states[x.entity]["attributes"]["friendly_name"]
+					: x.entity
 			);
 
-			this.renderCardHeader();
-
-			// get the histroy data and render the graph
-			this._getHistory();
+			if (this.skipRender == false) {
+				this.renderCardHeader();
+				// get the histroy data and render the graph
+				this._getHistory();
+				this.skipRender = true;
+			}
 		}
 
 		/**
@@ -25054,15 +25025,23 @@
 							],
 						},
 					};
+
+					// custom colors
 					let entityColors = this._config.entities
 						.map((x) => {
 							if (x.color !== undefined) return x.color;
 						})
 						.filter((notUndefined) => notUndefined !== undefined);
-
 					if (entityColors.length === this.graphData.data.labels.length) {
 						this.graphData.data.datasets[0].backgroundColor = entityColors;
 					}
+
+					if (this.graphData.data.length === 0) {
+						// showErrorCard(err.message, config);
+						console.error("No Histroydata present !");
+						return;
+					}
+
 					if (this.chart_update) {
 						this._updateGraph();
 					} else {
@@ -25097,40 +25076,18 @@
 							"last"
 						);
 						const id = list[0].entity_id;
-						let _optval = null;
-						let axisId = null;
+						const _attr = this.entities.find((x) => x.entity === id);
 						// default options
 						let _options = {
-							label: this._getEntityProperty(id, "name", id),
-							borderWidth: this._getEntityProperty(id, "borderwidth", 3),
+							label: _attr.name,
+							borderWidth: 3,
 							hoverBorderWidth: 0,
-							pointRadius: this._getEntityProperty(id, "pointRadius", 0.25),
-							fill: this._getEntityProperty(id, "fill", false),
-							unit: this._getEntityProperty(id, "unit", ""),
+							fill: false,
+							unit: "",
 							data: items.map((d) => d.y),
 						};
-
-						this._getEntityProperties(id);
-
-						// secondary axis
-						axisId = this._getEntityProperty(id, "yAxisID", null);
-						if (axisId) {
-							_options.yAxisID = axisId;
-						}
-						axisId = this._getEntityProperty(id, "xAxisID", null);
-						if (axisId) {
-							_options.xAxisID = axisId;
-						}
-						// mixed chart
-						_optval = this._getEntityProperty(id, "type", null);
-						if (_optval) _options.type = _optval;
-						// optional options from the entity
-						_optval = this._getEntityProperty(id, "color", null);
-						if (_optval) _options.backgroundColor = _optval;
-						_optval = this._getEntityProperty(id, "bordercolor", null);
-						if (_optval) _options.borderColor = _optval;
-						_optval = this._getEntityProperty(id, "type", null);
-						if (_optval) _options.type = _optval;
+						// add all entity settings
+						if (_attr) _options = { ..._options, ..._attr };
 						_graphData.data.labels = items.map((l) => l.x);
 						_graphData.data.datasets.push(_options);
 					}
@@ -25327,7 +25284,7 @@
 				};
 			}
 
-			Chart.defaults.global.elements.point.radius = 3;
+			Chart.defaults.global.elements.point.radius = 0.2;
 			Chart.defaults.global.elements.point.hitRadius = 8;
 
 			Chart.defaults.scale.gridLines.color = this.themeSettings.gridlineColor;
@@ -25430,7 +25387,7 @@
 		 * distribute all cards over the available columns.
 		 */
 		getCardSize() {
-			return 1;
+			return 4;
 		}
 	}
 
