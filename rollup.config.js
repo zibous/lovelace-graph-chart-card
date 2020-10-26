@@ -7,11 +7,18 @@ const bundleSize = require('rollup-plugin-bundle-size');
 const pkg = require('./package.json');
 
 const banner = `/*!
- * ${pkg.name} v${pkg.version}
+ * home-assistant lovelace ${pkg.name} v${pkg.version}
  * ${pkg.homepage}
  * (c) ${new Date().getFullYear()} ${pkg.author}
  * Released under the ${pkg.license} license
  * ${pkg.description}
+ * 
+ * Used plugins
+ * Chart.js v2.9.4
+ * https://www.chartjs.org
+ * (c) 2020 Chart.js Contributors
+ * chartjs-plugin-colorschemes.js v0.4.0
+ * https://nagix.github.io/chartjs-plugin-colorschemes
  */`;
 
 const plugins = [

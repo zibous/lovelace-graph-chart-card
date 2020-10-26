@@ -27,9 +27,10 @@ cards:
         cards:
           - type: horizontal-stack
             cards:
-              - type: 'custom:button-card'
-                name: '❖ Ernährung'
-                template: headline
+              - type: 'custom:button-text-card'
+                title: Informationen über Körperwerte
+                icon: 'mdi:weight-lifter'
+                large: true
           - break
 
       - type: custom:layout-card
@@ -37,7 +38,6 @@ cards:
         column_num: 1
         max_columns: 2
         layout: horizontal
-
         cards:
           - type: custom:layout-card
             max_width: 360
@@ -45,9 +45,10 @@ cards:
             max_columns: 2
             layout: horizontal
             cards:
-              ## PIE CHART ---------------
+              ## Doughnut CHART ---------------
               - type: 'custom:graph-chartjs-card'
                 title: 'Makro Nährstoffe'
+                icon: 'mdi:weight-lifter'
                 height: 240
                 chart: 'doughnut'
                 units: 'kal'
@@ -60,48 +61,72 @@ cards:
                 entities:
                   - entity: sensor.peter_eiweis_makronahrstoff
                     name: Eiweis
-                    unit: 'kal'
                   - entity: sensor.peter_fett_makronahrstoff
                     name: Fett
-                    unit: 'kal'
                   - entity: sensor.peter_kohlenhydrate_makronahrstoff
                     name: Kohlenhydrate
-                    unit: 'kal'
-
+                    
+              ## PIE CHART ---------------        
+              - type: 'custom:graph-chartjs-card'
+                title: 'Makro Nährstoffe'
+                height: 240
+                chart: 'pie'
+                units: 'kal'
+                colorschemes: 'brewer.Paired12'
+                options:
+                  title:
+                    display: true
+                    fontStyle: normal
+                    text: 'Aufteilung Nährstoffe (kal) pro Tag'
+                entities:
+                  - entity: sensor.peter_eiweis_makronahrstoff
+                    name: Eiweis
+                  - entity: sensor.peter_fett_makronahrstoff
+                    name: Fett
+                  - entity: sensor.peter_kohlenhydrate_makronahrstoff
+                    name: Kohlenhydrate
+              
               ## BAR CHART ---------------
               - type: 'custom:graph-chartjs-card'
                 title: 'Makro Nährstoffe'
                 chartTitle: 'Aufstellung der Nährstoffe'
-                height: 240
+                height: 320
                 chart: 'bar'
                 units: 'kal'
+#                style:
+#                  - gradiant:
+#                    - g1:
+#                      - color: 'rgba(255, 0,0, 1.0)'
+#                      - color: 'rgba(255, 0,0, .50)'
+#                    - g2: 
+#                      - color: 'rgba(52, 152, 219, 1.0)'
+#                      - color: 'rgba(52, 152, 219, 0.5)'
+#                    - g3:
+#                      - color: 'rgba(255, 87, 34, 1.0)'
+#                      - color: 'rgba(255, 87, 34, 0.5)'
                 options:
                   title:
                     text: 'Aufstellung der Nährstoffe'
+                    display: true
                   scales:
                     yAxes:
                       - display: true
-                        stacked: false
-                        position: left
+                        position: left                        
                         ticks:
                           autoSkip: true
                           maxTicksLimit: 8
                         scaleLabel:
-                          display: false
+                          display: true
                           labelString: kal
                           fontStyle: bold
                         gridLines:
                           display: true
                           color: '#5ac8fa'
                           lineWidth: 0.1
-                          zeroLineColor: '#ffcc00'
+                          zeroLineColor: '#007aff'
                           zeroLineWidth: 0.42
                     xAxes:
                       - display: true
-                        stacked: true
-                        ticks:
-                          autoSkip: true
-                          maxTicksLimit: 8
                         gridLines:
                           display: true
                           color: '#5ac8fa'
@@ -134,6 +159,8 @@ cards:
                     display: true
                     text: 'Aktuelle Werte'
                   scale:
+                    ticks:
+                      backdropColor: 'rgba(22, 26, 32, 0.15)'
                     pointLabels:
                       fontSize: 12
                     gridLines:
@@ -179,6 +206,8 @@ cards:
                     display: true
                     lineWidth: 0
                   scale:
+                    ticks:
+                      backdropColor: 'rgba(22, 26, 32, 0.15)'
                     pointLabels:
                       fontSize: 12
                     gridLines:
@@ -215,36 +244,51 @@ cards:
                 height: 320
                 chart: 'line'
                 locale: 'de-DE'
-                hours_to_show: 192 ## last 8 days..
+                hours_to_show: 400 ## last 8 days..
                 group_by: 'day'
                 options:
                   scales:
-                    yAxes:
-                      - id: 'left'
-                        type: linear
-                        position: 'left'
+                     xAxes:
+                      - display: true
                         ticks:
                           autoSkip: true
-                          maxTicksLimit: 10
-                      - id: 'right'
-                        type: linear
-                        position: 'right'
-                        min: 0
-                        max: 30
-                        ticks:
+                          maxTicksLimit: 24
+                        scaleLabel:
+                          display: true
+                          labelString: 'Zeitraum'
+                          fontStyle: normal
+                     yAxes:
+                       - id: 'left'
+                         type: linear
+                         position: 'left'
+                         ticks:
+                           autoSkip: true
+                           maxTicksLimit: 8
+                       - id: 'right'
+                         type: linear
+                         position: 'right'
+                         min: 0
+                         max: 30
+                         ticks:
                           autoSkip: true
                           maxTicksLimit: 5
                 entities:
                   - entity: sensor.peter_muskeln
-                    yAxisID: 'left'
-                    type: 'line'
+                    yAxisID: "left"
+                    type: "line"
+                    backgroundColor: "#ff9500"
+                    borderColor: "#ff9500"
                   - entity: sensor.peter_gewicht
-                    yAxisID: 'left'
-                    type: 'line'
+                    yAxisID: "left"
+                    type: "line"
+                    backgroundColor: "#ff5722"
+                    borderColor: "#ff5722"
                   - entity: sensor.peter_bmi
-                    yAxisID: 'right'
-                    type: 'bar'
-
+                    yAxisID: "right"
+                    type: "bar"
+                    borderWidth: 0
+                    backgroundColor: '#5ac8fa'
+                            
       - type: custom:layout-card
         max_width: 720
         column_num: 1
@@ -266,13 +310,18 @@ cards:
                 locale: 'de-DE'
                 hours_to_show: 72
                 group_by: 'hour'
+                ignoreZero: true
                 options:
                   title:
                     display: true
                     fontStyle: normal
                     text: 'Temperatur der letzten 3 Tage'
+#                  crosshair:
+#                    sync:
+#                      enabled: false
                   chartArea:
                     backgroundColor: 'rgba(255,255,255,0.5)'
+                  linearGradientLine: true    
                   scales:
                     yAxes:
                       - display: true
@@ -308,13 +357,12 @@ cards:
 
                 entities:
                   - entity: sensor.temp_sensor_temperature_aussen
-                    borderwidth: 1
-                    color: '#ff5722'
-                    bordercolor: 'white'
+                    borderWidth: 1
+                    backgroundColor: '#ff5722'
+                    borderColor: 'white'
                     fill: true
                     name: Aussen
                     unit: '°C'
-                    pointHitRadius: 0.25
                   - entity: sensor.temp_sensor_temperature_kuche
                     name: Küche
                     unit: '°C'

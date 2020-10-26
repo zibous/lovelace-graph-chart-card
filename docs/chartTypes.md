@@ -90,3 +90,8 @@ see: https://www.chartjs.org/samples/latest/charts/combo-bar-line.html
 ### Scatter
 ### Scatter - Multi axis
 ### Bubble Chart
+
+
+## Install beta
+npm install chart.js@next --save
+
