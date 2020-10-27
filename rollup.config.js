@@ -3,6 +3,8 @@ import nodeResolve from 'rollup-plugin-node-resolve';
 import del from "rollup-plugin-delete"
 import { terser } from "rollup-plugin-terser";
 import gzipPlugin from 'rollup-plugin-gzip'
+import cleanup from 'rollup-plugin-cleanup';
+
 const bundleSize = require('rollup-plugin-bundle-size');
 const pkg = require('./package.json');
 
@@ -24,12 +26,14 @@ const banner = `/*!
 const plugins = [
   nodeResolve(),
   commonjs(),
+  cleanup(),
   bundleSize(),
 ];
 
 const plugins2 = [
   nodeResolve(),
   commonjs(),
+  cleanup(),
   del(),
   terser(),
   bundleSize(),
@@ -38,6 +42,7 @@ const plugins2 = [
 const plugins3 = [
   nodeResolve(),
   commonjs(),
+  cleanup(),
   del(),
   gzipPlugin(),
   bundleSize(),

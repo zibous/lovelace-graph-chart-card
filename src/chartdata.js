@@ -263,6 +263,7 @@ class chartData {
 						minval: Math.min(..._items),
 						maxval: Math.max(..._items),
 						current: _attr.state || 0.00,
+						mode: "history",
 					};
 					_graphData.data.labels = items.map((l) => l.x);
 					// add all entity settings (simple merge)

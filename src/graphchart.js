@@ -5,6 +5,11 @@
  *
  */
 
+// TESTCASE Chart.js vv3.0.0-beta.4, - NOT WORKING ??
+// import { Chart, LineController, Line, Point, LinearScale, Title } from './libs/chart.js'
+// Chart.register(LineController, Line, Point, LinearScale, Title);
+
+// VERSION 2.9.4
 import Chart from "chart.js";
 import "chartjs-plugin-colorschemes";
 import ColorSchemesPlugin from "chartjs-plugin-colorschemes";
