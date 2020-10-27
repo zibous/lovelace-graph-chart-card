@@ -23056,11 +23056,11 @@ return ColorSchemesPlugin;
  *
  */
 
-// import "chartjs-plugin-style";
-// chartjs-plugin-gradient
-// This plugin requires Chart.js 3.0.0 or later. Could work with v2, but it is not supported.
-// import gradient from 'chartjs-plugin-gradient';
-
+/**
+ *  Deep Merge
+ * @param  {...any} sources
+ * @returns combined object
+ */
 function deepMerge(...sources) {
 	let acc = {};
 	for (const source of sources) {
@@ -23102,6 +23102,7 @@ class graphChart {
 	 */
 	constructor(config) {
 		this.ctx = config.ctx || null;
+		this.chart = null;
 		this.chart_locale = config.locale || "de-DE";
 		this.chart_type = config.chart_type || "bar";
 		this.chart_colorschemes = config.chart_colorschemes;
@@ -23109,6 +23110,7 @@ class graphChart {
 		this.chartconfig = config.chartconfig || {};
 		this.chart_styles = config.chart_styles || { dark: true };
 		this.graphData = {};
+		this.chart_update = false;
 		this.chart_ready = false;
 	}
 
@@ -23450,6 +23452,8 @@ class graphChart {
 			}
 
 			if (this.chart_type.toLowerCase() === "polararea") {
+				// cd.polarArea.scales.r.ticks = { backdropColor: "transparent" };
+				// Chart.defaults.set('polarArea.scales.r.ticks', { backdropColor: 'transparent' });
 				cd.polarArea.tooltips.callbacks.label = function (tooltipItem, data) {
 					let dataset = data.datasets[tooltipItem.datasetIndex];
 					let datasetLabel = data.labels[tooltipItem.index] || "";
@@ -23466,7 +23470,8 @@ class graphChart {
 			}
 
 			if (this.chart_type == "radar") {
-				// cd.ticks.backdropColor = 'red'
+				// Chart.defaults.set('radar.scales.r.ticks', { backdropColor: 'transparent' });
+				// cd.radar.scales.r.ticks = { backdropColor: "transparent" };
 				cd.radar.scale.gridLines = {
 					display: true,
 					color: this.themeSettings.gridlineColor,
@@ -23564,6 +23569,9 @@ class graphChart {
 			) {
 				this._setChartDefaultGlobals();
 				this.chart = new Chart(this.ctx, this.chartconfig);
+				if (this.chart) {
+					this.chart_ready = true;
+				}
 			}
 		} catch (err) {
 			console.log(this.chartconfig.options);
@@ -23579,14 +23587,18 @@ class graphChart {
 	 */
 	updateGraph() {
 		try {
-			if (this.chart && this.ctx) {
+			if (this.chart && this.ctx && this.chart_ready) {
 				this.chartconfig.data = {
 					charttype: this.chart_type,
 					unit: this.data_units,
 					labels: this.graphData.data.labels,
 					datasets: this.graphData.data.datasets,
 				};
+				this._setChartDefaultGlobals();
+				this.chart.options = this.chartconfig.options;
+				this.chart.data = this.chartconfig.data;
 				this.chart.update({ duration: 0, easing: "linear" });
+				this.chart_update = true;
 			}
 		} catch (err) {
 			console.log(this.chartconfig.options);
@@ -23668,7 +23680,7 @@ class chartData {
 		this.entityNames = config.entityNames;
 		this.stateHistories = config.stateHistories;
 		this.data_dateGroup = config.data_dateGroup;
-		this.data_aggregate = config.aggregate || 'last';
+		this.data_aggregate = config.aggregate || "last";
 		this.graphData = {};
 	}
 
@@ -23818,7 +23830,7 @@ class chartData {
 
 	/**
 	 * build the graph cart data and datasets for the
-	 * defined graph chart. Uses the history data 
+	 * defined graph chart. Uses the history data
 	 * for each entity
 	 *
 	 * @param {*} stateHistories
@@ -23838,15 +23850,20 @@ class chartData {
 					const items = this._getGroupHistoryData(
 						list,
 						this.data_dateGroup,
-						this.data_aggregate,
+						this.data_aggregate
 					);
 					const id = list[0].entity_id;
 					// get all settings from the selected entity
 					const _attr = this.entities.find((x) => x.entity === id);
+
 					// build the dataseries and check ignore data with zero values
 					let _items = this.data_ignoreZero
 						? items.map((d) => d.y).filter((x) => x != 0)
 						: items.map((d) => d.y);
+
+					// const _minval = Math.min(..._items);
+					// const _maxval = Math.min(..._items);
+
 					// default options
 					let _options = {
 						label: _attr.name,
@@ -23855,6 +23872,8 @@ class chartData {
 						fill: false,
 						unit: "",
 						data: _items,
+						minval: Math.min(..._items),
+						maxval: Math.max(..._items),
 					};
 					_graphData.data.labels = items.map((l) => l.x);
 					// add all entity settings (simple merge)
@@ -24067,6 +24086,11 @@ class GraphChartjsCard extends HTMLElement {
 			cardHeader.appendChild(cardTitle);
 		}
 		if (this.card_title || this.card_icon) card.append(cardHeader);
+		if(this.card_info){
+			const cardInfo = document.createElement("div");
+			cardInfo.style = "min-height:30px; background-color:trasnparent;padding:8px";
+			card.appendChild(cardInfo);
+		}
 		card.appendChild(content);
 		card.appendChild(style);
 		content.appendChild(canvas);
@@ -24094,6 +24118,7 @@ class GraphChartjsCard extends HTMLElement {
 			this.card_title = this._config.title || "";
 			this.card_icon = this._config.icon || null;
 			this.card_height = this._config.height || 240;
+			this.card_info = this._config.cardInfo || null;
 
 			// all settings for the chart
 			this.chart_type = this._config.chart || "bar";

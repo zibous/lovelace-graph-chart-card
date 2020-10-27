@@ -14,6 +14,38 @@ import ColorSchemesPlugin from "chartjs-plugin-colorschemes";
 // This plugin requires Chart.js 3.0.0 or later. Could work with v2, but it is not supported.
 // import gradient from 'chartjs-plugin-gradient';
 
+/**
+ * interpolate 2 RGB colors
+ * @param color1    integer containing color as 0x00RRGGBB
+ * @param color2    integer containing color as 0x00RRGGBB
+ * @param fraction  how much interpolation (0..1)
+ * - 0: full color 1
+ * - 1: full color 2
+ * @return the new color after interpolation
+ */
+const interpolateColor = (a, b, factor) => {
+	const ah = +a.replace("#", "0x");
+	const ar = ah >> 16;
+	const ag = (ah >> 8) & 0xff;
+	const ab = ah & 0xff;
+	const bh = +b.replace("#", "0x");
+	const br = bh >> 16;
+	const bg = (bh >> 8) & 0xff;
+	const bb = bh & 0xff;
+	const rr = ar + factor * (br - ar);
+	const rg = ag + factor * (bg - ag);
+	const rb = ab + factor * (bb - ab);
+
+	return `#${(((1 << 24) + (rr << 16) + (rg << 8) + rb) | 0)
+		.toString(16)
+		.slice(1)}`;
+};
+
+/**
+ *  Deep Merge
+ * @param  {...any} sources
+ * @returns combined object
+ */
 function deepMerge(...sources) {
 	let acc = {};
 	for (const source of sources) {
@@ -55,6 +87,7 @@ class graphChart {
 	 */
 	constructor(config) {
 		this.ctx = config.ctx || null;
+		this.chart = null;
 		this.chart_locale = config.locale || "de-DE";
 		this.chart_type = config.chart_type || "bar";
 		this.chart_colorschemes = config.chart_colorschemes;
@@ -62,6 +95,7 @@ class graphChart {
 		this.chartconfig = config.chartconfig || {};
 		this.chart_styles = config.chart_styles || { dark: true };
 		this.graphData = {};
+		this.chart_update = false;
 		this.chart_ready = false;
 	}
 
@@ -403,6 +437,8 @@ class graphChart {
 			}
 
 			if (this.chart_type.toLowerCase() === "polararea") {
+				// cd.polarArea.scales.r.ticks = { backdropColor: "transparent" };
+				// Chart.defaults.set('polarArea.scales.r.ticks', { backdropColor: 'transparent' });
 				cd.polarArea.tooltips.callbacks.label = function (tooltipItem, data) {
 					let dataset = data.datasets[tooltipItem.datasetIndex];
 					let datasetLabel = data.labels[tooltipItem.index] || "";
@@ -419,7 +455,8 @@ class graphChart {
 			}
 
 			if (this.chart_type == "radar") {
-				// cd.ticks.backdropColor = 'red'
+				// Chart.defaults.set('radar.scales.r.ticks', { backdropColor: 'transparent' });
+				// cd.radar.scales.r.ticks = { backdropColor: "transparent" };
 				cd.radar.scale.gridLines = {
 					display: true,
 					color: this.themeSettings.gridlineColor,
@@ -517,6 +554,9 @@ class graphChart {
 			) {
 				this._setChartDefaultGlobals();
 				this.chart = new Chart(this.ctx, this.chartconfig);
+				if (this.chart) {
+					this.chart_ready = true;
+				}
 			}
 		} catch (err) {
 			console.log(this.chartconfig.options);
@@ -532,14 +572,18 @@ class graphChart {
 	 */
 	updateGraph() {
 		try {
-			if (this.chart && this.ctx) {
+			if (this.chart && this.ctx && this.chart_ready) {
 				this.chartconfig.data = {
 					charttype: this.chart_type,
 					unit: this.data_units,
 					labels: this.graphData.data.labels,
 					datasets: this.graphData.data.datasets,
 				};
+				this._setChartDefaultGlobals();
+				this.chart.options = this.chartconfig.options;
+				this.chart.data = this.chartconfig.data;
 				this.chart.update({ duration: 0, easing: "linear" });
+				this.chart_update = true;
 			}
 		} catch (err) {
 			console.log(this.chartconfig.options);

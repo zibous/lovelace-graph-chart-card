@@ -197,6 +197,11 @@ class GraphChartjsCard extends HTMLElement {
 			cardHeader.appendChild(cardTitle);
 		}
 		if (this.card_title || this.card_icon) card.append(cardHeader);
+		if(this.card_info){
+			const cardInfo = document.createElement("div");
+			cardInfo.style = "min-height:30px; background-color:trasnparent;padding:8px"
+			card.appendChild(cardInfo);
+		}
 		card.appendChild(content);
 		card.appendChild(style);
 		content.appendChild(canvas);
@@ -224,6 +229,7 @@ class GraphChartjsCard extends HTMLElement {
 			this.card_title = this._config.title || "";
 			this.card_icon = this._config.icon || null;
 			this.card_height = this._config.height || 240;
+			this.card_info = this._config.cardInfo || null;
 
 			// all settings for the chart
 			this.chart_type = this._config.chart || "bar";

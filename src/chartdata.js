@@ -71,7 +71,7 @@ class chartData {
 		this.entityNames = config.entityNames;
 		this.stateHistories = config.stateHistories;
 		this.data_dateGroup = config.data_dateGroup;
-		this.data_aggregate = config.aggregate || 'last'
+		this.data_aggregate = config.aggregate || "last";
 		this.graphData = {};
 	}
 
@@ -221,7 +221,7 @@ class chartData {
 
 	/**
 	 * build the graph cart data and datasets for the
-	 * defined graph chart. Uses the history data 
+	 * defined graph chart. Uses the history data
 	 * for each entity
 	 *
 	 * @param {*} stateHistories
@@ -241,15 +241,20 @@ class chartData {
 					const items = this._getGroupHistoryData(
 						list,
 						this.data_dateGroup,
-						this.data_aggregate,
+						this.data_aggregate
 					);
 					const id = list[0].entity_id;
 					// get all settings from the selected entity
 					const _attr = this.entities.find((x) => x.entity === id);
+
 					// build the dataseries and check ignore data with zero values
 					let _items = this.data_ignoreZero
 						? items.map((d) => d.y).filter((x) => x != 0)
 						: items.map((d) => d.y);
+
+					// const _minval = Math.min(..._items);
+					// const _maxval = Math.min(..._items);
+
 					// default options
 					let _options = {
 						label: _attr.name,
@@ -258,6 +263,8 @@ class chartData {
 						fill: false,
 						unit: "",
 						data: _items,
+						minval: Math.min(..._items),
+						maxval: Math.max(..._items),
 					};
 					_graphData.data.labels = items.map((l) => l.x);
 					// add all entity settings (simple merge)
