@@ -6,7 +6,7 @@
  */
 
 // TESTCASE Chart.js vv3.0.0-beta.4, - NOT WORKING ??
-// import { Chart, LineController, Line, Point, LinearScale, Title } from './libs/chart.js'
+// import { Chart, LineController, Line, Point, LinearScale, Title } from './libs/chart.js/chart'
 // Chart.register(LineController, Line, Point, LinearScale, Title);
 
 // VERSION 2.9.4
