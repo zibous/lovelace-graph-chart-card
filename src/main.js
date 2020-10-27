@@ -108,7 +108,6 @@ class GraphChartjsCard extends HTMLElement {
 	 * get the font and colorsettings from the hass view.
 	 * optional the settings can be overwritten by the
 	 * card definition "card_theme" and the theme css
-	 * 
 	 * TODO: get the CSS Variables from the theme
 	 */
 	_getThemeSettings() {
@@ -118,7 +117,7 @@ class GraphChartjsCard extends HTMLElement {
 			fontColor: this._evaluateCssVariable("--primary-text-color") || "#333333",
 			fontFamily:
 				this._evaluateCssVariable("--paper-font-common-base_-_font-family") ||
-				"'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+				"Quicksand, Roboto,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
 			gridlineColor:
 				this._evaluateCssVariable("--light-primary-color") || "#DCDCDC",
 			zeroLineColor:

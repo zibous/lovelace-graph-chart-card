@@ -252,19 +252,17 @@ class chartData {
 						? items.map((d) => d.y).filter((x) => x != 0)
 						: items.map((d) => d.y);
 
-					// const _minval = Math.min(..._items);
-					// const _maxval = Math.min(..._items);
-
 					// default options
 					let _options = {
-						label: _attr.name,
+						label: _attr.name || 'unkonwn',
 						borderWidth: 3,
 						hoverBorderWidth: 0,
 						fill: false,
-						unit: "",
+						unit: _attr.unit || '',
 						data: _items,
 						minval: Math.min(..._items),
 						maxval: Math.max(..._items),
+						current: _attr.state || 0.00,
 					};
 					_graphData.data.labels = items.map((l) => l.x);
 					// add all entity settings (simple merge)

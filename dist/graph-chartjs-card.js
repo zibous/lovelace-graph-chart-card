@@ -23861,19 +23861,17 @@ class chartData {
 						? items.map((d) => d.y).filter((x) => x != 0)
 						: items.map((d) => d.y);
 
-					// const _minval = Math.min(..._items);
-					// const _maxval = Math.min(..._items);
-
 					// default options
 					let _options = {
-						label: _attr.name,
+						label: _attr.name || 'unkonwn',
 						borderWidth: 3,
 						hoverBorderWidth: 0,
 						fill: false,
-						unit: "",
+						unit: _attr.unit || '',
 						data: _items,
 						minval: Math.min(..._items),
 						maxval: Math.max(..._items),
+						current: _attr.state || 0.00,
 					};
 					_graphData.data.labels = items.map((l) => l.x);
 					// add all entity settings (simple merge)
@@ -23997,7 +23995,6 @@ class GraphChartjsCard extends HTMLElement {
 	 * get the font and colorsettings from the hass view.
 	 * optional the settings can be overwritten by the
 	 * card definition "card_theme" and the theme css
-	 * 
 	 * TODO: get the CSS Variables from the theme
 	 */
 	_getThemeSettings() {
@@ -24007,7 +24004,7 @@ class GraphChartjsCard extends HTMLElement {
 			fontColor: this._evaluateCssVariable("--primary-text-color") || "#333333",
 			fontFamily:
 				this._evaluateCssVariable("--paper-font-common-base_-_font-family") ||
-				"'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+				"Quicksand, Roboto,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
 			gridlineColor:
 				this._evaluateCssVariable("--light-primary-color") || "#DCDCDC",
 			zeroLineColor:
