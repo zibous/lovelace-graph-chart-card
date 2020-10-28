@@ -1,7 +1,10 @@
-/**
- * chart data builder
- * TODO: this is not final, try to find a optimized methode
- */
+/** ----------------------------------------------------------
+
+  	chart data builder
+  
+  	TODO: this is not final, try to find a optimized methode
+  
+ * ----------------------------------------------------------*/
 
 /**
  * data formatter
@@ -49,6 +52,19 @@ function formatDate(d, fmt) {
 	});
 }
 
+function randomScalingFactor() {
+	return (
+		(Math.random() > 0.5 ? 1.0 : -1.0) *
+		Math.round(Math.random() * 996.98 * 0.52)
+	);
+}
+
+function reject(obj, keys) {
+	return Object.keys(obj)
+		.filter((k) => !keys.includes(k))
+		.map((k) => Object.assign({}, { [k]: obj[k] }))
+		.reduce((res, o) => Object.assign(res, o), {});
+}
 /**
  * number format integer or float
  * @param {*} n
@@ -66,6 +82,7 @@ class chartData {
 	 * @param {*} config
 	 */
 	constructor(config) {
+		this.chart_type = config.chart_type;
 		this.entities = config.entities;
 		this.entityData = config.entityData;
 		this.entityNames = config.entityNames;
@@ -165,9 +182,79 @@ class chartData {
 		}
 	}
 
+	getTestData(entities) {
+		let _labels = [];
+		let _graphData = {
+			data: {
+				labels: [],
+				datasets: [],
+			},
+		};
+
+		for (let entity of entities) {
+			_labels.push(entity.name);
+
+			let _data = [];
+			let _minval = 0.0;
+			let _maxval = 0.0;
+			let _current = 0.0;
+
+			if (entity.randomize) {
+				// simulate the data with randomScalingFactor
+				_data = Array.apply(null, Array(parseInt(entity.randomize))).map(
+					function () {
+						return parseFloat(randomScalingFactor()).toFixed(2);
+					}
+				);
+			}
+
+			if (entity.data) {
+				// data set by entity
+				_data = entity.data.split(",").map(function (el) {
+					return +el;
+				});
+			}
+
+			if (entity.value) {
+				// value set by entity
+				_data = parseFloat(entity.value);
+			}
+
+			_minval = _data.length ? Math.min(..._data) : _data;
+			_maxval = _data.length ? Math.max(..._data) : _data;
+			_current = _data.length
+				? Math.floor(Math.random() * _data.length)
+				: _data;
+
+			const _attr = reject(entity, ["name", "data", "value", "randomize"]);
+
+			let _options = {
+				label: entity.name,
+				data: _data,
+				minval: _minval,
+				maxval: _maxval,
+				current: _current,
+				borderWidth: 3,
+				hoverBorderWidth: 0,
+				pointRadius: 0,
+				fill: true,
+				pointRadius: 0,
+				mode: "testsensor",
+			};
+
+			_graphData.data.labels = _labels;
+			_options = { ..._options, ..._attr };
+			_graphData.data.datasets.push(_options);
+		}
+
+		return _graphData;
+	}
+
 	/**
 	 * get the graph data for the entities
 	 * all current states for the defined entities
+	 * this is used for pie-, doughnut-, polarArea-,radar-, simple bar chart
+	 * because we do not need time series - only the current state values.
 	 */
 	getCurrentGraphData() {
 		try {
@@ -193,25 +280,31 @@ class chartData {
 							pointRadius: 0,
 							fill: true,
 							pointRadius: 0,
-							unit: this.data_units,
+							unit: this.data_units || "",
 							mode: "current",
 						},
 					],
 				},
 			};
+			// const _attr = reject(entity, ["name", "entity", "last_changed", "state"]);
 			// custom colors from the entities
 			let entityColors = this.entities
 				.map((x) => {
-					if (x.color !== undefined) return x.color;
+					if (x.color !== undefined || x.backgroundColor !== undefined)
+						return x.color || x.backgroundColor;
 				})
 				.filter((notUndefined) => notUndefined !== undefined);
 			if (entityColors.length === this.graphData.data.labels.length) {
 				this.graphData.data.datasets[0].backgroundColor = entityColors;
 			}
+
 			if (this.graphData.data.length === 0) {
 				console.error("No Histroydata present !");
 				return;
 			}
+			this.graphData.config = {
+				useAutoColors: entityColors.length==0,
+			};
 			return this.graphData;
 		} catch (err) {
 			console.error("Current entities GraphData", err.message);
@@ -254,20 +347,23 @@ class chartData {
 
 					// default options
 					let _options = {
-						label: _attr.name || 'unkonwn',
+						label: _attr.name || "unkonwn",
 						borderWidth: 3,
 						hoverBorderWidth: 0,
 						fill: false,
-						unit: _attr.unit || '',
+						unit: _attr.unit || "",
 						data: _items,
 						minval: Math.min(..._items),
 						maxval: Math.max(..._items),
-						current: _attr.state || 0.00,
+						current: _attr.state || 0.0,
 						mode: "history",
 					};
 					_graphData.data.labels = items.map((l) => l.x);
 					// add all entity settings (simple merge)
 					if (_attr) _options = { ..._options, ..._attr };
+					this.graphData.config = {
+						useAutoColors: true,
+					};
 					_graphData.data.datasets.push(_options);
 				}
 				this.graphData = _graphData;
@@ -279,5 +375,3 @@ class chartData {
 		return null;
 	}
 }
-
-export { chartData };

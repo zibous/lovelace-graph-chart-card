@@ -1,10 +1,28 @@
-/**
- * Graph Chart.js Card
- * Chart.js card for Home Assistant
- */
+/** --------------------------------------------------------------------
 
-import { graphChart } from "./graphchart";
-import { chartData } from "./chartdata";
+  Custom Chart Card
+  based on https://github.com/sdelliot/pie-chart-card
+
+  chartjs:    https://www.chartjs.org/
+  autocolors: https://github.com/kurkle/chartjs-plugin-autocolors
+  gradient:   https://github.com/kurkle/chartjs-plugin-gradient#readme
+
+/** -------------------------------------------------------------------*/
+
+// used libs for Chart.js v3.0.0-beta.4
+import "/hacsfiles/chart-card/libs/chart.js?module";
+import "/hacsfiles/chart-card/libs/chartjs-plugin-autocolors.min.js";
+import "/hacsfiles/chart-card/libs/chartjs-plugin-gradient.min.js";
+const gradient = window["chartjs-plugin-gradient"];
+const autocolors = window["chartjs-plugin-autocolors"];
+
+// used libs for Chart.js v2.9.4
+// import "/hacsfiles/chart-card/lib/Chart.bundle.js?module";
+// import "/hacsfiles/chart-card/lib/chartjs-plugin-colorschemes.js"
+//import "/hacsfiles/chart-card/lib/chartjs-plugin-autocolors.min.js";
+//const autocolors = window["chartjs-plugin-autocolors"];
+
+const CHARTJSv3 = true;
 
 // npm run-script build
 console.info(
@@ -13,16 +31,11 @@ console.info(
 	"color: white; background: #e74c3c; font-weight: 700;"
 );
 
-/**
- * global and helper
- */
 let GLOBAL = {
 	LOCALE: "",
 };
-/**
- * date format pattern
- * @param {*} key
- */
+
+// Tools
 const dtFormat = function (key) {
 	const df = [];
 	df["timestamp"] = "timestamp";
@@ -34,11 +47,14 @@ const dtFormat = function (key) {
 	else return df["timestamp"];
 };
 
-/**
- * customElements for Graph Chart.js Card
- * Chart.js card for Home Assistant
- */
-class GraphChartjsCard extends HTMLElement {
+class ChartCard extends HTMLElement {
+	static get properties() {
+		return {
+			_config: {},
+			_hass: {},
+		};
+	}
+
 	/**
 	 * Chartjs Card constructor
 	 */
@@ -61,7 +77,6 @@ class GraphChartjsCard extends HTMLElement {
 		this.graphChart = null;
 		this.chart_type = "bar";
 		this.chart_locale = "de-DE";
-		this.chart_colorschemes = null;
 		this.chart_update = false;
 		this.ctx = null;
 		this.chartconfig = null;
@@ -113,7 +128,6 @@ class GraphChartjsCard extends HTMLElement {
 	_getThemeSettings() {
 		// this.theme.dark
 		this.themeSettings = {
-			theme: this.theme,
 			fontColor: this._evaluateCssVariable("--primary-text-color") || "#333333",
 			fontFamily:
 				this._evaluateCssVariable("--paper-font-common-base_-_font-family") ||
@@ -128,6 +142,7 @@ class GraphChartjsCard extends HTMLElement {
 				this.chart_type.toLowerCase()
 			),
 			showGridLines: ["bar", "line"].includes(this.chart_type.toLowerCase()),
+			useAutoColors: true,
 		};
 	}
 
@@ -153,14 +168,12 @@ class GraphChartjsCard extends HTMLElement {
 				ctx: this.ctx,
 				chart_locale: this.chart_locale,
 				chart_type: this.chart_type,
-				chart_colorschemes: this.chart_colorschemes,
-				chart_styles: this.chart_styles,
 				themeSettings: this.themeSettings,
 				chartconfig: this.chartconfig,
 			};
 			this.graphChart = new graphChart(settings);
-		}else{
-			console.error("No chart.js container found !")
+		} else {
+			console.error("No chart.js container found !");
 		}
 	}
 
@@ -171,15 +184,16 @@ class GraphChartjsCard extends HTMLElement {
 	 */
 	_creatHACard() {
 		// card and chart elements
-		this.id = "card-" + Math.random().toString(36).substr(2, 9);
+		const eId = Math.random().toString(36).substr(2, 9);
+		this.id = "card-" + eId
 		const card = document.createElement("ha-card");
 		const content = document.createElement("div");
 		const canvas = document.createElement("canvas");
 		this.ctx = canvas.getContext("2d");
 		const style = document.createElement("style");
 		card.id = this.id;
-		content.id = "content";
-		canvas.id = "cnv";
+		content.id = "content-" +  eId;
+		canvas.id = "chart-" + eId;
 		content.style.height = this.card_height + "px";
 		canvas.height = this.card_height;
 		const cardHeader = document.createElement("div");
@@ -196,9 +210,10 @@ class GraphChartjsCard extends HTMLElement {
 			cardHeader.appendChild(cardTitle);
 		}
 		if (this.card_title || this.card_icon) card.append(cardHeader);
-		if(this.card_info){
+		if (this.card_info) {
 			const cardInfo = document.createElement("div");
-			cardInfo.style = "min-height:30px; background-color:trasnparent;padding:8px"
+			cardInfo.style =
+				"min-height:30px; background-color:trasnparent;padding:8px";
 			card.appendChild(cardInfo);
 		}
 		card.appendChild(content);
@@ -251,7 +266,6 @@ class GraphChartjsCard extends HTMLElement {
 						availableTypes.join(", ")
 				);
 			}
-			this.chart_colorschemes = this._config.colorschemes || null;
 			this.chart_locale = GLOBAL.LOCALE = this.chart_locale || "de-DE";
 
 			// setting for data handling
@@ -259,10 +273,11 @@ class GraphChartjsCard extends HTMLElement {
 			this.data_hoursToShow = this._config.hours_to_show || 0;
 			this.data_group_by = this._config.group_by || "day";
 			this.data_dateGroup = dtFormat(this.data_group_by);
-			this.data_aggregate = this._config.aggregate || 'last'
+			this.data_aggregate = this._config.aggregate || "last";
 			this.data_ignoreZero = this._config.ignoreZero || false;
 
 			this.data_units = this._config.units || "";
+			this.data_test = this._config.testdata || null;
 
 			// create the card and apply the chartjs config
 			this._creatHACard();
@@ -414,13 +429,16 @@ class GraphChartjsCard extends HTMLElement {
 	 */
 	_buildGraphData(stateHistories) {
 		const _chartData = new chartData({
+			chart_type: this.chart_type,
 			entities: this.entities,
 			entityData: this.entityData,
 			entityNames: this.entityNames,
 			stateHistories: stateHistories,
 			data_dateGroup: this.data_dateGroup,
+			data_aggregate: this.data_aggregate,
 		});
 
+		// get the chart data
 		if (stateHistories && stateHistories.length) {
 			this.graphData = _chartData.getHistoryGraphData();
 		} else {
@@ -430,6 +448,9 @@ class GraphChartjsCard extends HTMLElement {
 		if (this.graphData === null) {
 			console.error("No GraphData found for ", this.entityNames);
 			return;
+		} else {
+			if (this.graphData.config)
+				this.themeSettings.useAutoColors = this.graphData.config.useAutoColors;
 		}
 
 		if (this.chart_update) {
@@ -454,4 +475,4 @@ class GraphChartjsCard extends HTMLElement {
 	}
 }
 
-customElements.define("graph-chartjs-card", GraphChartjsCard);
+customElements.define("chart-card", ChartCard);

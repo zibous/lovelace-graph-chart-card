@@ -21,11 +21,7 @@ Chart.js card for Home Assistant -  Visualize your data in 8 different ways; eac
 
 <br>
 
-## Installation through HACS
-This card isn't in HACS, but you can add it manually through `Custom repositories`
-
-To do that just follow these steps: **HACS -> Frontend -> 3 dots (upper right corner) -> Custom repositories -> (Paste this github page url)**
-<br>
+## Installation 
 ### Manual install
 1. Download and copy `graph-chartjs-card.js` from the [latest release](https://github.com/zibus/dist/) into your `config/www` directory.
 
@@ -45,8 +41,6 @@ To do that just follow these steps: **HACS -> Frontend -> 3 dots (upper right co
 | title          | string   |             | card title  |
 | height         | integer  | 240         | card title  |
 | chart          | string   | bar          | chart type  |
-| cardtheme   | string   |          |   |
-| colorschemes   | string   |             | just like chart.js documentation, accepts Templates for all fields |
 | update        |  integer        | 60            | Specify a custom update interval of the history data (in seconds), instead of on every state change. |
 | hours_to_show          | integer   | 0          | Specify how many hours of history the graph should present. If not set (hours_to_show===0) only the current state values are used for the chart.  |
 | group_by          | string   | day          | Specify type of grouping of data by date or hour. If not set, all data from the entity will be used for the chart.  |
@@ -84,13 +78,18 @@ The following theme variables can be set in your HA theme to customize the appea
 
 ### Simple chart w/o any options
 ```yaml
-    - type: 'custom:graph-chartjs-card'
-      title: 'Makro Nährstoffe'
-      chart: 'doughnut' # Supports: ['line', 'radar', 'bar', 'horizontalBar', 'pie', 'doughnut', 'polarArea']
-      entities:
-        - entity: sensor.peter_eiweis_makronahrstoff
-        - entity: sensor.peter_fett_makronahrstoff
-        - entity: sensor.peter_kohlenhydrate_makronahrstoff
+- type: 'custom:chart-card'
+  title: 'Makro Nährstoffe'
+  icon: 'mdi:nutrition'
+  height: 240
+  chart: 'pie'
+  units: 'kal'
+  options:
+    title:
+      display: true
+      text: 'Aufteilung Nährstoffe (kal) pro Tag'
+      fontStyle: 'normal'
+      fontSize: '18'
 
 ```
 <br>
@@ -106,7 +105,7 @@ The following theme variables can be set in your HA theme to customize the appea
    options:
      title:
        display: true
-       fontStyle: normal
+       fontStyle: 'normal'
        text: 'Aufteilung Nährstoffe (kal) pro Tag'
     entities:
       - entity: sensor.peter_eiweis_makronahrstoff
@@ -136,14 +135,14 @@ The following theme variables can be set in your HA theme to customize the appea
         yAxes:
           - display: true
             stacked: false
-            position: left                        
+            position: 'left'                        
             ticks:
               autoSkip: true
               maxTicksLimit: 8
             scaleLabel:
               display: false
-              labelString: kal
-              fontStyle: bold
+              labelString: 'kal'
+              fontStyle: 'bold'
             gridLines:
               display: true
               color: '#5ac8fa'

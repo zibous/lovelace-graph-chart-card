@@ -1,44 +1,35 @@
 {
-  "name": "graph-chartjs-card",
-  "version": "0.0.1",
-  "description": "Graph card for Home Assistant Lovelace UI based on chart.js ",
-  "main": "src/main.js",
+  "name": "graph-echarts",
+  "version": "1.0.0",
+  "description": "A customizable graph card (echart based) for Home Assistant Lovelace UI",
   "homepage": "https://github.com/zibous/lovelace-graph-chart-card",
+  "main": "src/main.js",
+  "module": "src/main.js",
   "keywords": [
-    "chartjs",
-    "homeassistant",
     "home-assistant",
+    "homeassistant",
     "hass",
     "automation",
     "lovelace",
+    "sensor",
+    "graph",
+    "svg",
     "custom-cards"
   ],
-  "dependencies": {
-    "chart.js": "^2.9.4",
-    "chartjs-adapter-date-fns": "^1.0.0",
-    "chartjs-plugin-colorschemes": "^0.4.0",
-    "chartjs-plugin-crosshair": "^1.1.6",
-    "chartjs-plugin-gradient": "^0.1.0",
-    "chartjs-plugin-stacked100": "^0.7.1",
-    "chartjs-plugin-style": "^0.5.0",
-    "date-fns": "^2.16.1"
+  "author": "Peter Siebler",
+  "license": "MIT",
+  "repository": "https://github.com/zibous/lovelace-graph-chart-card.git",
+  "dependencies": {},
+  "scripts": {
+    "build": "gulp"
   },
   "devDependencies": {
-    "rollup": "^2.32.0",
-    "rollup-plugin-bundle-size": "^1.0.3",
-    "rollup-plugin-cleanup": "^3.2.1",
-    "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-delete": "^2.0.0",
-    "rollup-plugin-gzip": "^2.5.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-terser": "^7.0.2"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm run rollup",
-    "rollup": "rollup -c"
-  },
-  "repository": "https://github.com/zibous/lovelace-graph-chart-card.git",
-  "author": "Peter Siebler",
-  "license": "MIT"
+    "gulp": "^4.0.2",
+    "gulp-babel": "^8.0.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-header-comment": "^0.8.0",
+    "gulp-minify": "^3.1.0",
+    "gulp-plumber": "^1.2.1",
+    "gulp-uglify": "^3.0.2"
+  }
 }
