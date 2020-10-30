@@ -39,9 +39,10 @@ Chart.js card for Home Assistant -  Visualize your data in 8 different ways; eac
 | Name           | Type     | Default     | Description |
 | -------------- | -------- | ----------- |------------ |
 | title          | string   |             | card title  |
-| height         | integer  | 240         | card title  |
+| icon          | string   |             | Set a custom icon from any of the available mdi icons.   |
+| height         | integer  | 240         | cSet a custom height of the card.  |
 | chart          | string   | bar          | chart type  |
-| update        |  integer        | 60            | Specify a custom update interval of the history data (in seconds), instead of on every state change. |
+| updateInterval        |  integer        | 60            | Specify a custom update interval of the history data (in seconds), instead of on every state change. |
 | hours_to_show          | integer   | 0          | Specify how many hours of history the graph should present. If not set (hours_to_show===0) only the current state values are used for the chart.  |
 | group_by          | string   | day          | Specify type of grouping of data by date or hour. If not set, all data from the entity will be used for the chart.  |
 | units          | string   |           | Set a custom unit of measurement for all entities.  |
@@ -58,21 +59,24 @@ properties of the Entity object detailed in the following table (as per `sensor.
 |------|:----:|:-------:|-------------|
 | entity ***(required)*** | string |  | Entity id of the sensor.
 | name | string |  | Set a custom display name, defaults to entity's friendly_name.
-| color | string |  | Set a custom color, overrides all other color options including thresholds.
+| backgroundColor | string |  | Set a custom color, overrides all other color options including thresholds.
+| borderColor | string |  | Set a custom color, overrides all other color options including thresholds.
 | unit | string |  | Set a custom unit of measurement, overrides `unit` set in base config.
+| yAxisID | string |  | Set secondary axis yAxisID: "right" || yAxisID: "left" |
+| fill | boolean | false  | How to fill the area under the. line see: [Chart.js documentation](https://www.chartjs.org/docs/latest/).|
 | ... | optional |  | Set a custom option  see: [Chart.js documentation](https://www.chartjs.org/docs/latest/).|
 
 ### Theme variables
 The following theme variables can be set in your HA theme to customize the appearence of the card.
-
+TODO: open, not aktive
 | Name | Default | Description |
 |------|:-------:|-------------|
-| cartjs-text-fontColor |  | |
-| cartjs-fontFamily | | |
-| cartjs-gridline-color | | |
-| cartjs-zero-gridline-color | | |
-| cartjs-tooltip-background | | |
-| cartjs-text-fontcolor | | |
+| chartjs-text-fontColor |  | |
+| chartjs-fontFamily | | |
+| chartjs-gridline-color | | |
+| chartjs-zero-gridline-color | | |
+| chartjs-tooltip-background | | |
+| chartjs-text-fontcolor | | |
 
 <br><br>
 

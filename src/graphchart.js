@@ -34,6 +34,9 @@ function deepMerge(...sources) {
 	return acc;
 }
 
+// randomColor({luminosity: 'light',count: 27});
+const randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
+
 /**
  * graph chart wrapper class
  *
@@ -57,12 +60,15 @@ class graphChart {
 	 *
 	 */
 	constructor(config) {
-		this.ctx = config.ctx || null; // the chart canvas element
 		this.chart = null; // current chart
+		this.ctx = config.ctx || null; // the chart canvas element
+		this.canvasId = config.canvasId;
+		this.card_config = config.card_config;
 		this.chart_locale = config.locale || "de-DE"; // the locale for number(s) and date(s)
 		this.chart_type = config.chart_type || "bar"; // the chart type
 		this.themeSettings = config.themeSettings || {}; // the theme settings (dark or light)
 		this.chartconfig = config.chartconfig || {}; // the chart config from the template
+		this.chartCurrentConfig = this.chartconfig; // current chart settings
 		this.graphData = {}; // the graph data
 		this.chart_update = false; // boolean for update the chart
 		this.chart_ready = false; // boolean chart allready exits
@@ -127,34 +133,58 @@ class graphChart {
 	 * @called: from rendergraph and updategraph
 	 */
 	_setChartOptions() {
-		// global default settings for Chart.js vv3.0.0-beta.4
-		// Chart.defaults.font.color = this.themeSettings.fontColor;
-		// Chart.defaults.font.family = this.themeSettings.fontFamily;
-		// Chart.defaults.showGridLines = this.themeSettings.showGridLines;
-		// Chart.defaults.elements.line.tension = 0.4;
-
 		// chart default settings
 		let options = {
-			charttype: this.chart_type,
+			type: this.chart_type,
 			responsive: true,
 			maintainAspectRatio: false,
 			animation: { duration: 0 },
 			units: this.data_units || "",
-			title: { display: false, fontStyle: "normal", text: "", fontSize: 18 },
-			layout: { padding: { left: 8, right: 8, top: 0, bottom: 20 } },
+			font: {
+				color: this.themeSettings.fontColor,
+				family: this.themeSettings.fontFamily,
+				size: 12,
+				style: "normal",
+				lineHeight: 1.2,
+				lineWidth: 0,
+			},
+			title: {
+				display: this.chartconfig.title != "",
+				text: "",
+				font: {
+					style: "normal",
+					color: this.themeSettings.fontColor,
+				},
+			},
+			layout: { padding: { left: 16, right: 16, top: 0, bottom: 20 } },
 			chartArea: { backgroundColor: "transparent" },
 			legend: {
 				display: this.themeSettings.showLegend || false,
 				position: "bottom",
 				lineWidth: 0,
+				labels: {
+					usePointStyle: true,
+					boxWidth: 8,
+				},
 			},
 			tooltips: {
 				enabled: true,
 				mode: "nearest",
 				position: "nearest",
-				//backgroundColor: this.themeSettings.tooltipsBackground,
-				//titleFontColor: this.themeSettings.tooltipsFontColor,
-				//bodyFontColor: this.themeSettings.tooltipsFontColor,
+				backgroundColor: this.themeSettings.tooltipsBackground,
+				titleFont: {
+					style: "normal",
+					color: this.themeSettings.tooltipsFontColor,
+				},
+				bodyFont: {
+					style: "normal",
+					color: this.themeSettings.tooltipsFontColor,
+				},
+				footerFont: {
+					style: "normal",
+					color: this.themeSettings.tooltipsFontColor,
+				},
+				animation: null,
 			},
 			hover: {
 				mode: "nearest",
@@ -162,10 +192,11 @@ class graphChart {
 			},
 			elements: {
 				point: {
-					radius: 0.2,
-					hitRadius: 8,
+					radius: 0.33,
+					hitRadius: 8.0,
 				},
 			},
+			spanGaps: true,
 			plugins: {
 				autocolors: {
 					useAutoColors: true,
@@ -175,20 +206,95 @@ class graphChart {
 			},
 		};
 
+		if (this.themeSettings.showGridLines) {
+			Chart.defaults.set("scale", {
+				gridLines: {
+					display: true,
+					color: this.themeSettings.gridlineColor,
+					lineWidth: 0.365,
+					drawBorder: true,
+				},
+				ticks: {
+					maxTicksLimit: 12,
+				},
+			});
+		} else {
+			Chart.defaults.set("scale", {
+				gridLines: {
+					display: false,
+				},
+				ticks: {
+					maxTicksLimit: 8,
+				},
+			});
+		}
+		// check secondary axis
+		if (
+			this.themeSettings.secondaryAxis &&
+			this.graphData &&
+			this.graphData.data &&
+			this.graphData.data.datasets
+		) {
+			let _scaleOptions = {};
+			this.graphData.data.datasets.forEach((dataset) => {
+				if (dataset.yAxisID) {
+					_scaleOptions[dataset.yAxisID] = {};
+					_scaleOptions[dataset.yAxisID].id = dataset.yAxisID;
+					_scaleOptions[dataset.yAxisID].type = "linear";
+					_scaleOptions[dataset.yAxisID].position = dataset.yAxisID;
+					_scaleOptions[dataset.yAxisID].display = true;
+				}
+				if (dataset.xAxisID) {
+					// TODO: if needed
+				}
+			});
+			if (_scaleOptions) {
+				options.scales = _scaleOptions;
+			}
+		}
+
 		switch (this.chart_type.toLowerCase()) {
 			case "radar":
-				if (CHARTJSv3) {
-					Chart.defaults.set("radar.scales.r.ticks", {
+				Chart.defaults.set("radar.scales.r", {
+					ticks: {
 						backdropColor: "transparent",
-					});
-				}
+					},
+					angleLines: {
+						display: true,
+						color: this.themeSettings.gridlineColor,
+						lineWidth: 0.3333,
+					},
+					gridLines: {
+						circular: true,
+					},
+				});
+				Chart.defaults.set("scale", {
+					gridLines: {
+						display: true,
+						lineWidth: 0.333,
+					},
+				});
 				break;
 			case "polararea":
-				if (CHARTJSv3) {
-					Chart.defaults.set("polarArea.scales.r.ticks", {
+				Chart.defaults.set("polarArea.scales.r", {
+					ticks: {
 						backdropColor: "transparent",
-					});
-				}
+					},
+					angleLines: {
+						display: true,
+						color: this.themeSettings.gridlineColor,
+						lineWidth: 0.3333,
+					},
+					gridLines: {
+						circular: true,
+						lineWidth: 0.245,
+					},
+				});
+				Chart.defaults.set("scale", {
+					gridLines: {
+						display: true,
+					},
+				});
 				break;
 			case "scatter":
 			case "line":
@@ -200,11 +306,23 @@ class graphChart {
 				break;
 		}
 
+		this.chartCurrentConfig = {
+			type: this.chart_type,
+			data: {
+				labels: [],
+				datasets: [],
+			},
+			options: {},
+		};
+
 		// merge default with chart config options
 		if (this.chartconfig.options) {
-			this.chartconfig.options = deepMerge(options, this.chartconfig.options);
+			this.chartCurrentConfig.options = deepMerge(
+				options,
+				this.chartconfig.options
+			);
 		} else {
-			this.chartconfig.options = options;
+			this.chartCurrentConfig.options = options;
 		}
 	}
 
@@ -214,19 +332,18 @@ class graphChart {
 	 *    this.graphChart.graphData = this.graphData
 	 *    this.graphChart.renderGraph()
 	 */
-	renderGraph() {
+	renderGraph(doUpdate) {
 		try {
-			if (this.chart && this.chart_ready) {
-				// allread present, so we can update
-				this.updateGraph();
-				return;
+			// check if chart exits
+			if (this.chart && !doUpdate) {
+				doUpdate = true;
 			}
 
 			// set the chart options
 			this._setChartOptions();
 
-			// set the data for the current chart
-			this.chartconfig.data = {
+			// append the data for the current chart settings
+			this.chartCurrentConfig.data = {
 				labels: this.graphData.data.labels,
 				datasets: this.graphData.data.datasets,
 			};
@@ -234,17 +351,74 @@ class graphChart {
 			// Chart declaration
 			if (
 				this.ctx &&
-				this.chartconfig.data.datasets &&
-				this.chartconfig.options
+				this.chartCurrentConfig.data &&
+				this.chartCurrentConfig.options
 			) {
-				if (CHARTJSv3) {
+				if (doUpdate || this.chart_update) {
+					this.chart.update({ duration: 0, easing: "linear" });
+					this.chart_update = true;
+				} else {
+					// -----------------------------------------
+					// all used plugins
+					// -----------------------------------------
 					if (autocolors) Chart.register(autocolors);
 					if (gradient) Chart.register(gradient);
+					// chart background
+					if (
+						this.chartconfig &&
+						this.chartconfig.options &&
+						this.chartconfig.options.chartArea &&
+						this.chartconfig.options.chartArea.backgroundColor !== ""
+					) {
+						Chart.register({
+							id: "chardbackground",
+							beforeDraw: function (chart) {
+								if (
+									chart.config.options.chartArea &&
+									chart.config.options.chartArea.backgroundColor
+								) {
+									const chartArea = chart.chartArea;
+									const ctx = chart.ctx;
+									ctx.save();
+									ctx.fillStyle =
+										chart.config.options.chartArea.backgroundColor;
+									ctx.fillRect(
+										chartArea.left,
+										chartArea.top,
+										chartArea.right - chartArea.left,
+										chartArea.bottom - chartArea.top
+									);
+									ctx.restore();
+								}
+							},
+						});
+					}
+					// ------------------------------------------------------
+					// register new chart
+					// ------------------------------------------------------
+					this.chart = new Chart(this.ctx, this.chartCurrentConfig);
+					if (this.chart) {
+						this.chart_ready = true;
+						this.chart_update = true;
+					}
+					// var canvs = document.getElementById(this.canvasId);
+					// console.log(this.canvasId, canvs);
+					// if(canvs){
+					// 	canvs.addEventListener("mousemove", function (event) {
+					// 		console.log(
+					// 			"mousemove: " +
+					// 				event.clientX +
+					// 				"/" +
+					// 				event.clientY +
+					// 				" buttons: " +
+					// 				event.buttons
+					// 		);
+					// 	});
+					// }
+
 				}
-				this.chart = new Chart(this.ctx, this.chartconfig);
-				if (this.chart) {
-					this.chart_ready = true;
-				}
+			} else {
+				console.log("Missing settings or data", this.chartCurrentConfig);
 			}
 		} catch (err) {
 			console.error(
@@ -252,38 +426,8 @@ class graphChart {
 				this.chart_type,
 				": ",
 				err,
-				this.chartconfig.options
+				this.chartCurrentConfig
 			);
-		}
-	}
-
-	/**
-	 * calls the chart update and render all new data.
-	 * * @example:
-	 *    this.graphChart.graphData = this.graphData
-	 *    this.graphChart.updateGraph()
-	 */
-	updateGraph() {
-		try {
-			if (this.chart && this.ctx && this.chart_ready) {
-				// set the new data
-				this.chartconfig.data = {
-					charttype: this.chart_type,
-					unit: this.data_units,
-					labels: this.graphData.data.labels,
-					datasets: this.graphData.data.datasets,
-				};
-
-				// get the current settings
-				this.chart.options = this.chartconfig.options;
-				this.chart.data = this.chartconfig.data;
-
-				// update the chart
-				this.chart.update({ duration: 0, easing: "linear" });
-				this.chart_update = true;
-			}
-		} catch (err) {
-			console.error("Update Graph", err.message, this.chartconfig.options);
 		}
 	}
 }

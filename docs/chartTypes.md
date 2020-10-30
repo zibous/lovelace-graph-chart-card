@@ -1,5 +1,55 @@
 
 
+# Config
+
+```javascript
+var config = {
+
+        type: 'line',
+
+        data: {
+            labels: [...],
+            datasets: [{
+                label: '...',
+                backgroundColor: window.chartColors.red,
+                borderColor: window.chartColors.red,
+                data: [...],
+                fill: false,
+            }, {
+                label: '...',
+                fill: false,
+                backgroundColor: window.chartColors.blue,
+                borderColor: window.chartColors.blue,
+                data: [....],
+            }]
+        },
+
+        options: {
+            responsive: true,
+            title: {
+                display: true,
+                text: 'Grid Line Settings'
+            },
+            scales: {
+                y: {
+                    gridLines: {
+                        drawBorder: false,
+                        color: function(context) {
+                            if (context.tick.value > 0) {
+                                return window.chartColors.green;
+                            } else if (context.tick.value < 0) {
+                                return window.chartColors.red;
+                            }
+
+                            return '#000000';
+                        },
+                    },
+                }
+            }
+        }
+    };
+```
+
 ## Bar Chart
 
 ### Vertical

@@ -9,44 +9,25 @@
 
 /** -------------------------------------------------------------------*/
 
-// used libs for Chart.js v3.0.0-beta.4
-import "/hacsfiles/chart-card/libs/chart.js?module";
-import "/hacsfiles/chart-card/libs/chartjs-plugin-autocolors.min.js";
+// Chart.js v3.0.0-beta.4 and used plugins
+import "/hacsfiles/chart-card/libs/chart.min.js?module";
+// import "/hacsfiles/chart-card/libs/chartjs-plugin-autocolors.min.js";
+import "/hacsfiles/chart-card/libs/chartjs-plugin-autocolors.js";
 import "/hacsfiles/chart-card/libs/chartjs-plugin-gradient.min.js";
+
+// autocolors, gradient
 const gradient = window["chartjs-plugin-gradient"];
 const autocolors = window["chartjs-plugin-autocolors"];
 
-// used libs for Chart.js v2.9.4
-// import "/hacsfiles/chart-card/lib/Chart.bundle.js?module";
-// import "/hacsfiles/chart-card/lib/chartjs-plugin-colorschemes.js"
-//import "/hacsfiles/chart-card/lib/chartjs-plugin-autocolors.min.js";
-//const autocolors = window["chartjs-plugin-autocolors"];
-
-const CHARTJSv3 = true;
-
-// npm run-script build
 console.info(
 	"%c CHARTJS-CARD-DEV %c ".concat("0.0.4", " "),
 	"color: white; background: #2980b9; font-weight: 700;",
 	"color: white; background: #e74c3c; font-weight: 700;"
 );
 
-let GLOBAL = {
-	LOCALE: "",
-};
-
-// Tools
-const dtFormat = function (key) {
-	const df = [];
-	df["timestamp"] = "timestamp";
-	df["day"] = "%Y-%M-%d";
-	df["hour"] = "%Y-%M-%d %H:00:00";
-	df["month"] = "%Y-%M";
-	df["year"] = "%Y";
-	if (key in df) return df[key];
-	else return df["timestamp"];
-};
-
+/**
+ * lovelace card chart graph
+ */
 class ChartCard extends HTMLElement {
 	static get properties() {
 		return {
@@ -104,6 +85,22 @@ class ChartCard extends HTMLElement {
 	}
 
 	/**
+	 * get the date format patter for the
+	 * data series group
+	 * @param {*} key
+	 */
+	_dateFormatPattern(key) {
+		const df = [];
+		df["timestamp"] = "timestamp";
+		df["day"] = "%Y-%M-%d";
+		df["hour"] = "%Y-%M-%d %H:00:00";
+		df["month"] = "%Y-%M";
+		df["year"] = "%Y";
+		if (key in df) return df[key];
+		else return df["timestamp"];
+	}
+
+	/**
 	 * evaluate the CSS variable
 	 * @param {*} variable
 	 */
@@ -138,12 +135,25 @@ class ChartCard extends HTMLElement {
 				this._evaluateCssVariable("--dark-primary-color") || "#555555",
 			tooltipsBackground: "#ecf0f1",
 			tooltipsFontColor: "#647687",
-			showLegend: ["pie", "doughnut", "polarArea", "line"].includes(
+			showLegend: ["pie", "doughnut", "polararea", "line"].includes(
 				this.chart_type.toLowerCase()
 			),
 			showGridLines: ["bar", "line"].includes(this.chart_type.toLowerCase()),
 			useAutoColors: true,
+			secondaryAxis: false,
 		};
+
+		if (
+			this._config.options &&
+			this._config.options.scale &&
+			this._config.options.scale.gridLines
+		) {
+			this.themeSettings.showGridLines = true;
+		}
+
+		if (this._config.options && this._config.options.legend) {
+			this.themeSettings.showLegend = true;
+		}
 	}
 
 	/**
@@ -166,6 +176,8 @@ class ChartCard extends HTMLElement {
 		if (this.ctx) {
 			let settings = {
 				ctx: this.ctx,
+				canvasId: this.canvasId,
+				card_config: this._config,
 				chart_locale: this.chart_locale,
 				chart_type: this.chart_type,
 				themeSettings: this.themeSettings,
@@ -185,19 +197,24 @@ class ChartCard extends HTMLElement {
 	_creatHACard() {
 		// card and chart elements
 		const eId = Math.random().toString(36).substr(2, 9);
-		this.id = "card-" + eId
+		this.id = "card-" + eId;
 		const card = document.createElement("ha-card");
 		const content = document.createElement("div");
 		const canvas = document.createElement("canvas");
 		this.ctx = canvas.getContext("2d");
+		this.canvasId = "chart-" + eId;
 		const style = document.createElement("style");
 		card.id = this.id;
-		content.id = "content-" +  eId;
-		canvas.id = "chart-" + eId;
+		content.id = "content-" + eId;
+		canvas.id = this.canvasId;
 		content.style.height = this.card_height + "px";
+		content.style.position = "relative";
 		canvas.height = this.card_height;
+		canvas.style.cssText =
+			"-moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;z-index:100;position:relative";
 		const cardHeader = document.createElement("div");
 		cardHeader.setAttribute("class", "card-header");
+		cardHeader.style.cssText = "padding-bottom:0 !important;";
 		if (this.card_icon) {
 			const iconel = document.createElement("ha-icon");
 			iconel.setAttribute("icon", this.card_icon);
@@ -262,17 +279,21 @@ class ChartCard extends HTMLElement {
 				throw new Error("You need to define type of chart");
 			} else if (!availableTypes.includes(this.chart_type)) {
 				throw new Error(
-					"Invalid config for 'chart'. Available options are: " +
+					"Invalid config for 'chart:'" +
+						this.chart_type +
+						". Available options are: " +
 						availableTypes.join(", ")
 				);
 			}
-			this.chart_locale = GLOBAL.LOCALE = this.chart_locale || "de-DE";
-
+			if (this.chart_type.toLowerCase() === "horizontalbar") {
+				this.chart_type = "bar";
+			}
+			this.chart_locale = this._config.locale || "de-DE";
 			// setting for data handling
 			this.updateInterval = this._config.update || 60;
 			this.data_hoursToShow = this._config.hours_to_show || 0;
 			this.data_group_by = this._config.group_by || "day";
-			this.data_dateGroup = dtFormat(this.data_group_by);
+			this.data_dateGroup = this._dateFormatPattern(this.data_group_by);
 			this.data_aggregate = this._config.aggregate || "last";
 			this.data_ignoreZero = this._config.ignoreZero || false;
 
@@ -282,6 +303,7 @@ class ChartCard extends HTMLElement {
 			// create the card and apply the chartjs config
 			this._creatHACard();
 			this._setChartConfig();
+			this._initialized = true;
 		} catch (err) {
 			console.log(err.message, config);
 		}
@@ -293,6 +315,7 @@ class ChartCard extends HTMLElement {
 	 */
 	set hass(hass) {
 		if (hass === undefined) return;
+		if (!this._initialized) return;
 
 		if (this.theme && this.theme !== hass.selectedTheme) {
 			// theme change, update chart
@@ -300,7 +323,7 @@ class ChartCard extends HTMLElement {
 			this._getThemeSettings();
 			if (this.graphChart) {
 				this.graphChart.themeSettings = this.themeSettings;
-				this.graphChart.updateGraph();
+				this.graphChart.renderGraph(true);
 			}
 			if (this.skipRender) return;
 		}
@@ -378,7 +401,7 @@ class ChartCard extends HTMLElement {
 				: x.entity
 		);
 
-		if (this.skipRender == false) {
+		if (this.skipRender == false && this._initialized) {
 			// get the histroy data and render the graph
 			this._getHistory();
 			this.skipRender = true;
@@ -430,6 +453,7 @@ class ChartCard extends HTMLElement {
 	_buildGraphData(stateHistories) {
 		const _chartData = new chartData({
 			chart_type: this.chart_type,
+			card_config: this._config,
 			entities: this.entities,
 			entityData: this.entityData,
 			entityNames: this.entityNames,
@@ -449,19 +473,23 @@ class ChartCard extends HTMLElement {
 			console.error("No GraphData found for ", this.entityNames);
 			return;
 		} else {
-			if (this.graphData.config)
-				this.themeSettings.useAutoColors = this.graphData.config.useAutoColors;
+			if (this.graphData.config) {
+				this.themeSettings.useAutoColors =
+					this.graphData.config.useAutoColors || false;
+				this.themeSettings.secondaryAxis =
+					this.graphData.config.secondaryAxis || false;
+			}
 		}
 
 		if (this.chart_update) {
 			if (this.graphChart && this.graphData) {
 				this.graphChart.graphData = this.graphData;
-				this.graphChart.updateGraph();
+				this.graphChart.renderGraph(true);
 			}
 		} else {
 			if (this.graphChart && this.graphData) {
 				this.graphChart.graphData = this.graphData;
-				this.graphChart.renderGraph();
+				this.graphChart.renderGraph(false);
 			}
 		}
 	}

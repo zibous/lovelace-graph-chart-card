@@ -57,8 +57,10 @@ cards:
                   title:
                     display: true
                     text: 'Aufteilung Nährstoffe (kal) pro Tag'
-                    fontStyle: 'normal'
-                    fontSize: '18'
+                    font:
+                       family: "Quicksand, Roboto, 'Open Sans','Rubik',sans-serif"
+                       style: 'normal'
+                       color: '#ff9500'
                 entities:
                   - entity: sensor.peter_eiweis_makronahrstoff
                     name: Eiweis
@@ -109,12 +111,9 @@ cards:
                 icon: 'mdi:home'
                 height: 240
                 chart: 'radar'
-                colorscheme: 'brewer.Paired12'
                 options:
                   title:
-                    display: true
                     text: 'Aktuelle Werte'
-                    font: 'normal'
                   scale:  
                     gridLines:
                       color:
@@ -140,44 +139,75 @@ cards:
                     name: Gewicht
                   - entity: sensor.peter_viszerales_fett
                     name: Viszerales Fett
-#
-#      - type: custom:layout-card
-#        max_width: 720
-#        column_num: 1
-#        max_columns: 2
-#        layout: horizontal
-#        cards:
-#          - type: custom:layout-card
-#            max_width: 720
-#            column_num: 1
-#            max_columns: 1
-#            layout: horizontal
-#            cards:
-#              ## MIXED CHART (LINE & BAR) ------
-#              - type: 'custom:chart-card'
-#                title: 'Gewichtsverlauf'
-#                height: 320
-#                chart: 'line'
-#                locale: 'de-DE'
-#                hours_to_show: 400 ## last 8 days..
-#                group_by: 'day'
-#                
-#                entities:
-#                  - entity: sensor.peter_muskeln
-#                    yAxisID: "left"
-#                    type: "line"
-#                    backgroundColor: "#ff9500"
-#                    borderColor: "#ff9500"
-#                  - entity: sensor.peter_gewicht
-#                    yAxisID: "left"
-#                    type: "line"
-#                    backgroundColor: "#ff5722"
-#                    borderColor: "#ff5722"
-#                  - entity: sensor.peter_bmi
-#                    yAxisID: "right"
-#                    type: "bar"
-#                    borderWidth: 0
-#                    backgroundColor: '#5ac8fa'
+
+      - type: custom:layout-card
+        max_width: 720
+        column_num: 1
+        max_columns: 2
+        layout: horizontal
+        cards:
+          - type: custom:layout-card
+            max_width: 720
+            column_num: 1
+            max_columns: 1
+            layout: horizontal
+            cards:
+              ## MIXED CHART (LINE & BAR) ------
+              - type: 'custom:chart-card'
+                title: 'Gewichtsverlauf'
+                height: 320
+                chart: 'line'
+                locale: 'de-DE'
+                hours_to_show: 400 ## last 8 days..
+                group_by: 'day'
+                options:
+                  legend:
+                    position: 'top'
+                  scales:
+                    x:
+                      scaleLabel:
+                        display: true
+                        labelString: "Zeitraum"
+                    left:
+                      id: 'left'
+                      type: "linear"
+                      position: "left"
+                      display: true
+                      scaleLabel:
+                        display: true
+                        labelString: "Gewicht / Muskeln"
+                      ticks:
+                        autoSkip: true
+                        maxTicksLimit: 5
+                    right:
+                      id: 'right'
+                      type: "linear"
+                      position: "right"
+                      display: true
+                      scaleLabel:
+                        display: true
+                        labelString: "BMI"
+                      gridLines:
+                        drawOnChartArea: false
+                      ticks:
+                        autoSkip: true
+                        maxTicksLimit: 5
+                entities:
+                  - entity: sensor.peter_muskeln
+                    yAxisID: "left"
+                    type: "line"
+                    backgroundColor: "#ff9500"
+                    borderColor: "#ff9500"
+                  - entity: sensor.peter_gewicht
+                    yAxisID: "left"
+                    type: "line"
+                    backgroundColor: "#ff5722"
+                    borderColor: "#ff5722"
+                  - entity: sensor.peter_bmi
+                    yAxisID: "right"
+                    type: "bar"
+                    borderWidth: 0
+                    backgroundColor: '#5ac8fa'
 #                            
 #      - type: custom:layout-card
 #        max_width: 720

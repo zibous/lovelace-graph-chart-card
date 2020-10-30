@@ -83,6 +83,7 @@ class chartData {
 	 */
 	constructor(config) {
 		this.chart_type = config.chart_type;
+		this.card_config = config.card_config;
 		this.entities = config.entities;
 		this.entityData = config.entityData;
 		this.entityNames = config.entityNames;
@@ -286,7 +287,14 @@ class chartData {
 					],
 				},
 			};
+
+			if (this.card_config.chart.toLowerCase() === "horizontalbar") {
+				this.graphData.data.datasets[0].indexAxis = "y";
+			}
+
+			// TODO: // map attributes
 			// const _attr = reject(entity, ["name", "entity", "last_changed", "state"]);
+
 			// custom colors from the entities
 			let entityColors = this.entities
 				.map((x) => {
@@ -303,7 +311,7 @@ class chartData {
 				return;
 			}
 			this.graphData.config = {
-				useAutoColors: entityColors.length==0,
+				useAutoColors: entityColors.length == 0,
 			};
 			return this.graphData;
 		} catch (err) {
@@ -329,6 +337,10 @@ class chartData {
 						labels: [],
 						datasets: [],
 					},
+					config: {
+						useAutoColors: false,
+						secondaryAxis: false,
+					},
 				};
 				for (const list of this.stateHistories) {
 					const items = this._getGroupHistoryData(
@@ -336,6 +348,7 @@ class chartData {
 						this.data_dateGroup,
 						this.data_aggregate
 					);
+
 					const id = list[0].entity_id;
 					// get all settings from the selected entity
 					const _attr = this.entities.find((x) => x.entity === id);
@@ -361,9 +374,19 @@ class chartData {
 					_graphData.data.labels = items.map((l) => l.x);
 					// add all entity settings (simple merge)
 					if (_attr) _options = { ..._options, ..._attr };
-					this.graphData.config = {
-						useAutoColors: true,
-					};
+
+					// check autocolors
+					if (!_graphData.config.useAutoColors) {
+						_graphData.config.useAutoColors =
+							_attr.backgroundColor !== undefined;
+					}
+
+					// check secondary axis
+					if (!_graphData.config.secondaryAxis) {
+						_graphData.config.secondaryAxis =
+							_attr.yAxisID != undefined || _attr.xAxisID != undefined;
+					}
+
 					_graphData.data.datasets.push(_options);
 				}
 				this.graphData = _graphData;
