@@ -10,8 +10,9 @@
 /** -------------------------------------------------------------------*/
 
 // Chart.js v3.0.0-beta.4 and used plugins
-import "/hacsfiles/chart-card/libs/chart.min.js?module";
+// import "/hacsfiles/chart-card/libs/chart.min.js?module";
 // import "/hacsfiles/chart-card/libs/chartjs-plugin-autocolors.min.js";
+import "/hacsfiles/chart-card/libs/chart.js?module";
 import "/hacsfiles/chart-card/libs/chartjs-plugin-autocolors.js";
 import "/hacsfiles/chart-card/libs/chartjs-plugin-gradient.min.js";
 
@@ -43,6 +44,7 @@ class ChartCard extends HTMLElement {
 		// TODO: Why is this called 3-6 times on startup ?
 		super();
 		this._hass = null;
+
 		this.attachShadow({
 			mode: "open",
 		});
@@ -205,13 +207,17 @@ class ChartCard extends HTMLElement {
 		this.canvasId = "chart-" + eId;
 		const style = document.createElement("style");
 		card.id = this.id;
+		// card content
 		content.id = "content-" + eId;
 		canvas.id = this.canvasId;
 		content.style.height = this.card_height + "px";
-		content.style.position = "relative";
+		content.style.width = "100%"
+		// the canvas element for chartjs
 		canvas.height = this.card_height;
 		canvas.style.cssText =
-			"-moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;z-index:100;position:relative";
+			"-moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;";
+		
+		// create the header and icon	
 		const cardHeader = document.createElement("div");
 		cardHeader.setAttribute("class", "card-header");
 		cardHeader.style.cssText = "padding-bottom:0 !important;";
@@ -227,6 +233,8 @@ class ChartCard extends HTMLElement {
 			cardHeader.appendChild(cardTitle);
 		}
 		if (this.card_title || this.card_icon) card.append(cardHeader);
+
+		// create the info box (optional)
 		if (this.card_info) {
 			const cardInfo = document.createElement("div");
 			cardInfo.style =

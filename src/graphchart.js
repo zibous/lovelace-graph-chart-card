@@ -138,7 +138,7 @@ class graphChart {
 			type: this.chart_type,
 			responsive: true,
 			maintainAspectRatio: false,
-			animation: { duration: 0 },
+			animation: false, //{ duration: 0 },
 			units: this.data_units || "",
 			font: {
 				color: this.themeSettings.fontColor,
@@ -184,7 +184,7 @@ class graphChart {
 					style: "normal",
 					color: this.themeSettings.tooltipsFontColor,
 				},
-				animation: null,
+				animation: false,
 			},
 			hover: {
 				mode: "nearest",
@@ -393,6 +393,16 @@ class graphChart {
 							},
 						});
 					}
+					// Testcase mouse events
+					// Thanks to https://github.com/kurkle
+					
+					// Chart.register({
+					// 	id: 'eventlogger', 
+					// 	afterEvent(chart, event) { 
+					// 	console.log(event); 
+					// 	} 
+					// });
+
 					// ------------------------------------------------------
 					// register new chart
 					// ------------------------------------------------------
@@ -401,21 +411,6 @@ class graphChart {
 						this.chart_ready = true;
 						this.chart_update = true;
 					}
-					// var canvs = document.getElementById(this.canvasId);
-					// console.log(this.canvasId, canvs);
-					// if(canvs){
-					// 	canvs.addEventListener("mousemove", function (event) {
-					// 		console.log(
-					// 			"mousemove: " +
-					// 				event.clientX +
-					// 				"/" +
-					// 				event.clientY +
-					// 				" buttons: " +
-					// 				event.buttons
-					// 		);
-					// 	});
-					// }
-
 				}
 			} else {
 				console.log("Missing settings or data", this.chartCurrentConfig);

@@ -16,8 +16,9 @@
 /** -------------------------------------------------------------------*/
 
 // Chart.js v3.0.0-beta.4 and used plugins
-import "/hacsfiles/chart-card/libs/chart.min.js?module";
+// import "/hacsfiles/chart-card/libs/chart.min.js?module";
 // import "/hacsfiles/chart-card/libs/chartjs-plugin-autocolors.min.js";
+import "/hacsfiles/chart-card/libs/chart.js?module";
 import "/hacsfiles/chart-card/libs/chartjs-plugin-autocolors.js";
 import "/hacsfiles/chart-card/libs/chartjs-plugin-gradient.min.js";
 
@@ -49,6 +50,7 @@ class ChartCard extends HTMLElement {
 		// TODO: Why is this called 3-6 times on startup ?
 		super();
 		this._hass = null;
+
 		this.attachShadow({
 			mode: "open",
 		});
@@ -211,13 +213,17 @@ class ChartCard extends HTMLElement {
 		this.canvasId = "chart-" + eId;
 		const style = document.createElement("style");
 		card.id = this.id;
+		// card content
 		content.id = "content-" + eId;
 		canvas.id = this.canvasId;
 		content.style.height = this.card_height + "px";
-		content.style.position = "relative";
+		content.style.width = "100%"
+		// the canvas element for chartjs
 		canvas.height = this.card_height;
 		canvas.style.cssText =
-			"-moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;z-index:100;position:relative";
+			"-moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;";
+		
+		// create the header and icon	
 		const cardHeader = document.createElement("div");
 		cardHeader.setAttribute("class", "card-header");
 		cardHeader.style.cssText = "padding-bottom:0 !important;";
@@ -233,6 +239,8 @@ class ChartCard extends HTMLElement {
 			cardHeader.appendChild(cardTitle);
 		}
 		if (this.card_title || this.card_icon) card.append(cardHeader);
+
+		// create the info box (optional)
 		if (this.card_info) {
 			const cardInfo = document.createElement("div");
 			cardInfo.style =
@@ -1052,7 +1060,7 @@ class graphChart {
 			type: this.chart_type,
 			responsive: true,
 			maintainAspectRatio: false,
-			animation: { duration: 0 },
+			animation: false, //{ duration: 0 },
 			units: this.data_units || "",
 			font: {
 				color: this.themeSettings.fontColor,
@@ -1098,7 +1106,7 @@ class graphChart {
 					style: "normal",
 					color: this.themeSettings.tooltipsFontColor,
 				},
-				animation: null,
+				animation: false,
 			},
 			hover: {
 				mode: "nearest",
@@ -1307,6 +1315,16 @@ class graphChart {
 							},
 						});
 					}
+					// Testcase mouse events
+					// Thanks to https://github.com/kurkle
+					
+					// Chart.register({
+					// 	id: 'eventlogger', 
+					// 	afterEvent(chart, event) { 
+					// 	console.log(event); 
+					// 	} 
+					// });
+
 					// ------------------------------------------------------
 					// register new chart
 					// ------------------------------------------------------
@@ -1315,21 +1333,6 @@ class graphChart {
 						this.chart_ready = true;
 						this.chart_update = true;
 					}
-					// var canvs = document.getElementById(this.canvasId);
-					// console.log(this.canvasId, canvs);
-					// if(canvs){
-					// 	canvs.addEventListener("mousemove", function (event) {
-					// 		console.log(
-					// 			"mousemove: " +
-					// 				event.clientX +
-					// 				"/" +
-					// 				event.clientY +
-					// 				" buttons: " +
-					// 				event.buttons
-					// 		);
-					// 	});
-					// }
-
 				}
 			} else {
 				console.log("Missing settings or data", this.chartCurrentConfig);

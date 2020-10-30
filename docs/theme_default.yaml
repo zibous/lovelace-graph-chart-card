@@ -21,9 +21,9 @@ Home Assistant:
   primary-color: '#03a9f4'
   
   # Chart.js colors
-  cartjs-text-fontColor: '#333333'
-  cartjs-fontFamily: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
-  cartjs-gridline-color: '#DCDCDC'
-  cartjs-zero-gridline-color: '#555555'
-  cartjs-tooltip-background: '#ecf0f1'
-  cartjs-text-fontcolor: '#647687'
+  chartjs-text-fontColor: '#2F3846'
+  chartjs-fontFamily: "Quicksand, Roboto, 'Open Sans','Rubik',sans-serif"
+  chartjs-gridline-color: '#EAEEF1'
+  chartjs-zero-gridline-color: '#C9CBD0'
+  chartjs-tooltip-background: '#EAEEF1'
+  chartjs-text-fontcolor: '#292F33'
