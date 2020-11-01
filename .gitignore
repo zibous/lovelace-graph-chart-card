@@ -4,6 +4,7 @@ yarn-error.log
 .history
 .DS_Store
 tests/
+release/
 
 # Logs
 logs

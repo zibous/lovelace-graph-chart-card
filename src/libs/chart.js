@@ -907,6 +907,10 @@ function getCanvasPosition(evt, canvas) {
       offsetY = source.offsetY;
   var box = false;
   var x, y;
+  // ------------------------------
+  // TODO: CHECK THIS !!!!!!!!!!!!!
+  // ------------------------------
+  offsetX = offsetY = 0;
   if (offsetX > 0 || offsetY > 0) {
     x = offsetX;
     y = offsetY;

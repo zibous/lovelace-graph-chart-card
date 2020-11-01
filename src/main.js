@@ -10,18 +10,14 @@
 /** -------------------------------------------------------------------*/
 
 // Chart.js v3.0.0-beta.4 and used plugins
-// import "/hacsfiles/chart-card/libs/chart.min.js?module";
-// import "/hacsfiles/chart-card/libs/chartjs-plugin-autocolors.min.js";
-import "/hacsfiles/chart-card/libs/chart.js?module";
-import "/hacsfiles/chart-card/libs/chartjs-plugin-autocolors.js";
-import "/hacsfiles/chart-card/libs/chartjs-plugin-gradient.min.js";
+import "/hacsfiles/chart-card/chart-min.js?module";
 
 // autocolors, gradient
 const gradient = window["chartjs-plugin-gradient"];
 const autocolors = window["chartjs-plugin-autocolors"];
 
 console.info(
-	"%c CHARTJS-CARD-DEV %c ".concat("0.0.4", " "),
+	"%c CHARTJS-CARD-DEV %c ".concat("0.0.5", " "),
 	"color: white; background: #2980b9; font-weight: 700;",
 	"color: white; background: #e74c3c; font-weight: 700;"
 );
@@ -43,7 +39,9 @@ class ChartCard extends HTMLElement {
 	constructor() {
 		// TODO: Why is this called 3-6 times on startup ?
 		super();
+
 		this._hass = null;
+		this._config = null;
 
 		this.attachShadow({
 			mode: "open",
@@ -256,10 +254,17 @@ class ChartCard extends HTMLElement {
 		if (!config.entities) {
 			throw new Error("You need to define an entity");
 		}
+		
 
 		try {
 			this.root = this.shadowRoot;
 			if (this.root.lastChild) this.root.removeChild(this.root.lastChild);
+
+			
+			if(this._config){
+				console.log("CHART-CART Config", config.title , " allready loaded")
+				return
+			}
 
 			// get the config from the lovelace
 			this._config = config;

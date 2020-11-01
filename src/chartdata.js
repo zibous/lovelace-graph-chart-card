@@ -5,6 +5,128 @@
   	TODO: this is not final, try to find a optimized methode
   
  * ----------------------------------------------------------*/
+const DEFAULT_COLORS = [
+	"#c6e2ff",
+	"#a8acf7",
+	"#95f4ad",
+	"#def785",
+	"#bae0ff",
+	"#8d99f4",
+	"#92f4a8",
+	"#80e9f7",
+	"#ffed8c",
+	"#e5c7fc",
+	"#ffa5a0",
+	"#9779f2",
+	"#95f99a",
+	"#75f4e5",
+	"#fffdb2",
+	"#f1bdfc",
+	"#f690f9",
+	"#f99fde",
+	"#f4ea8d",
+	"#fce5b3",
+	"#ccffb2",
+	"#9bf7a3",
+	"#9cb9fc",
+	"#8ffcb2",
+	"#afffce",
+	"#fca9ee",
+	"#efccff",
+	"#c5ff84",
+	"#f7e2a5",
+	"#cbed82",
+	"#aabaff",
+	"#e5fca6",
+	"#a5ff91",
+	"#a8a5f7",
+	"#74c1e0",
+	"#f7f179",
+	"#bb8fea",
+	"#f2c582",
+	"#f174fc",
+	"#99c6ff",
+	"#e4b5fc",
+	"#f1f993",
+	"#c9cdff",
+	"#fcc9b8",
+	"#c2a3ed",
+	"#f98ee2",
+	"#aeb3f9",
+	"#cbff9b",
+	"#ab79f7",
+	"#fc97b0",
+	"#ef6ec6",
+	"#a384ff",
+	"#a4baf9",
+	"#bab5f4",
+	"#70efa9",
+	"#f9bfb3",
+	"#ffc6cf",
+	"#ffccea",
+	"#a4fcd7",
+	"#f77f6f",
+	"#7cf4ea",
+	"#fcccc4",
+	"#a0fffa",
+	"#bd81f4",
+	"#77f4be",
+	"#adffcc",
+	"#68d2dd",
+	"#fca899",
+	"#d4c0f9",
+	"#fca9e2",
+	"#f6f98e",
+	"#d0ff7f",
+	"#91f7e3",
+	"#fcaeb9",
+	"#c4f998",
+	"#9cfcef",
+	"#adf998",
+	"#86f4b6",
+	"#9887ed",
+	"#83e86a",
+	"#f799c2",
+	"#f9a581",
+	"#c197ef",
+	"#ff99db",
+	"#f796b7",
+	"#e7ef88",
+	"#9de9f2",
+	"#b395f4",
+	"#f492cb",
+	"#fffbb7",
+	"#c7fc79",
+	"#bcf970",
+	"#aad6ef",
+	"#f2dea2",
+	"#a6fcb0",
+	"#fcf6b3",
+	"#bbd1f9",
+	"#9bf7ab",
+	"#fcc4f6",
+	"#a4f77e",
+	"#c7c0f9",
+	"#7ded90",
+	"#f2b787",
+	"#a5ffd2",
+	"#8ef986",
+	"#8ffcbe",
+	"#f5abfc",
+	"#7bf46e",
+	"#aefce1",
+	"#a07be5",
+	"#8cf7d2",
+	"#efb270",
+	"#78fc71",
+	"#89f9b0",
+	"#77f97e",
+	"#cdf99d",
+	"#f492ee",
+	"#88f7ab",
+	"#6bb4db",
+	"#f7aff6",
+];
 
 /**
  * data formatter
@@ -266,6 +388,12 @@ class chartData {
 			let _data = this.entityData.filter(
 				(element, index, array) => !emptyIndexes.includes(index)
 			);
+
+			if (_data.length === 0) {
+				console.error("No Histroydata present !");
+				return;
+			}
+
 			let _labels = this.entityNames.filter(
 				(element, index, array) => !emptyIndexes.includes(index)
 			);
@@ -302,17 +430,15 @@ class chartData {
 						return x.color || x.backgroundColor;
 				})
 				.filter((notUndefined) => notUndefined !== undefined);
+
 			if (entityColors.length === this.graphData.data.labels.length) {
 				this.graphData.data.datasets[0].backgroundColor = entityColors;
 			}
 
-			if (this.graphData.data.length === 0) {
-				console.error("No Histroydata present !");
-				return;
-			}
 			this.graphData.config = {
 				useAutoColors: entityColors.length == 0,
 			};
+
 			return this.graphData;
 		} catch (err) {
 			console.error("Current entities GraphData", err.message);
@@ -342,7 +468,10 @@ class chartData {
 						secondaryAxis: false,
 					},
 				};
+
 				for (const list of this.stateHistories) {
+
+					// interate throw all entities data
 					const items = this._getGroupHistoryData(
 						list,
 						this.data_dateGroup,
@@ -371,6 +500,7 @@ class chartData {
 						current: _attr.state || 0.0,
 						mode: "history",
 					};
+
 					_graphData.data.labels = items.map((l) => l.x);
 					// add all entity settings (simple merge)
 					if (_attr) _options = { ..._options, ..._attr };
@@ -389,6 +519,7 @@ class chartData {
 
 					_graphData.data.datasets.push(_options);
 				}
+				
 				this.graphData = _graphData;
 				return this.graphData;
 			}

@@ -23,12 +23,12 @@ Chart.js card for Home Assistant -  Visualize your data in 8 different ways; eac
 
 ## Installation 
 ### Manual install
-1. Download and copy `graph-chartjs-card.js` from the [latest release](https://github.com/zibus/dist/) into your `config/www` directory.
-
-2. Add a reference to `graph-chartjs-card.js` inside your `ui-lovelace.yaml` or at the top of the *raw config editor UI*:
+1. Download the [latest release](https://github.com/zibous/lovelace-graph-chart-card/releases), unzip and copy the folder `chart-card` into your `config/www/community` directory.
+<br>
+2. Add a reference to `chart-card-min.js` inside your `ui-lovelace.yaml` or at the top of the *raw config editor UI*:
     ```yaml
     resources:
-      - url: /hacsfiles/graph-chartjs-card/graph-chartjs-card.js
+      - url: /hacsfiles/chart-card/chart-card-min.js
         type: module
     ```
 
@@ -40,7 +40,7 @@ Chart.js card for Home Assistant -  Visualize your data in 8 different ways; eac
 | -------------- | -------- | ----------- |------------ |
 | title          | string   |             | card title  |
 | icon          | string   |             | Set a custom icon from any of the available mdi icons.   |
-| height         | integer  | 240         | cSet a custom height of the card.  |
+| height         | integer  | 240         | Set a custom height of the card.  |
 | chart          | string   | bar          | chart type  |
 | updateInterval        |  integer        | 60            | Specify a custom update interval of the history data (in seconds), instead of on every state change. |
 | hours_to_show          | integer   | 0          | Specify how many hours of history the graph should present. If not set (hours_to_show===0) only the current state values are used for the chart.  |
@@ -183,10 +183,11 @@ TODO: open, not aktive
 <br>
 
 ### TODO - Open Tasks
+- Wait for Bugfix [Home-Assistant Fronend Bug](https://github.com/home-assistant/frontend/issues/7246)
 - Better locale settings (number, date)
 - Optimize the Initalizing / Data update for the custom card
 - Optimize the data provider Historydata (data mapping, grouping)
-- Chart - Scatter, Bubble Charts
+- Chart - Scatter, Bubble Charts (optional)
     ```json
 
     # scatter -----------------
@@ -218,8 +219,6 @@ TODO: open, not aktive
           backgroundColor:"#ff6384",
           hoverBackgroundColor: "#ff6384"
    ```
-- Migration to Chart.js 3.0, see [Chart.js Version 3.0](https://www.chartjs.org/docs/master/getting-started/v3-migration/)
-- Wait for Bugfix [Home-Assistant Fronend Bug](https://github.com/home-assistant/frontend/issues/7246)
 <br>
 <hr>
 <br>
@@ -229,7 +228,7 @@ TODO: open, not aktive
 - [JSON to YAML Online](https://www.convertjson.com/json-to-yaml.htm) - Use this online tool to convert JSON into YAML. 
 
 ## Resources
-- [Chart.js Version 2.9.4](https://chartjs.org) - Chart.js - Simple yet flexible JavaScript charting for designers & developers
+- [Chart.js v3.0.0-beta.4](https://chartjs.org) - Chart.js - Simple yet flexible JavaScript charting for designers & developers
 - [Chart.js Official Guide](https://chartjs.org/docs) - The user guide and documentation site.
 - [Chart.js Samples](https://www.chartjs.org/samples/latest/) - Simple yet flexible JavaScript charting for designers & developers
 
@@ -239,3 +238,9 @@ TODO: open, not aktive
 - [datalabels](https://github.com/chartjs/chartjs-plugin-datalabels) - Displays labels on data for any type of charts.
 - [stacked100](https://github.com/y-takey/chartjs-plugin-stacked100) - Draws 100% stacked bar chart.
 - [style](https://github.com/nagix/chartjs-plugin-style) - Provides styling options such as shadow, bevel, glow or overlay effects.
+
+<hr>
+
+## Credits
+- [Evert Timberg](https://github.com/etimberg) - Maintainer of @chartjs
+- [Jukka Kurkela](https://github.com/kurkle) - Plugins for chartjs
