@@ -272,7 +272,7 @@ class graphChart {
 					_scaleOptions[dataset.xAxisID].type = "linear";
 					_scaleOptions[dataset.xAxisID].position = dataset.xAxisID;
 					_scaleOptions[dataset.xAxisID].display = true;
-					_scaleOptions[dataset.xAxisID].borderDash = [8, 4];
+					_scaleOptions[dataset.xAxisID].borderDash = [2, 5];
 				}
 			});
 			if (_scaleOptions) {

@@ -263,6 +263,38 @@ class chartData {
 	}
 
 	/**
+	 * Create dataseries for scatter chart
+	 * @param {*} _entities
+	 */
+	createScatterChartData(_entities) {
+		let _graphData = null;
+		if (_entities.length % 2 === 0) {
+			_graphData = this.getDefaultGraphData();
+			for (let i = 0; i < _entities.length; i += 2) {
+				// first entity holds the attributes
+				const _attr = _entities[i];
+				_graphData.data.datasets.push({
+					label: _attr.name || "",
+					scale: _attr.scale || 1.0,
+					unit: _attr.unit || "",
+					backgroundColor: _attr.backgroundColor || COLOR_BUBBLECHAT,
+					borderColor: _attr.borderColor || COLOR_BUBBLECHAT,
+					data: [
+						{
+							x: _entities[i].state || 0.0,
+							y: _entities[i + 1].state || 0.0,
+						},
+					],
+				});
+			}
+			_graphData.config.options.scatter = true;
+		} else {
+			console.error("ScatterChart setting not valid", this.entities);
+		}
+		return _graphData;
+	}
+
+	/**
 	 * create the series data for the bubble chart
 	 *
 	 * Important: the radius property, r is not scaled by the chart,
@@ -311,14 +343,14 @@ class chartData {
 			);
 
 			let _data = [];
-
 			switch (this.chart_type.toLowerCase()) {
 				case "bubble":
 					this.graphData = this.createBubbleChartData(this.entities);
 					return this.graphData;
 				case "scatter":
-					break;
-				default:
+					this.graphData = this.createScatterChartData(this.entities);
+					return this.graphData;
+				default:		
 					_data = this.entityData.filter(
 						(element, index, array) => !emptyIndexes.includes(index)
 					);
@@ -388,6 +420,22 @@ class chartData {
 	}
 
 	/**
+	 * get series data for bubble or scatter chart
+	 */
+	getSeriesData() {
+		let _seriesData = [];
+		for (const list of this.stateHistories) {
+			const items = this._getGroupHistoryData(
+				list,
+				this.data_dateGroup,
+				this.data_aggregate
+			);
+			_seriesData.push(items);
+		}
+		return _seriesData;
+	}
+
+	/**
 	 * build the graph cart data and datasets for the
 	 * defined graph chart. Uses the history data
 	 * for each entity
@@ -399,24 +447,13 @@ class chartData {
 		try {
 			if (this.stateHistories && this.stateHistories.length) {
 				let _graphData = this.getDefaultGraphData();
-
+				let _seriesData = [];
 				switch (this.chart_type.toLowerCase()) {
 					case "bubble":
-						let _seriesData = [];
-
-						for (const list of this.stateHistories) {
-							const items = this._getGroupHistoryData(
-								list,
-								this.data_dateGroup,
-								this.data_aggregate
-							);
-							_seriesData.push(items);
-						}
+						_seriesData = this.getSeriesData();
 						if (_seriesData.length % 3 === 0) {
-							_graphData.config.options.bubble = false;
 							for (let r = 0; r < _seriesData.length; r += 3) {
 								const _attr = this.entities[r + 2];
-								const _bubbleScale = _attr.scale || 1;
 								let _data = [];
 								_seriesData[r].forEach(function (e, i) {
 									if (_seriesData[r + 1][i] && _seriesData[r + 2][i]) {
@@ -430,6 +467,7 @@ class chartData {
 								_graphData.data.datasets.push({
 									label: _attr.name || "",
 									unit: _attr.unit || "",
+									scale: _attr.scale || 1,
 									backgroundColor: _attr.backgroundColor || COLOR_BUBBLECHAT,
 									borderColor: _attr.borderColor || COLOR_BUBBLECHAT,
 									data: _data,
@@ -444,11 +482,42 @@ class chartData {
 						console.error("BubbleChart setting not valid", this.entities);
 						return null;
 					case "scatter":
+						_seriesData = this.getSeriesData();
+						if (_seriesData.length % 2 === 0) {
+							for (let r = 0; r < _seriesData.length; r += 2) {
+								// first entity hols the attributes
+								const _attr = this.entities[r];
+								let _data = [];
+								_seriesData[r].forEach(function (e, i) {
+									if (_seriesData[r][i] && _seriesData[r + 1][i]) {
+										_data.push({
+											x: parseFloat(_seriesData[r + 0][i].y) || 0.0,
+											y: parseFloat(_seriesData[r + 1][i].y || 0.0),
+										});
+									}
+								});
+								_graphData.data.datasets.push({
+									label: _attr.name || "",
+									unit: _attr.unit || "",
+									unit: _attr.scale || 1.0,
+									backgroundColor: _attr.backgroundColor || COLOR_BUBBLECHAT,
+									borderColor: _attr.borderColor || COLOR_BUBBLECHAT,
+									data: _data,
+								});
+							}
+							if (_graphData.data.datasets.length) {
+								_graphData.config.options.bubble = true;
+								this.graphData = _graphData;
+								return this.graphData;
+							}
+						}
+						console.error("ScatterChart setting not valid", this.entities);
 						return null;
 					default:
 						break;
 				}
 
+				// all for other carts
 				for (const list of this.stateHistories) {
 					// interate throw all entities data
 					const items = this._getGroupHistoryData(
