@@ -4,20 +4,18 @@
   based on https://github.com/sdelliot/pie-chart-card
 
   chartjs:    https://www.chartjs.org/
-  autocolors: https://github.com/kurkle/chartjs-plugin-autocolors
   gradient:   https://github.com/kurkle/chartjs-plugin-gradient#readme
 
 /** -------------------------------------------------------------------*/
 
-// Chart.js v3.0.0-beta.4 and used plugins
-import "/hacsfiles/chart-card/chart-min.js?module";
+// Chart.js v3.0.0-beta.4 and used plugins, production use min.js
+import "/hacsfiles/chart-card/chart.js?module";
 
-// autocolors, gradient
+// gradient
 const gradient = window["chartjs-plugin-gradient"];
-const autocolors = window["chartjs-plugin-autocolors"];
 
 console.info(
-	"%c CHARTJS-CARD-DEV %c ".concat("0.0.5", " "),
+	"%c CHARTJS-CARD-DEV %c ".concat("0.0.6", " "),
 	"color: white; background: #2980b9; font-weight: 700;",
 	"color: white; background: #e74c3c; font-weight: 700;"
 );
@@ -66,6 +64,7 @@ class ChartCard extends HTMLElement {
 		// data providers
 		this.hassEntities = [];
 		this.entities = [];
+		this.entityOptions = null;
 		this.entity_ids = [];
 		this.entityData = [];
 		this.entityNames = [];
@@ -120,26 +119,40 @@ class ChartCard extends HTMLElement {
 	 * get the font and colorsettings from the hass view.
 	 * optional the settings can be overwritten by the
 	 * card definition "card_theme" and the theme css
-	 * TODO: get the CSS Variables from the theme
+		--chartjs-text-fontColor: '#2F3846'
+  		--chartjs-fontFamily: "Quicksand, Roboto, 'Open Sans','Rubik',sans-serif"
+  		--chartjs-gridline-color: '#EAEEF1'
+  		--chartjs-zero-gridline-color: '#C9CBD0'
+  		--chartjs-tooltip-background: '#EAEEF1'
+  		--chartjs-text-fontcolor: '#292F33'
 	 */
 	_getThemeSettings() {
 		// this.theme.dark
 		this.themeSettings = {
-			fontColor: this._evaluateCssVariable("--primary-text-color") || "#333333",
+			fontColor:
+				this._evaluateCssVariable("--chartjs-text-fontColor") ||
+				this._evaluateCssVariable("--primary-text-color") ||
+				"#333333",
 			fontFamily:
+				this._evaluateCssVariable("--chartjs-fontFamily") ||
 				this._evaluateCssVariable("--paper-font-common-base_-_font-family") ||
 				"Quicksand, Roboto,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
 			gridlineColor:
-				this._evaluateCssVariable("--light-primary-color") || "#DCDCDC",
+				this._evaluateCssVariable("--chartjs-gridline-color") ||
+				this._evaluateCssVariable("--light-primary-color") ||
+				"#DCDCDC",
 			zeroLineColor:
-				this._evaluateCssVariable("--dark-primary-color") || "#555555",
-			tooltipsBackground: "#ecf0f1",
-			tooltipsFontColor: "#647687",
+				this._evaluateCssVariable("--chartjs-zero-gridline-color") ||
+				this._evaluateCssVariable("--dark-primary-color") ||
+				"#555555",
+			tooltipsBackground:
+				this._evaluateCssVariable("--chartjs-tooltip-background") || "#ecf0f1",
+			tooltipsFontColor:
+				this._evaluateCssVariable("--chartjs-text-fontcolor") || "#647687",
 			showLegend: ["pie", "doughnut", "polararea", "line"].includes(
 				this.chart_type.toLowerCase()
 			),
-			showGridLines: ["bar", "line"].includes(this.chart_type.toLowerCase()),
-			useAutoColors: true,
+			showGridLines: ["bar", "line", "bubble"].includes(this.chart_type.toLowerCase()),
 			secondaryAxis: false,
 		};
 
@@ -209,13 +222,12 @@ class ChartCard extends HTMLElement {
 		content.id = "content-" + eId;
 		canvas.id = this.canvasId;
 		content.style.height = this.card_height + "px";
-		content.style.width = "100%"
+		content.style.width = "100%";
 		// the canvas element for chartjs
 		canvas.height = this.card_height;
 		canvas.style.cssText =
 			"-moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;";
-		
-		// create the header and icon	
+		// create the header and icon
 		const cardHeader = document.createElement("div");
 		cardHeader.setAttribute("class", "card-header");
 		cardHeader.style.cssText = "padding-bottom:0 !important;";
@@ -231,7 +243,6 @@ class ChartCard extends HTMLElement {
 			cardHeader.appendChild(cardTitle);
 		}
 		if (this.card_title || this.card_icon) card.append(cardHeader);
-
 		// create the info box (optional)
 		if (this.card_info) {
 			const cardInfo = document.createElement("div");
@@ -254,16 +265,16 @@ class ChartCard extends HTMLElement {
 		if (!config.entities) {
 			throw new Error("You need to define an entity");
 		}
-		
 
 		try {
 			this.root = this.shadowRoot;
-			if (this.root.lastChild) this.root.removeChild(this.root.lastChild);
+			while (this.root.hasChildNodes()) {
+				this.root.removeChild(root.lastChild);
+			}
 
-			
-			if(this._config){
-				console.log("CHART-CART Config", config.title , " allready loaded")
-				return
+			if (this._config) {
+				console.log("CHART-CART Config", config.title, " allready loaded");
+				return;
 			}
 
 			// get the config from the lovelace
@@ -331,7 +342,6 @@ class ChartCard extends HTMLElement {
 		if (!this._initialized) return;
 
 		if (this.theme && this.theme !== hass.selectedTheme) {
-			// theme change, update chart
 			this.theme = hass.selectedTheme;
 			this._getThemeSettings();
 			if (this.graphChart) {
@@ -345,8 +355,9 @@ class ChartCard extends HTMLElement {
 		if (this.updateInterval) {
 			let endTime = new Date();
 			let elapsed = (endTime.getTime() - this.startTime.getTime()) / 1000;
-			if (elapsed > this.updateInterval) {
+			if (elapsed >= this.updateInterval) {
 				// refresh and update the graph
+				this._getThemeSettings();
 				this.graphChart.themeSettings = this.themeSettings;
 				this._getHistory();
 				this.startTime = new Date();
@@ -374,39 +385,55 @@ class ChartCard extends HTMLElement {
 
 		// An object list containing the states of all entities in Home Assistant.
 		// The key is the entity_id, the value is the state object.
-		this.hassEntities = this._config.entities.map((x) => hass.states[x.entity]);
+		this.hassEntities = this._config.entities
+			.map((x) => hass.states[x.entity])
+			.filter((notUndefined) => notUndefined !== undefined);
+
+		// check if we have valid entities and skip if we can'nt find the
+		// entities in the hass entities list.
 		if (!this.hassEntities || this.hassEntities.length === 0) return;
 
 		// all entity data
 		this.entityData = this.hassEntities.map((x) =>
 			x === undefined ? 0 : x.state
 		);
+		this.entityOptions = null;
 
-		// all entities
 		if (
 			this.ready === false &&
 			this.entities.length !== this.hassEntities.length
 		) {
 			this.entities = [];
+			// interate throw all _config.entities
 			for (let entity of this._config.entities) {
-				const h = this.hassEntities.find((x) => x.entity_id === entity.entity);
-				let item = Object.assign({}, entity);
-				if (h.attributes) {
-					item.name = item.name || h.attributes.friendly_name || item.name;
-					item.unit = item.unit || h.attributes.unit_of_measurement || "";
+				if (entity.options) {
+					// all global entity options
+					this.entityOptions = entity.options;
+				} else {
+					// hass entity
+					const h = this.hassEntities.find(
+						(x) => x.entity_id === entity.entity
+					);
+					if (h) {
+						let item = Object.assign({}, entity);
+						item.name = item.name;
+						item.unit = item.unit;
+						if (h.attributes) {
+							item.name = h.attributes.friendly_name || item.name;
+							item.unit = h.attributes.unit_of_measurement || item.unit || "";
+						}
+						item.last_changed = h.last_changed;
+						item.state = h.state;
+						this.entities.push(item);
+						this.entity_ids.push(entity.entity);
+					}
 				}
-				if (h) {
-					item.last_changed = h.last_changed;
-					item.state = h.state;
-				}
-				this.entities.push(item);
-				this.entity_ids.push(entity.entity);
 			}
 			this.ready = (this.entity_ids && this.entity_ids.length) !== 0;
 		}
 
-		// all entity names
-		this.entityNames = this._config.entities.map((x) =>
+		// all entity names this.entities
+		this.entityNames = this.entities.map((x) =>
 			x.name !== undefined
 				? x.name
 				: hass.states[x.entity]["attributes"]["friendly_name"] !== undefined
@@ -421,6 +448,10 @@ class ChartCard extends HTMLElement {
 		}
 	}
 
+	// connectedCallback() {
+	// 	console.log("connectedCallback");
+	// }
+
 	/**
 	 * Get all histroy data for all registrated entity ids
 	 * or get the entity data if no time slot (hoursToShow) is defined.
@@ -428,7 +459,12 @@ class ChartCard extends HTMLElement {
 	 */
 	_getHistory() {
 		if (this.ready) {
-			if (this.data_hoursToShow && this.data_hoursToShow > 0) {
+			if (
+				this.data_hoursToShow &&
+				this.data_hoursToShow > 0 &&
+				this.entity_ids.length
+			) {
+				// get all data for the selected timeslot and entities...
 				let startTime;
 				if (this.chart_update) {
 					startTime = this.lastEndTime;
@@ -464,16 +500,22 @@ class ChartCard extends HTMLElement {
 	 * @param {*} stateHistories
 	 */
 	_buildGraphData(stateHistories) {
+		// start get chart data
 		const _chartData = new chartData({
 			chart_type: this.chart_type,
 			card_config: this._config,
 			entities: this.entities,
+			entityOptions: this.entityOptions,
 			entityData: this.entityData,
 			entityNames: this.entityNames,
 			stateHistories: stateHistories,
 			data_dateGroup: this.data_dateGroup,
 			data_aggregate: this.data_aggregate,
 		});
+
+		if (this.entities[0].name === "Time") {
+			console.log(this.entities);
+		}
 
 		// get the chart data
 		if (stateHistories && stateHistories.length) {
@@ -486,9 +528,7 @@ class ChartCard extends HTMLElement {
 			console.error("No GraphData found for ", this.entityNames);
 			return;
 		} else {
-			if (this.graphData.config) {
-				this.themeSettings.useAutoColors =
-					this.graphData.config.useAutoColors || false;
+			if (this.graphData && this.graphData.config) {
 				this.themeSettings.secondaryAxis =
 					this.graphData.config.secondaryAxis || false;
 			}

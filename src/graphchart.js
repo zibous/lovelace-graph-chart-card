@@ -34,9 +34,6 @@ function deepMerge(...sources) {
 	return acc;
 }
 
-// randomColor({luminosity: 'light',count: 27});
-const randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
-
 /**
  * graph chart wrapper class
  *
@@ -76,6 +73,7 @@ class graphChart {
 
 	/**
 	 * chartjs Callback for toolips
+	 * TODO:// not active !
 	 * @param {*} tooltipItem
 	 * @param {*} data
 	 */
@@ -133,12 +131,41 @@ class graphChart {
 	 * @called: from rendergraph and updategraph
 	 */
 	_setChartOptions() {
-		// chart default settings
+		const _chartGridLineWidth = 0.165;
+
+		// global default settings
+		Chart.defaults.responsive = true;
+		Chart.defaults.maintainAspectRatio = false;
+		Chart.defaults.animation = false;
+		Chart.defaults.locale = this.chart_locale;
+
+		// If false, NaN data causes a break in the line.
+		// Chart.defaults.controllers.line.spanGaps = true;
+		// Chart.defaults.controllers.radar.spanGaps = true;
+
+		Chart.defaults.defaultFontColor = this.themeSettings.fontColor;
+		Chart.defaults.defaultFontFamily = this.themeSettings.fontFamily;
+
+		Chart.defaults.scale.gridLines.lineWidth = _chartGridLineWidth;
+
+		// element settings
+		if (Chart.defaults.elements && Chart.defaults.elements.arc)
+			Chart.defaults.elements.arc.borderWidth = 0;
+
+		if (Chart.defaults.elements && Chart.defaults.elements.line) {
+			Chart.defaults.elements.line.fill = false;
+			Chart.defaults.elements.line.tension = 0;
+		}
+
+		if (Chart.defaults.elements && Chart.defaults.elements.point) {
+			Chart.defaults.elements.point.radius = 0;
+			Chart.defaults.elements.point.borderWidth = 0;
+			Chart.defaults.elements.point.hoverRadius = 8;
+		}
+
+		// chart default options
 		let options = {
 			type: this.chart_type,
-			responsive: true,
-			maintainAspectRatio: false,
-			animation: false, //{ duration: 0 },
 			units: this.data_units || "",
 			font: {
 				color: this.themeSettings.fontColor,
@@ -197,25 +224,20 @@ class graphChart {
 				},
 			},
 			spanGaps: true,
-			plugins: {
-				autocolors: {
-					useAutoColors: true,
-					enabled: this.themeSettings.useAutoColors,
-					mode: "data",
-				},
-			},
+			plugins: {},
 		};
 
+		if (gradient && this.graphData.config.gradient) {
+			options.plugins = {
+				gradient,
+			};
+		}
 		if (this.themeSettings.showGridLines) {
 			Chart.defaults.set("scale", {
 				gridLines: {
 					display: true,
 					color: this.themeSettings.gridlineColor,
-					lineWidth: 0.365,
 					drawBorder: true,
-				},
-				ticks: {
-					maxTicksLimit: 12,
 				},
 			});
 		} else {
@@ -223,14 +245,13 @@ class graphChart {
 				gridLines: {
 					display: false,
 				},
-				ticks: {
-					maxTicksLimit: 8,
-				},
 			});
 		}
+		// ------------------------------------
 		// check secondary axis
+		// ------------------------------------
 		if (
-			this.themeSettings.secondaryAxis &&
+			this.graphData.config.secondaryAxis &&
 			this.graphData &&
 			this.graphData.data &&
 			this.graphData.data.datasets
@@ -243,9 +264,15 @@ class graphChart {
 					_scaleOptions[dataset.yAxisID].type = "linear";
 					_scaleOptions[dataset.yAxisID].position = dataset.yAxisID;
 					_scaleOptions[dataset.yAxisID].display = true;
+					_scaleOptions[dataset.yAxisID].borderDash = [8, 4];
 				}
 				if (dataset.xAxisID) {
-					// TODO: if needed
+					_scaleOptions[dataset.xAxisID] = {};
+					_scaleOptions[dataset.xAxisID].id = dataset.xAxisID;
+					_scaleOptions[dataset.xAxisID].type = "linear";
+					_scaleOptions[dataset.xAxisID].position = dataset.xAxisID;
+					_scaleOptions[dataset.xAxisID].display = true;
+					_scaleOptions[dataset.xAxisID].borderDash = [8, 4];
 				}
 			});
 			if (_scaleOptions) {
@@ -255,7 +282,7 @@ class graphChart {
 
 		switch (this.chart_type.toLowerCase()) {
 			case "radar":
-				Chart.defaults.set("radar.scales.r", {
+				Chart.defaults.set("controllers.radar.scales.r", {
 					ticks: {
 						backdropColor: "transparent",
 					},
@@ -271,23 +298,23 @@ class graphChart {
 				Chart.defaults.set("scale", {
 					gridLines: {
 						display: true,
-						lineWidth: 0.333,
+						lineWidth: _chartGridLineWidth * 2,
 					},
 				});
 				break;
 			case "polararea":
-				Chart.defaults.set("polarArea.scales.r", {
+				Chart.defaults.set("controllers.polarArea.scales.r", {
 					ticks: {
 						backdropColor: "transparent",
 					},
 					angleLines: {
 						display: true,
 						color: this.themeSettings.gridlineColor,
-						lineWidth: 0.3333,
+						lineWidth: _chartGridLineWidth * 2,
 					},
 					gridLines: {
 						circular: true,
-						lineWidth: 0.245,
+						lineWidth: _chartGridLineWidth * 1.6,
 					},
 				});
 				Chart.defaults.set("scale", {
@@ -296,10 +323,43 @@ class graphChart {
 					},
 				});
 				break;
+			case "bubble":
+				let labelX = this.card_config.entities[0].name;
+				labelX += this.card_config.entities[0].unit
+					? " (" + this.card_config.entities[0].unit + ")"
+					: "";
+				let labelY = this.card_config.entities[1].name;
+				labelY += this.card_config.entities[1].unit
+					? " (" + this.card_config.entities[1].unit + ")"
+					: "";
+				options.scales = {
+					x: {
+						id: "x",
+						scaleLabel: {
+							display: true,
+							labelString: labelX,
+						},
+					},
+					y: {
+						id: "y",
+						scaleLabel: {
+							display: true,
+							labelString: labelY,
+						},
+					},
+				};
+				options.elements = {
+					point: {
+					  radius: (context) => {
+						const value = context.dataset.data[context.dataIndex];
+						return value._r * .5;
+					  }
+					}
+				};
+				break;
 			case "scatter":
 			case "line":
 			case "bar":
-				break;
 			case "pie":
 			case "doughnut":
 			default:
@@ -361,8 +421,8 @@ class graphChart {
 					// -----------------------------------------
 					// all used plugins
 					// -----------------------------------------
-					if (autocolors) Chart.register(autocolors);
-					if (gradient) Chart.register(gradient);
+					if (gradient && this.graphData.config.gradient)
+						Chart.register(gradient);
 					// chart background
 					if (
 						this.chartconfig &&
@@ -393,16 +453,6 @@ class graphChart {
 							},
 						});
 					}
-					// Testcase mouse events
-					// Thanks to https://github.com/kurkle
-					
-					// Chart.register({
-					// 	id: 'eventlogger', 
-					// 	afterEvent(chart, event) { 
-					// 	console.log(event); 
-					// 	} 
-					// });
-
 					// ------------------------------------------------------
 					// register new chart
 					// ------------------------------------------------------

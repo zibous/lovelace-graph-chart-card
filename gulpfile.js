@@ -8,7 +8,11 @@ const zip = require("gulp-zip");
 
 const settings = {
 	files: ["./src/chartdata.js", "./src/graphchart.js", "./src/main.js"],
-	libs:  ["./src/libs/chart.js", "./src/libs/chartjs-plugin-autocolors.js", "./src/libs/chartjs-plugin-gradient.js"],
+	libs: [
+		"./src/libs/chart.js",
+		"./src/libs/chartjs-plugin-gradient.js",
+		// "./src/libs/Stacked100Plugin.js",
+	],
 	outfile: "chart-card.js",
 	libsfile: "chart.js",
 	distfolder: "./dist/chart-card",
@@ -32,11 +36,11 @@ gulp.task("cleanup", function () {
  * the home-assistant plugins folder
  */
 gulp.task("deploy", function () {
-	if(settings.hassfolder){
-	return gulp
-		.src(settings.distfolder + "/*.js")
-		.pipe(gulp.dest(settings.hassfolder));
-	}else{
+	if (settings.hassfolder) {
+		return gulp
+			.src(settings.distfolder + "/*.js")
+			.pipe(gulp.dest(settings.hassfolder));
+	} else {
 		return done();
 	}
 });
@@ -52,15 +56,15 @@ gulp.task("release", function () {
 });
 
 /**
- * build the libs 
+ * build the libs
  */
 gulp.task("build-libs", function () {
 	return gulp
-	.src(settings.libs)
-	.pipe(plumber())
-	.pipe(concat(settings.libsfile))
-	.pipe(minify())
-	.pipe(gulp.dest(settings.distfolder));
+		.src(settings.libs)
+		.pipe(plumber())
+		.pipe(concat(settings.libsfile))
+		.pipe(minify())
+		.pipe(gulp.dest(settings.distfolder));
 });
 
 /**
@@ -87,8 +91,11 @@ gulp.task("build", function () {
  */
 gulp.task(
 	"default",
-	gulp.series(["cleanup", "build", "build-libs", "release", "deploy"], function (done) {
-		// task code here
-		done();
-	})
+	gulp.series(
+		["cleanup", "build", "build-libs", "release", "deploy"],
+		function (done) {
+			// task code here
+			done();
+		}
+	)
 );

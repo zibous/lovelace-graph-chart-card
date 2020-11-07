@@ -573,24 +573,30 @@ function index_esm(input) {
 }
 
 function createGradient(ctx, axis, area) {
-	return axis === 'y'
-		? ctx.createLinearGradient(0, area.bottom, 0, area.top)
-		: ctx.createLinearGradient(area.left, 0, area.right, 0);
+	if(area.bottom && area.top && area.left && area.right){
+		return axis === 'y'
+			? ctx.createLinearGradient(0, area.bottom, 0, area.top)
+			: ctx.createLinearGradient(area.left, 0, area.right, 0);
+	}
 }
 
 function addColors(gradient, scale, colors) {
 	Object.keys(colors).forEach(value => {
 		const pixel = scale.getPixelForValue(value);
-		const stop = scale.getDecimalForPixel(pixel);
-		gradient.addColorStop(Math.max(0, Math.min(1, stop)), index_esm(colors[value]).rgbString());
+		if(pixel){
+			const stop = scale.getDecimalForPixel(pixel);
+			gradient.addColorStop(Math.max(0, Math.min(1, stop)), index_esm(colors[value]).rgbString());
+		}
 	});
 }
 
 var index = {
 	id: 'gradient',
 	beforeDatasetsUpdate(chart) {
-		const area = chart.chartArea;
+
 		const ctx = chart.ctx;
+		const area = chart.chartArea;
+		
 		chart.data.datasets.forEach((dataset, i) => {
 			const gradient = dataset.gradient;
 			if (gradient && area) {
@@ -600,7 +606,8 @@ var index = {
 					const scale = meta[axis + 'Scale'];
 					const value = createGradient(ctx, axis, area);
 					addColors(value, scale, colors);
-					dataset[prop] = meta.dataset.options[prop] = value;
+					dataset[prop] = meta.dataset.options[prop] = value;	
+
 				});
 			}
 		});

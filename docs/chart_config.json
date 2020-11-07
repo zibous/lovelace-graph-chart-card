@@ -1,258 +1,292 @@
 {
-	"type": "line",
-	"options": {
-		"color": "rgba(0,0,0,0.1)",
-		"elements": {
-			"arc": {
-				"borderAlign": "center",
-				"borderColor": "#fff",
-				"borderWidth": 2,
-				"offset": 0,
-				"backgroundColor": "rgba(0,0,0,0.1)"
-			},
-			"line": {
-				"borderCapStyle": "butt",
-				"borderDash": [],
-				"borderDashOffset": 0,
-				"borderJoinStyle": "miter",
-				"borderWidth": 3,
-				"capBezierPoints": true,
-				"fill": true,
-				"tension": 0,
-				"backgroundColor": "rgba(0,0,0,0.1)",
-				"borderColor": "rgba(0,0,0,0.1)"
-			},
-			"point": {
-				"borderWidth": 1,
-				"hitRadius": 8,
-				"hoverBorderWidth": 1,
-				"hoverRadius": 4,
-				"pointStyle": "circle",
-				"radius": 0.2,
-				"backgroundColor": "rgba(0,0,0,0.1)",
-				"borderColor": "rgba(0,0,0,0.1)"
-			},
-			"rectangle": {
-				"borderSkipped": "start",
-				"borderWidth": 0,
-				"backgroundColor": "rgba(0,0,0,0.1)",
-				"borderColor": "rgba(0,0,0,0.1)"
-			}
+	"color": "rgba(0,0,0,0.1)",
+	"elements": {
+		"arc": {
+			"borderAlign": "center",
+			"borderColor": "#fff",
+			"borderWidth": 0,
+			"offset": 0,
+			"backgroundColor": "rgba(0,0,0,0.1)"
 		},
-		"events": ["mousemove", "mouseout", "click", "touchstart", "touchmove"],
-		"font": {
-			"color": "#666",
-			"family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
-			"size": 12,
-			"style": "normal",
-			"lineHeight": 1.2,
-			"weight": null,
-			"lineWidth": 0
+		"line": {
+			"borderCapStyle": "butt",
+			"borderDash": [],
+			"borderDashOffset": 0,
+			"borderJoinStyle": "miter",
+			"borderWidth": 3,
+			"capBezierPoints": true,
+			"fill": false,
+			"tension": 0,
+			"backgroundColor": "rgba(0,0,0,0.1)",
+			"borderColor": "rgba(0,0,0,0.1)"
 		},
-		"hover": {
-			"onHover": null,
-			"mode": "nearest",
-			"intersect": true
-		},
-		"maintainAspectRatio": false,
-		"onClick": null,
-		"responsive": true,
-		"showLines": true,
-		"plugins": {
-			"filler": {
-				"propagate": true
-			},
-			"legend": {
-				"display": true,
-				"position": "top",
-				"align": "center",
-				"fullWidth": true,
-				"reverse": false,
-				"weight": 1000,
-				"onHover": null,
-				"onLeave": null,
-				"labels": {
-					"boxWidth": 40,
-					"padding": 10
-				},
-				"title": {
-					"display": false,
-					"position": "center",
-					"text": ""
-				}
-			},
-			"title": {
-				"align": "center",
-				"display": false,
-				"font": {
-					"style": "bold"
-				},
-				"fullWidth": true,
-				"padding": 10,
-				"position": "top",
-				"text": "",
-				"weight": 2000
-			},
-			"tooltip": {
-				"enabled": true,
-				"custom": null,
-				"mode": "nearest",
-				"position": "average",
-				"intersect": true,
-				"backgroundColor": "rgba(0,0,0,0.8)",
-				"titleFont": {
-					"style": "bold",
-					"color": "#fff"
-				},
-				"titleSpacing": 2,
-				"titleMarginBottom": 6,
-				"titleAlign": "left",
-				"bodySpacing": 2,
-				"bodyFont": {
-					"color": "#fff"
-				},
-				"bodyAlign": "left",
-				"footerSpacing": 2,
-				"footerMarginTop": 6,
-				"footerFont": {
-					"color": "#fff",
-					"style": "bold"
-				},
-				"footerAlign": "left",
-				"yPadding": 6,
-				"xPadding": 6,
-				"caretPadding": 2,
-				"caretSize": 5,
-				"cornerRadius": 6,
-				"multiKeyBackground": "#fff",
-				"displayColors": true,
-				"borderColor": "rgba(0,0,0,0)",
-				"borderWidth": 0,
-				"animation": {
-					"duration": 400,
-					"easing": "easeOutQuart",
-					"numbers": {
-						"type": "number",
-						"properties": ["x", "y", "width", "height", "caretX", "caretY"]
-					},
-					"opacity": {
-						"easing": "linear",
-						"duration": 200
-					}
-				},
-				"callbacks": {}
-			},
-			"autocolors": {
-				"useAutoColors": true,
-				"enabled": true,
-				"mode": "data"
-			},
-			"gradient": {}
-		},
-		"doughnut": {
-			"datasetElementType": false,
-			"dataElementType": "arc",
-			"dataElementOptions": [
-				"backgroundColor",
-				"borderColor",
-				"borderWidth",
-				"borderAlign",
-				"offset"
-			],
-			"animation": {
-				"numbers": {
-					"type": "number",
-					"properties": [
-						"circumference",
-						"endAngle",
-						"innerRadius",
-						"outerRadius",
-						"startAngle",
-						"x",
-						"y",
-						"offset",
-						"borderWidth"
-					]
-				},
-				"animateRotate": true,
-				"animateScale": false
-			},
-			"aspectRatio": 1,
-			"legend": {
-				"labels": {}
-			},
-			"cutoutPercentage": 50,
-			"rotation": 0,
-			"circumference": 360,
-			"tooltips": {
-				"callbacks": {}
-			}
-		},
-		"layout": {
-			"padding": {
-				"top": 0,
-				"right": 8,
-				"bottom": 20,
-				"left": 8
-			}
-		},
-		"animation": {
-			"duration": 0,
-			"easing": "easeOutQuart",
-			"colors": {
-				"type": "color",
-				"properties": ["borderColor", "backgroundColor"]
-			},
-			"numbers": {
-				"type": "number",
-				"properties": ["x", "y", "borderWidth", "radius", "tension"]
-			},
-			"active": {
-				"duration": 400
-			},
-			"resize": {
-				"duration": 0
-			},
-			"show": {
-				"colors": {
-					"type": "color",
-					"properties": ["borderColor", "backgroundColor"],
-					"from": "transparent"
-				},
-				"visible": {
-					"type": "boolean",
-					"duration": 0
-				}
-			},
-			"hide": {
-				"colors": {
-					"type": "color",
-					"properties": ["borderColor", "backgroundColor"],
-					"to": "transparent"
-				},
-				"visible": {
-					"type": "boolean",
-					"easing": "easeInExpo"
-				}
-			}
+		"point": {
+			"borderWidth": 1,
+			"hitRadius": 1,
+			"hoverBorderWidth": 1,
+			"hoverRadius": 4,
+			"pointStyle": "circle",
+			"radius": 3,
+			"backgroundColor": "rgba(0,0,0,0.1)",
+			"borderColor": "rgba(0,0,0,0.1)"
 		},
 		"bar": {
+			"borderSkipped": "start",
+			"borderWidth": 0,
+			"borderRadius": 0,
+			"backgroundColor": "rgba(0,0,0,0.1)",
+			"borderColor": "rgba(0,0,0,0.1)"
+		}
+	},
+	"events": ["mousemove", "mouseout", "click", "touchstart", "touchmove"],
+	"font": {
+		"color": "#666",
+		"family": "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+		"size": 12,
+		"style": "normal",
+		"lineHeight": 1.2,
+		"weight": null,
+		"lineWidth": 0
+	},
+	"interaction": {
+		"mode": "nearest",
+		"intersect": true
+	},
+	"hover": {
+		"onHover": null
+	},
+	"maintainAspectRatio": false,
+	"onHover": null,
+	"onClick": null,
+	"responsive": true,
+	"showLine": true,
+	"plugins": {
+		"filler": {
+			"propagate": true
+		},
+		"legend": {
+			"display": true,
+			"position": "top",
+			"align": "center",
+			"fullWidth": true,
+			"reverse": false,
+			"weight": 1000,
+			"onHover": null,
+			"onLeave": null,
+			"labels": {
+				"boxWidth": 40,
+				"padding": 10
+			},
+			"title": {
+				"display": false,
+				"position": "center",
+				"text": ""
+			}
+		},
+		"title": {
+			"align": "center",
+			"display": false,
+			"font": {
+				"style": "bold"
+			},
+			"fullWidth": true,
+			"padding": 10,
+			"position": "top",
+			"text": "",
+			"weight": 2000
+		},
+		"tooltip": {
+			"enabled": true,
+			"custom": null,
+			"position": "average",
+			"backgroundColor": "rgba(0,0,0,0.8)",
+			"titleFont": {
+				"style": "bold",
+				"color": "#fff"
+			},
+			"titleSpacing": 2,
+			"titleMarginBottom": 6,
+			"titleAlign": "left",
+			"bodySpacing": 2,
+			"bodyFont": {
+				"color": "#fff"
+			},
+			"bodyAlign": "left",
+			"footerSpacing": 2,
+			"footerMarginTop": 6,
+			"footerFont": {
+				"color": "#fff",
+				"style": "bold"
+			},
+			"footerAlign": "left",
+			"yPadding": 6,
+			"xPadding": 6,
+			"caretPadding": 2,
+			"caretSize": 5,
+			"cornerRadius": 6,
+			"multiKeyBackground": "#fff",
+			"displayColors": true,
+			"borderColor": "rgba(0,0,0,0)",
+			"borderWidth": 0,
+			"animation": {
+				"duration": 400,
+				"easing": "easeOutQuart",
+				"numbers": {
+					"type": "number",
+					"properties": ["x", "y", "width", "height", "caretX", "caretY"]
+				},
+				"opacity": {
+					"easing": "linear",
+					"duration": 200
+				}
+			},
+			"callbacks": {}
+		},
+		"chardbackground": {},
+		"gradient": {}
+	},
+	"scale": {
+		"display": true,
+		"offset": false,
+		"reverse": false,
+		"beginAtZero": false,
+		"gridLines": {
+			"display": true,
+			"color": "#b3e5fC",
+			"lineWidth": 0.365,
+			"drawBorder": true,
+			"drawOnChartArea": true,
+			"drawTicks": true,
+			"tickMarkLength": 10,
+			"offsetGridLines": false,
+			"borderDash": [],
+			"borderDashOffset": 0
+		},
+		"scaleLabel": {
+			"display": false,
+			"labelString": "",
+			"padding": {
+				"top": 4,
+				"bottom": 4
+			}
+		},
+		"ticks": {
+			"minRotation": 0,
+			"maxRotation": 50,
+			"mirror": false,
+			"lineWidth": 0,
+			"strokeStyle": "",
+			"padding": 0,
+			"display": true,
+			"autoSkip": true,
+			"autoSkipPadding": 0,
+			"labelOffset": 0,
+			"minor": {},
+			"major": {},
+			"align": "center",
+			"crossAlign": "near",
+			"maxTicksLimit": 12
+		}
+	},
+	"scales": {
+		"category": {
+			"ticks": {}
+		},
+		"linear": {
+			"ticks": {}
+		},
+		"logarithmic": {
+			"ticks": {
+				"major": {
+					"enabled": true
+				}
+			}
+		},
+		"radialLinear": {
+			"display": true,
+			"animate": true,
+			"position": "chartArea",
+			"angleLines": {
+				"display": true,
+				"color": "rgba(0,0,0,0.1)",
+				"lineWidth": 1,
+				"borderDash": [],
+				"borderDashOffset": 0
+			},
+			"gridLines": {
+				"circular": false
+			},
+			"ticks": {
+				"showLabelBackdrop": true,
+				"backdropColor": "rgba(255,255,255,0.75)",
+				"backdropPaddingY": 2,
+				"backdropPaddingX": 2
+			},
+			"pointLabels": {
+				"display": true,
+				"font": {
+					"size": 10
+				}
+			}
+		},
+		"time": {
+			"bounds": "data",
+			"adapters": {},
+			"time": {
+				"parser": false,
+				"unit": false,
+				"round": false,
+				"isoWeekday": false,
+				"minUnit": "millisecond",
+				"displayFormats": {}
+			},
+			"ticks": {
+				"source": "auto",
+				"major": {
+					"enabled": false
+				}
+			}
+		},
+		"timeseries": {
+			"bounds": "data",
+			"adapters": {},
+			"time": {
+				"parser": false,
+				"unit": false,
+				"round": false,
+				"isoWeekday": false,
+				"minUnit": "millisecond",
+				"displayFormats": {}
+			},
+			"ticks": {
+				"source": "auto",
+				"major": {
+					"enabled": false
+				}
+			}
+		}
+	},
+	"controllers": {
+		"bar": {
 			"datasetElementType": false,
-			"dataElementType": "rectangle",
+			"dataElementType": "bar",
 			"dataElementOptions": [
 				"backgroundColor",
 				"borderColor",
 				"borderSkipped",
 				"borderWidth",
+				"borderRadius",
 				"barPercentage",
 				"barThickness",
+				"base",
 				"categoryPercentage",
 				"maxBarThickness",
 				"minBarLength"
 			],
-			"hover": {
+			"interaction": {
 				"mode": "index"
 			},
+			"hover": {},
 			"datasets": {
 				"categoryPercentage": 0.8,
 				"barPercentage": 0.9,
@@ -306,6 +340,45 @@
 				"callbacks": {}
 			}
 		},
+		"doughnut": {
+			"datasetElementType": false,
+			"dataElementType": "arc",
+			"dataElementOptions": [
+				"backgroundColor",
+				"borderColor",
+				"borderWidth",
+				"borderAlign",
+				"offset"
+			],
+			"animation": {
+				"numbers": {
+					"type": "number",
+					"properties": [
+						"circumference",
+						"endAngle",
+						"innerRadius",
+						"outerRadius",
+						"startAngle",
+						"x",
+						"y",
+						"offset",
+						"borderWidth"
+					]
+				},
+				"animateRotate": true,
+				"animateScale": false
+			},
+			"aspectRatio": 1,
+			"legend": {
+				"labels": {}
+			},
+			"cutoutPercentage": 50,
+			"rotation": 0,
+			"circumference": 360,
+			"tooltips": {
+				"callbacks": {}
+			}
+		},
 		"line": {
 			"datasetElementType": "line",
 			"datasetElementOptions": [
@@ -335,11 +408,12 @@
 				"radius": "pointRadius",
 				"rotation": "pointRotation"
 			},
-			"showLines": true,
+			"showLine": true,
 			"spanGaps": false,
-			"hover": {
+			"interaction": {
 				"mode": "index"
 			},
+			"hover": {},
 			"scales": {
 				"_index_": {
 					"type": "category"
@@ -381,14 +455,20 @@
 				"r": {
 					"type": "radialLinear",
 					"angleLines": {
-						"display": false
+						"display": true,
+						"color": "#b3e5fC",
+						"lineWidth": 0.3333
 					},
 					"beginAtZero": true,
 					"gridLines": {
-						"circular": true
+						"circular": true,
+						"lineWidth": 0.245
 					},
 					"pointLabels": {
 						"display": false
+					},
+					"ticks": {
+						"backdropColor": "transparent"
 					}
 				}
 			},
@@ -472,6 +552,14 @@
 					"type": "radialLinear",
 					"ticks": {
 						"backdropColor": "transparent"
+					},
+					"angleLines": {
+						"display": true,
+						"color": "#b3e5fC",
+						"lineWidth": 0.3333
+					},
+					"gridLines": {
+						"circular": true
 					}
 				}
 			},
@@ -514,11 +602,12 @@
 				"radius": "pointRadius",
 				"rotation": "pointRotation"
 			},
-			"showLines": true,
+			"showLine": true,
 			"spanGaps": false,
-			"hover": {
+			"interaction": {
 				"mode": "index"
 			},
+			"hover": {},
 			"scales": {
 				"x": {
 					"type": "linear"
@@ -534,362 +623,17 @@
 			"tooltips": {
 				"callbacks": {}
 			}
-		},
-		"datasetElementType": "line",
-		"datasetElementOptions": [
-			"backgroundColor",
-			"borderCapStyle",
-			"borderColor",
-			"borderDash",
-			"borderDashOffset",
-			"borderJoinStyle",
-			"borderWidth",
-			"capBezierPoints",
-			"cubicInterpolationMode",
-			"fill"
-		],
-		"dataElementType": "point",
-		"dataElementOptions": {
-			"backgroundColor": "pointBackgroundColor",
-			"borderColor": "pointBorderColor",
-			"borderWidth": "pointBorderWidth",
-			"hitRadius": "pointHitRadius",
-			"hoverHitRadius": "pointHitRadius",
-			"hoverBackgroundColor": "pointHoverBackgroundColor",
-			"hoverBorderColor": "pointHoverBorderColor",
-			"hoverBorderWidth": "pointHoverBorderWidth",
-			"hoverRadius": "pointHoverRadius",
-			"pointStyle": "pointStyle",
-			"radius": "pointRadius",
-			"rotation": "pointRotation"
-		},
-		"spanGaps": false,
-		"charttype": "line",
-		"units": "",
-		"title": {
-			"align": "center",
-			"display": false,
-			"font": {
-				"style": "bold"
-			},
-			"fullWidth": true,
-			"padding": 10,
-			"position": "top",
-			"text": "",
-			"weight": 2000,
-			"fontStyle": "normal",
-			"fontSize": 18
-		},
-		"chartArea": {
-			"backgroundColor": "transparent"
-		},
-		"legend": {
-			"display": true,
-			"position": "bottom",
-			"lineWidth": 0
-		},
-		"tooltips": {
-			"enabled": true,
-			"custom": null,
-			"mode": "nearest",
-			"position": "nearest",
-			"intersect": true,
-			"backgroundColor": "rgba(0,0,0,0.8)",
-			"titleFont": {
-				"style": "bold",
-				"color": "#fff"
-			},
-			"titleSpacing": 2,
-			"titleMarginBottom": 6,
-			"titleAlign": "left",
-			"bodySpacing": 2,
-			"bodyFont": {
-				"color": "#fff"
-			},
-			"bodyAlign": "left",
-			"footerSpacing": 2,
-			"footerMarginTop": 6,
-			"footerFont": {
-				"color": "#fff",
-				"style": "bold"
-			},
-			"footerAlign": "left",
-			"yPadding": 6,
-			"xPadding": 6,
-			"caretPadding": 2,
-			"caretSize": 5,
-			"cornerRadius": 6,
-			"multiKeyBackground": "#fff",
-			"displayColors": true,
-			"borderColor": "rgba(0,0,0,0)",
-			"borderWidth": 0,
-			"animation": {
-				"duration": 400,
-				"easing": "easeOutQuart",
-				"numbers": {
-					"type": "number",
-					"properties": ["x", "y", "width", "height", "caretX", "caretY"]
-				},
-				"opacity": {
-					"easing": "linear",
-					"duration": 200
-				}
-			},
-			"callbacks": {}
-		},
-		"scales": {
-			"x": {
-				"axis": "x",
-				"type": "category",
-				"offset": true,
-				"gridLines": {
-					"offsetGridLines": true,
-					"display": true,
-					"color": "rgba(0,0,0,0.1)",
-					"lineWidth": 1,
-					"drawBorder": true,
-					"drawOnChartArea": true,
-					"drawTicks": true,
-					"tickMarkLength": 10,
-					"borderDash": [],
-					"borderDashOffset": 0
-				},
-				"ticks": {
-					"minRotation": 0,
-					"maxRotation": 50,
-					"mirror": false,
-					"lineWidth": 0,
-					"strokeStyle": "",
-					"padding": 0,
-					"display": true,
-					"autoSkip": true,
-					"autoSkipPadding": 0,
-					"labelOffset": 0,
-					"minor": {},
-					"major": {},
-					"align": "center",
-					"crossAlign": "near"
-				},
-				"display": true,
-				"reverse": false,
-				"beginAtZero": false,
-				"scaleLabel": {
-					"display": false,
-					"labelString": "",
-					"padding": {
-						"top": 4,
-						"bottom": 4
-					}
-				},
-				"id": "x",
-				"position": "bottom"
-			},
-			"left": {
-				"axis": "y",
-				"type": "linear",
-				"ticks": {
-					"minRotation": 0,
-					"maxRotation": 50,
-					"mirror": false,
-					"lineWidth": 0,
-					"strokeStyle": "",
-					"padding": 0,
-					"display": true,
-					"autoSkip": true,
-					"autoSkipPadding": 0,
-					"labelOffset": 0,
-					"minor": {},
-					"major": {},
-					"align": "center",
-					"crossAlign": "near"
-				},
-				"display": true,
-				"offset": false,
-				"reverse": false,
-				"beginAtZero": false,
-				"gridLines": {
-					"display": true,
-					"color": "rgba(0,0,0,0.1)",
-					"lineWidth": 1,
-					"drawBorder": true,
-					"drawOnChartArea": true,
-					"drawTicks": true,
-					"tickMarkLength": 10,
-					"offsetGridLines": false,
-					"borderDash": [],
-					"borderDashOffset": 0
-				},
-				"scaleLabel": {
-					"display": false,
-					"labelString": "",
-					"padding": {
-						"top": 4,
-						"bottom": 4
-					}
-				},
-				"id": "left",
-				"position": "left"
-			},
-			"right": {
-				"axis": "y",
-				"type": "linear",
-				"beginAtZero": true,
-				"ticks": {
-					"minRotation": 0,
-					"maxRotation": 50,
-					"mirror": false,
-					"lineWidth": 0,
-					"strokeStyle": "",
-					"padding": 0,
-					"display": true,
-					"autoSkip": true,
-					"autoSkipPadding": 0,
-					"labelOffset": 0,
-					"minor": {},
-					"major": {},
-					"align": "center",
-					"crossAlign": "near"
-				},
-				"display": true,
-				"offset": false,
-				"reverse": false,
-				"gridLines": {
-					"display": true,
-					"color": "rgba(0,0,0,0.1)",
-					"lineWidth": 1,
-					"drawBorder": true,
-					"drawOnChartArea": true,
-					"drawTicks": true,
-					"tickMarkLength": 10,
-					"offsetGridLines": false,
-					"borderDash": [],
-					"borderDashOffset": 0
-				},
-				"scaleLabel": {
-					"display": false,
-					"labelString": "",
-					"padding": {
-						"top": 4,
-						"bottom": 4
-					}
-				},
-				"id": "right",
-				"position": "left"
-			}
 		}
 	},
-	"data": {
-		"labels": [
-			"2020-10-24",
-			"2020-10-25",
-			"2020-10-26",
-			"2020-10-27",
-			"2020-10-28",
-			"2020-10-29"
-		],
-		"datasets": [
-			{
-				"label": "Peter Muskeln",
-				"borderWidth": 3,
-				"hoverBorderWidth": 0,
-				"fill": false,
-				"unit": "%",
-				"data": ["53.28", "52.35", "52.40", "53.16", "52.38", "53.31"],
-				"minval": 52.35,
-				"maxval": 53.31,
-				"current": "53.31",
-				"mode": "history",
-				"entity": "sensor.peter_muskeln",
-				"yAxisID": "left",
-				"type": "line",
-				"backgroundColor": [
-					"rgba(204, 82, 82, 0.75)",
-					"rgba(128, 51, 51, 0.75)",
-					"rgba(82, 204, 204, 0.75)",
-					"rgba(51, 128, 128, 0.75)",
-					"rgba(143, 204, 82, 0.75)",
-					"rgba(89, 128, 51, 0.75)"
-				],
-				"borderColor": [
-					"rgba(204, 82, 82, 0.56)",
-					"rgba(128, 51, 51, 0.56)",
-					"rgba(82, 204, 204, 0.56)",
-					"rgba(51, 128, 128, 0.56)",
-					"rgba(143, 204, 82, 0.56)",
-					"rgba(89, 128, 51, 0.56)"
-				],
-				"name": "Peter Muskeln",
-				"last_changed": "2020-10-29T07:41:08.603162+00:00",
-				"state": "53.31"
-			},
-			{
-				"label": "Peter Gewicht",
-				"borderWidth": 3,
-				"hoverBorderWidth": 0,
-				"fill": false,
-				"unit": "kg",
-				"data": ["67.95", "69.30", "68.35", "68.40", "68.35", "68.05"],
-				"minval": 67.95,
-				"maxval": 69.3,
-				"current": "68.05",
-				"mode": "history",
-				"entity": "sensor.peter_gewicht",
-				"yAxisID": "left",
-				"type": "line",
-				"backgroundColor": [
-					"rgba(143, 82, 204, 0.75)",
-					"rgba(89, 51, 128, 0.75)",
-					"rgba(204, 173, 82, 0.75)",
-					"rgba(128, 108, 51, 0.75)",
-					"rgba(82, 204, 112, 0.75)",
-					"rgba(51, 128, 70, 0.75)"
-				],
-				"borderColor": [
-					"rgba(143, 82, 204, 0.56)",
-					"rgba(89, 51, 128, 0.56)",
-					"rgba(204, 173, 82, 0.56)",
-					"rgba(128, 108, 51, 0.56)",
-					"rgba(82, 204, 112, 0.56)",
-					"rgba(51, 128, 70, 0.56)"
-				],
-				"name": "Peter Gewicht",
-				"last_changed": "2020-10-29T07:41:08.597979+00:00",
-				"state": "68.05"
-			},
-			{
-				"label": "Peter BMI",
-				"borderWidth": 0,
-				"hoverBorderWidth": 0,
-				"fill": false,
-				"unit": "kg/㎡",
-				"data": ["22.19", "22.63", "22.32", "22.33", "22.32", "22.22"],
-				"minval": 22.19,
-				"maxval": 22.63,
-				"current": "22.22",
-				"mode": "history",
-				"entity": "sensor.peter_bmi",
-				"yAxisID": "right",
-				"type": "bar",
-				"backgroundColor": [
-					"rgba(82, 112, 204, 0.75)",
-					"rgba(51, 70, 128, 0.75)",
-					"rgba(204, 82, 173, 0.75)",
-					"rgba(128, 51, 108, 0.75)",
-					"rgba(204, 129, 82, 0.75)",
-					"rgba(128, 80, 51, 0.75)"
-				],
-				"name": "Peter BMI",
-				"last_changed": "2020-10-29T07:41:08.601011+00:00",
-				"state": "22.22",
-				"borderColor": [
-					"rgba(82, 112, 204, 0.56)",
-					"rgba(51, 70, 128, 0.56)",
-					"rgba(204, 82, 173, 0.56)",
-					"rgba(128, 51, 108, 0.56)",
-					"rgba(204, 129, 82, 0.56)",
-					"rgba(128, 80, 51, 0.56)"
-				]
-			}
-		]
-	}
+	"layout": {
+		"padding": {
+			"top": 0,
+			"right": 0,
+			"bottom": 0,
+			"left": 0
+		}
+	},
+	"animation": false,
+	"defaultFontColor": "#e1e1e1",
+	"defaultFontFamily": "\"Roboto\", \"Noto\", sans-serif"
 }

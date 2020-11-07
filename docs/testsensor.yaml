@@ -1,0 +1,217 @@
+## #################################
+## Test senors for chartjs
+## #################################
+
+# - Binary Sensor
+#   - platform: tod
+#     name: Night
+#     after: sunset
+#     before: sunrise
+    
+## ############################
+## simulated clima
+## ############################
+- platform: simulated
+  name: 'humidity outdoor'
+  unit: '%'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 75
+  spread: 10
+  seed: 999
+  relative_to_epoch: false
+  
+- platform: simulated
+  name: 'humidity indoor'
+  unit: '%'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 50
+  spread: 26
+  seed: 999
+  relative_to_epoch: false  
+ 
+- platform: simulated
+  name: 'temperatur outdoor'
+  unit: '°C'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 20
+  spread: 10
+  seed: 999
+  relative_to_epoch: false
+  
+- platform: simulated
+  name: 'temperatur indoor'
+  unit: '°C'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 28
+  spread: 10
+  seed: 999
+  relative_to_epoch: false
+
+## ############################
+## body scales
+## ############################
+- platform: simulated
+  name: 'Gewicht'
+  unit: 'kg'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 68
+  spread: 10
+  seed: 999
+  relative_to_epoch: false
+ 
+- platform: simulated
+  name: 'BMI'
+  unit: 'kg/m2'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 18
+  spread: 3
+  seed: 999
+  relative_to_epoch: false
+
+- platform: simulated
+  name: 'bodyfat'
+  unit: '%'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 18
+  spread: 6
+  seed: 999
+  relative_to_epoch: false
+
+- platform: simulated
+  name: 'bodywater'
+  unit: '%'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 48
+  spread: 8
+  seed: 999
+  relative_to_epoch: false
+
+- platform: simulated
+  name: 'muscle'
+  unit: '%'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 52
+  spread: 5.25
+  seed: 999
+  relative_to_epoch: false  
+
+- platform: simulated
+  name: 'protein'
+  unit: '%'
+  amplitude: 2
+  mean: 25
+  spread: 1.25
+  seed: 999
+  relative_to_epoch: false 
+
+- platform: simulated
+  name: 'impedanz'
+  unit: 'Ω'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 510
+  spread: 15
+  seed: 999
+  relative_to_epoch: false 
+
+
+- platform: simulated
+  name: 'bones'
+  unit: '%'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 3.4
+  spread: .05
+  seed: 999
+  relative_to_epoch: false  
+
+## ############################
+## simulated makro
+## ############################  
+- platform: simulated
+  name: 'eiweis makronahrstoff'
+  unit: 'g'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 900
+  spread: 25
+  seed: 999
+  relative_to_epoch: false  
+
+- platform: simulated
+  name: 'fett makronahrstoff'
+  unit: 'g'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 400
+  spread: 25
+  seed: 999
+  relative_to_epoch: false 
+
+- platform: simulated
+  name: 'kohlenhydrate makronahrstoff'
+  unit: 'g'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 1500
+  spread: 25
+  seed: 999
+  relative_to_epoch: false 
+
+## ############################
+## simulated power
+## ############################
+- platform: simulated
+  name: 'power generated'
+  unit: 'kWh'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 20.5
+  spread: 5
+  seed: 999
+  relative_to_epoch: false  
+
+- platform: simulated
+  name: 'power used'
+  unit: 'kWh'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: -24.50
+  spread: 8
+  seed: 999
+  relative_to_epoch: false   
+
+- platform: simulated
+  name: 'power unused'
+  unit: 'kWh'
+  amplitude: 0 # Turns off the periodic contribution
+  mean: 6.5
+  spread: 2
+  seed: 999
+  relative_to_epoch: false     
+
+- platform: template
+  sensors:
+    kostal_total:
+      friendly_name: "Energieproduktion"
+      unit_of_measurement: "kWh"
+      value_template: >-
+         {% if (states.binary_sensor.night.state =='off') %}
+             {{states.sensor.power_generated.state|float}}
+         {% else %}
+             0.00
+         {% endif %}
+      entity_id: sensor.power_generated
+    energie_total:
+      friendly_name: "Energieverbrauch"
+      unit_of_measurement: "kWh"
+      value_template: >-
+         {% if (states.binary_sensor.night.state =='off') %}
+             {{(states.sensor.power_used.state|float) * 1.20}}
+         {% else %}
+             0.00
+         {% endif %}
+      entity_id: sensor.power_used
+    energie_total_unused:
+      friendly_name: "Energieüberschuss"
+      unit_of_measurement: "kWh"
+      value_template: >-
+         {% if (states.binary_sensor.night.state =='off') %}
+            {{states.sensor.power_unused.state|float}}
+         {% else %}
+             0.00
+         {% endif %}
+      entity_id: sensor.power_unused
