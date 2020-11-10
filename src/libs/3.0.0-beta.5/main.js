@@ -15,7 +15,7 @@ import "/hacsfiles/chart-card/chart.js?module";
 const gradient = window["chartjs-plugin-gradient"];
 
 console.info(
-    "%c CHARTJS-CARD-DEV %c ".concat("1.0.0", " "),
+    "%c CHARTJS-CARD-DEV %c ".concat("0.0.6", " "),
     "color: white; background: #2980b9; font-weight: 700;",
     "color: white; background: #e74c3c; font-weight: 700;"
 );
@@ -113,22 +113,6 @@ class ChartCard extends HTMLElement {
         return v;
     }
 
-    _setDefaultThemeSettings() {
-        this.themeSettings = {
-            theme: { theme: "system", dark: false },
-            fontColor: "#333333",
-            fontFamily: "Quicksand, Roboto,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
-            gridlineColor: "#DCDCDC",
-            zeroLineColor: "#555555",
-            tooltipsBackground: "#ecf0f1",
-            tooltipsFontColor: "#647687",
-            showLegend: ["pie", "doughnut", "polararea", "line"].includes(this.chart_type.toLowerCase()) || false,
-            showGridLines: ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || false,
-            secondaryAxis: false,
-            gridLineWidth: 0.18,
-            borderDash: [2]
-        };
-    }
     /**
 	 * THEME SETTINGS
 	 * get the font and colorsettings from the hass view.
@@ -139,52 +123,41 @@ class ChartCard extends HTMLElement {
   		--chartjs-gridline-color: '#EAEEF1'
   		--chartjs-zero-gridline-color: '#C9CBD0'
   		--chartjs-tooltip-background: '#EAEEF1'
-        --chartjs-text-fontcolor: '#292F33'
+  		--chartjs-text-fontcolor: '#292F33'
 	 */
     _getThemeSettings() {
-        this._setDefaultThemeSettings();
-        try {
-            this.themeSettings = {
-                fontColor:
-                    this._evaluateCssVariable("--chartjs-text-fontColor") ||
-                    this._evaluateCssVariable("--primary-text-color") ||
-                    this.themeSettings.fontFamily,
-                fontFamily:
-                    this._evaluateCssVariable("--chartjs-fontFamily") ||
-                    this._evaluateCssVariable("--paper-font-common-base_-_font-family") ||
-                    "Quicksand, Roboto,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
-                gridlineColor:
-                    this._evaluateCssVariable("--chartjs-gridline-color") ||
-                    this._evaluateCssVariable("--light-primary-color") ||
-                    this.themeSettings.gridlineColor,
-                zeroLineColor:
-                    this._evaluateCssVariable("--chartjs-zero-gridline-color") ||
-                    this._evaluateCssVariable("--dark-primary-color") ||
-                    this.themeSettings.zeroLineColor,
-                tooltipsBackground:
-                    this._evaluateCssVariable("--chartjs-tooltip-background") || this.themeSettings.tooltipsBackground,
-                tooltipsFontColor:
-                    this._evaluateCssVariable("--chartjs-text-fontcolor") || this.themeSettings.tooltipsFontColor,
-                showLegend:
-                    ["pie", "doughnut", "polararea", "line"].includes(this.chart_type.toLowerCase()) ||
-                    this.themeSettings.showLegend,
-                showGridLines:
-                    ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || this.showGridLines,
-                secondaryAxis: false
-            };
-            if (this.theme && this.theme.dark != undefined) {
-                this.themeSettings.theme = this.theme;
-            }
-            this.themeSettings.gridLineWidth = this.themeSettings.theme.dark ? 0.18 : 0.45;
-            this.themeSettings.borderDash = this.themeSettings.theme.dark ? [2] : [0];
-            if (this._config.options && this._config.options.scale && this._config.options.scale.gridLines)
-                this.themeSettings.showGridLines = true;
-            if (this._config.options && this._config.options.legend) this.themeSettings.showLegend = true;
-            return true;
-        } catch (err) {
-            console.err("Fatal Error theme settings");
+        
+        this.themeSettings = {
+            fontColor:
+                this._evaluateCssVariable("--chartjs-text-fontColor") ||
+                this._evaluateCssVariable("--primary-text-color") ||
+                "#333333",
+            fontFamily:
+                this._evaluateCssVariable("--chartjs-fontFamily") ||
+                this._evaluateCssVariable("--paper-font-common-base_-_font-family") ||
+                "Quicksand, Roboto,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+            gridlineColor:
+                this._evaluateCssVariable("--chartjs-gridline-color") ||
+                this._evaluateCssVariable("--light-primary-color") ||
+                "#DCDCDC",
+            zeroLineColor:
+                this._evaluateCssVariable("--chartjs-zero-gridline-color") ||
+                this._evaluateCssVariable("--dark-primary-color") ||
+                "#555555",
+            tooltipsBackground: this._evaluateCssVariable("--chartjs-tooltip-background") || "#ecf0f1",
+            tooltipsFontColor: this._evaluateCssVariable("--chartjs-text-fontcolor") || "#647687",
+            showLegend: ["pie", "doughnut", "polararea", "line"].includes(this.chart_type.toLowerCase()),
+            showGridLines: ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()),
+            secondaryAxis: false
+        };
+
+        if (this._config.options && this._config.options.scale && this._config.options.scale.gridLines) {
+            this.themeSettings.showGridLines = true;
         }
-        return false;
+
+        if (this._config.options && this._config.options.legend) {
+            this.themeSettings.showLegend = true;
+        }
     }
 
     /**
@@ -228,95 +201,48 @@ class ChartCard extends HTMLElement {
      */
     _creatHACard() {
         // card and chart elements
-        this.id = "i" + Math.random().toString(36).substr(2, 3).toLocaleLowerCase();
+        const eId = Math.random().toString(36).substr(2, 9);
+        this.id = "card-" + eId;
         const card = document.createElement("ha-card");
         const content = document.createElement("div");
         const canvas = document.createElement("canvas");
         this.ctx = canvas.getContext("2d");
-        this.canvasId = this.id + "-chart";
-
-        // const style = document.createElement("style");
-
-        card.id = this.id + "-card";
-        card.setAttribute("data-graphtype", this.chart_type);
-
-        // create the header and icon (optional)
-        if (this.card_title || this.card_icon) {
-            const cardHeader = document.createElement("div");
-            cardHeader.setAttribute("class", "card-header");
-            cardHeader.id = this.id + "-header";
-            cardHeader.style.cssText = "padding-bottom:0 !important;";
-            if (this.card_icon) {
-                // // detail view
-                // const dataview = document.createElement("div");
-                // dataview.id = this.id + "-detail";
-                // dataview.setAttribute('class',this.id+"D")
-                // dataview.style = "position:absolute;top:0;left:0;margin-top:54px;display:none;height:100%;width:100%;";
-                // header icon
-                const iconel = document.createElement("ha-icon");
-                iconel.setAttribute("icon", this.card_icon);
-                iconel.style.cssText = "position:relative;top:-4px;padding:0 12px 0 4px;";
-                // iconel.setAttribute("data-detail", 0);
-                // iconel.setAttribute("data-detail-id", dataview.id);
-                // iconel.setAttribute("data-canavas-id", this.canvasId);
-
-                // iconel.onclick = function () {
-                //     console.log(this, this.shadowRoot.getElementById('card'))
-                //     // const elem = evt.currentTarget;
-                //     // if (elem) {
-
-                //     //     const state = parseInt(elem.getAttribute("data-detail"));
-                //     //     const dv = document.getElementById(elem.getAttribute("data-detail-id"));
-                //     //     const cv = document.getElementById(elem.getAttribute("data-canavas-id"));
-                //     //     dv.style.display = state ? "none" : "block";
-                //     //     cv.style.display = state ? "block" : "none";
-                //     //     elem.setAttribute("data-detail", state ? 0 : 1);
-                //     // }
-                //     // return true;
-                // };
-                cardHeader.appendChild(iconel);
-                // content.append(dataview);
-            }
-            if (this.card_title) {
-                const cardTitle = document.createElement("span");
-                cardTitle.innerHTML = "<!---->" + this.card_title + "<!---->";
-                cardHeader.appendChild(cardTitle);
-            }
-            card.append(cardHeader);
-        }
-
+        this.canvasId = "chart-" + eId;
+        const style = document.createElement("style");
+        card.id = this.id;
         // card content
-        content.id = this.id + "-view";
+        content.id = "content-" + eId;
+        canvas.id = this.canvasId;
         content.style.height = this.card_height + "px";
         content.style.width = "100%";
-
-        // create the info box (optional)
-        this.cardHeader = null;
-        if (this.card_header) {
-            this.cardHeader = document.createElement("div");
-            this.cardHeader.id = this.id + "-cardheader";
-            this.cardHeader.style = "min-height:30px; background-color:transparent;padding:0 24px";
-        }
-
-        // the canvas element for chartjs (required)
-        canvas.id = this.canvasId;
+        // the canvas element for chartjs
         canvas.height = this.card_height;
         canvas.style.cssText = "-moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;";
-
-        // create the info box (optional)
-        this.cardFooter = null;
-        if (this.card_footer) {
-            this.cardFooter = document.createElement("div");
-            this.cardFooter.id = this.id + "-footer";
-            this.cardFooter.style = "min-height:30px; background-color:transparent;padding:0 24px";
+        // create the header and icon
+        const cardHeader = document.createElement("div");
+        cardHeader.setAttribute("class", "card-header");
+        cardHeader.style.cssText = "padding-bottom:0 !important;";
+        if (this.card_icon) {
+            const iconel = document.createElement("ha-icon");
+            iconel.setAttribute("icon", this.card_icon);
+            iconel.style.cssText = "position:relative;top:-4px;padding:0 12px 0 4px;";
+            cardHeader.appendChild(iconel);
         }
-
-        // apply the content and the card
-        if (this.card_header) card.appendChild(this.cardHeader);
+        if (this.card_title) {
+            const cardTitle = document.createElement("span");
+            cardTitle.innerHTML = "<!---->" + this.card_title + "<!---->";
+            cardHeader.appendChild(cardTitle);
+        }
+        if (this.card_title || this.card_icon) card.append(cardHeader);
+        // create the info box (optional)
+        if (this.card_info) {
+            const cardInfo = document.createElement("div");
+            cardInfo.style = "min-height:30px; background-color:trasnparent;padding:8px";
+            card.appendChild(cardInfo);
+        }
         card.appendChild(content);
-        // card.appendChild(style);
+        card.appendChild(style);
         content.appendChild(canvas);
-        if (this.card_footer) card.appendChild(this.cardFooter);
         this.root.appendChild(card);
     }
 
@@ -348,14 +274,10 @@ class ChartCard extends HTMLElement {
             this.card_title = this._config.title || "";
             this.card_icon = this._config.icon || null;
             this.card_height = this._config.height || 240;
-            // additinal elements
-            this.card_header = this._config.cardheader || null;
-            this.card_footer = this._config.cardfooter || null;
+            this.card_info = this._config.cardInfo || null;
 
             // all settings for the chart
             this.chart_type = this._config.chart || "bar";
-            this.chart_statistics = this._config.statistics || null;
-
             const availableTypes = [
                 "line",
                 "radar",
@@ -392,26 +314,16 @@ class ChartCard extends HTMLElement {
             this.data_units = this._config.units || "";
             this.data_test = this._config.testdata || null;
 
-            // check if we can have statitics
-            if (["bubble", "scatter"].includes(this.chart_type.toLocaleLowerCase())) {
-                this.chart_statistics = false; // sorry not in this version
-            } else {
-                if (this.data_hoursToShow > 0 && this.chart_statistics) {
-                    this.card_footer = {
-                        statitics: true
-                    };
-                }
-            }
-
             // create the card and apply the chartjs config
             this._creatHACard();
+            this._setChartConfig();
             this._initialized = true;
         } catch (err) {
             console.log(err.message, config);
         }
     }
 
-    /**
+     /**
      * HASS settings
      *
      */
@@ -561,48 +473,8 @@ class ChartCard extends HTMLElement {
                     () => null
                 );
             } else {
-                this.lastUpdate = new Date().toISOString();
                 this._buildGraphData(null);
             }
-        }
-    }
-
-    /**
-     * 
-     * {
-                    name:item.label,
-                    minval:item.minval,
-                    maxval:item.maxval,
-                    date:item.last_changed,
-                }
-
-     * @param {*} data 
-     */
-    renderStatistics(data) {
-        if (!this.cardFooter) return;
-        if (data) {
-            let html = [];
-            html.push('<div><table style="margin: 0 auto;font-size:0.95em;color:#e1e1e1;font-weight:300;">');
-            html.push('<tr style="text-align:left;font-size:1.0em">')
-            html.push('<th width="30%"><b>Statistics</b></th>');
-            html.push('<th style="padding: 0 12px;">Min</th>');
-            html.push('<th style="padding: 0 12px;">Max</th>');
-            html.push('<th style="padding: 0 12px;">Current</th>');
-            html.push('<th style="padding: 0 12px;">Date</th>');
-            html.push('</tr>')
-            for (const item of data) {
-                html.push('<tr>');
-                html.push('<td><span style="font-size:4.5em;color:red;vertical-align:middle;">&bull;</span>' + item.name + '</td>');
-                html.push('<td>' + item.minval + ' ' + item.unit + '</td>');
-                html.push('<td>' + item.maxval + ' ' + item.unit + '</td>');
-                html.push('<td>' + item.current + ' ' + item.unit + '</td>');
-                html.push('<td>' + item.date + '</span>');
-                html.push('</tr>');
-            }
-            html.push("</table></div><br/>");
-            this.cardFooter.innerHTML = html.join("");
-        } else {
-            this.cardFooter.innerHTML = "";
         }
     }
 
@@ -634,52 +506,35 @@ class ChartCard extends HTMLElement {
         }
 
         // get the chart data
-        let bIsHistory = stateHistories && stateHistories.length;
-        if (bIsHistory) {
-            this.graphData = _chartData.getHistoryGraphData();
-        } else {
-            this.graphData = _chartData.getCurrentGraphData();
-        }
-
-        if (this.graphData === null) {
-            console.error("No GraphData found for ", this.entityNames);
-            return;
-        } else {
-            if (this.graphData && this.graphData.config) {
-                this.themeSettings.secondaryAxis = this.graphData.config.secondaryAxis || false;
-            }
-        }
-
-        // TODO : HANDLING !!!
-        if (this.chart_update) {
-            if (this.graphChart && this.graphData) {
-                this.graphChart.graphData = this.graphData;
-                this.graphChart.renderGraph(true);
-            }
-        } else {
-            if (this.graphChart && this.graphData) {
-                this.graphChart.graphData = this.graphData;
-                this.graphChart.renderGraph(false);
-            }
-        }
-        if (bIsHistory && this.chart_statistics && this.cardFooter) {
-            // this.graphData.data.datasets
-            // label, minval, maxval,lastchange
-            let _data = this.graphData.data.datasets.map(function (item) {
-                return {
-                    name: item.label || "",
-                    minval: item.minval || 0.0,
-                    maxval: item.maxval || 0.0,
-                    avgval: 0.0,
-                    sumval: 0.0,
-                    current: item.current || 0.0,
-                    unit: item.unit || "",
-                    date: item.last_changed || ""
-                };
-            });
-            if (_data) this.renderStatistics(_data);
-            // console.log(this.graphData);
-        }
+              // get the chart data
+              let bIsHistory = stateHistories && stateHistories.length;
+              if (bIsHistory) {
+                  this.graphData = _chartData.getHistoryGraphData();
+              } else {
+                  this.graphData = _chartData.getCurrentGraphData();
+              }
+      
+              if (this.graphData === null) {
+                  console.error("No GraphData found for ", this.entityNames);
+                  return;
+              } else {
+                  if (this.graphData && this.graphData.config) {
+                      this.themeSettings.secondaryAxis = this.graphData.config.secondaryAxis || false;
+                  }
+              }
+      
+              // TODO : HANDLING !!!
+              if (this.chart_update) {
+                  if (this.graphChart && this.graphData) {
+                      this.graphChart.graphData = this.graphData;
+                      this.graphChart.renderGraph(true);
+                  }
+              } else {
+                  if (this.graphChart && this.graphData) {
+                      this.graphChart.graphData = this.graphData;
+                      this.graphChart.renderGraph(false);
+                  }
+              }
     }
 
     /**

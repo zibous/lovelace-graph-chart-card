@@ -177,13 +177,19 @@ The following theme variables can be set in your HA theme to customize the appea
 
 <br>
 
+
+
 ### TODO - Open Tasks
 
   - [ ] Wait for Bugfix [Home-Assistant Fronend Bug](https://github.com/home-assistant/frontend/issues/7246)
   - [ ] Optimize the Initalizing / Data update for the custom card
   - [ ] Optimize the data provider Historydata (data mapping, grouping)
-  - [ ] Better default colors
+  - [ ] Better default colors (simple, gradient) for all charts
+  - [ ] Handling theme settings (dark, light...)
+
 <br>
+<a href="https://www.buymeacoff.ee/zibous" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+
 <hr>
 <br>
 
@@ -194,7 +200,7 @@ The following theme variables can be set in your HA theme to customize the appea
 
 ## Resources
 
-- [Chart.js v3.0.0-beta.5](https://chartjs.org) - Chart.js - Simple yet flexible JavaScript charting for designers & developers
+- [Chart.js v3.0.0-beta.6](https://chartjs.org) - Chart.js - Simple yet flexible JavaScript charting for designers & developers
 - [Chart.js Official Guide](https://chartjs.org/docs) - The user guide and documentation site.
 - [Chart.js Samples](https://www.chartjs.org/samples/latest/) - Simple yet flexible JavaScript charting for designers & developers
 

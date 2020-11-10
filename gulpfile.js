@@ -21,6 +21,9 @@ const settings = {
 		"/Volumes/zeususdata/home/homeassistant/.homeassistant/www/community/chart-card",
 };
 
+function onError(error) { handleError.call(this, 'error', error);}
+function onWarning(error) { handleError.call(this, 'warning', error);}
+
 /**
  * clean up distributen and release
  */
@@ -39,7 +42,8 @@ gulp.task("deploy", function () {
 	if (settings.hassfolder) {
 		return gulp
 			.src(settings.distfolder + "/*.js")
-			.pipe(gulp.dest(settings.hassfolder));
+			.pipe(gulp.dest(settings.hassfolder))
+			.on('error', onError);
 	} else {
 		return done();
 	}
@@ -52,7 +56,8 @@ gulp.task("release", function () {
 	return gulp
 		.src([settings.distfolder + "/**/*"])
 		.pipe(zip("chart-card.zip"))
-		.pipe(gulp.dest(settings.releasefolder));
+		.pipe(gulp.dest(settings.releasefolder))
+		.on('error', onError);
 });
 
 /**
@@ -64,7 +69,8 @@ gulp.task("build-libs", function () {
 		.pipe(plumber())
 		.pipe(concat(settings.libsfile))
 		.pipe(minify())
-		.pipe(gulp.dest(settings.distfolder));
+		.pipe(gulp.dest(settings.distfolder))
+		.on('error', onError);
 });
 
 /**
@@ -83,7 +89,8 @@ gulp.task("build", function () {
       Author: <%= _.capitalize(pkg.author) %>
     `)
 		)
-		.pipe(gulp.dest(settings.distfolder));
+		.pipe(gulp.dest(settings.distfolder))
+		.on('error', onError);
 });
 
 /**

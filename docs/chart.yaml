@@ -45,8 +45,10 @@ cards:
             column_num: 1
             max_columns: 2
             layout: horizontal
-            cards:
-              ## PIE CHART ---------------
+            cards:       
+              ## --------------------------------
+              ## PIE CHART       
+              ## --------------------------------
               - type: 'custom:chart-card'
                 title: 'Makro Nährstoffe'
                 icon: 'mdi:nutrition'
@@ -58,7 +60,7 @@ cards:
                     display: true
                     text: 'Aufteilung Nährstoffe (kal) pro Tag'
                     font:
-                      color: '#ff9500'
+                       color: '#ff9500'
                 entities:
                   - entity: sensor.peter_eiweis_makronahrstoff
                     name: Eiweis
@@ -66,7 +68,10 @@ cards:
                     name: Fett
                   - entity: sensor.peter_kohlenhydrate_makronahrstoff
                     name: Kohlenhydrate
-
+                  
+              ## --------------------------------
+              ## chart: 'bar' simple
+              ## --------------------------------      
               - type: 'custom:chart-card'
                 title: 'Makro Nährstoffe'
                 icon: 'mdi:nutrition'
@@ -83,7 +88,7 @@ cards:
                     backgroundColor: '#f1c40f'
                   - entity: sensor.peter_fett_makronahrstoff
                     name: Fett
-                    backgroundColor: '#e74c3c'
+                    backgroundColor: '#e74c3c' 
                   - entity: sensor.peter_kohlenhydrate_makronahrstoff
                     name: Kohlenhydrate
                     backgroundColor: '#009688'
@@ -103,8 +108,11 @@ cards:
                   - entity: sensor.peter_fett_makronahrstoff
                     name: Fett
                   - entity: sensor.peter_kohlenhydrate_makronahrstoff
-                    name: Kohlenhydrate
-
+                    name: Kohlenhydrate    
+            
+              ## --------------------------------
+              ## chart: 'radar' 
+              ## --------------------------------
               - type: 'custom:chart-card'
                 title: 'Körperwerte'
                 icon: 'mdi:weight-lifter'
@@ -113,7 +121,7 @@ cards:
                 options:
                   title:
                     text: 'Aktuelle Werte'
-                  scale:
+                  scale:  
                     gridLines:
                       color:
                         - '#03a9f4'
@@ -138,7 +146,10 @@ cards:
                     name: Gewicht
                   - entity: sensor.peter_viszerales_fett
                     name: Viszerales Fett
-
+              
+              ## --------------------------------
+              ## chart: 'horizontalBar' 
+              ## --------------------------------
               - type: 'custom:chart-card'
                 title: 'Körperwerte'
                 icon: 'mdi:human-pregnant'
@@ -162,7 +173,10 @@ cards:
                     name: Gewicht
                   - entity: sensor.peter_viszerales_fett
                     name: Viszerales Fett
-
+            
+              ## --------------------------------
+              ## chart: 'polarArea' 
+              ## --------------------------------
               - type: 'custom:chart-card'
                 title: 'Körperwerte'
                 icon: 'mdi:tape-measure'
@@ -171,7 +185,7 @@ cards:
                 options:
                   title:
                     text: 'Aktuelle Werte'
-                  scale:
+                  scale:  
                     gridLines:
                       color:
                         - '#03a9f4'
@@ -196,7 +210,7 @@ cards:
                     name: Gewicht
                   - entity: sensor.peter_viszerales_fett
                     name: Viszerales Fett
-
+                    
       - type: custom:layout-card
         max_width: 720
         column_num: 1
@@ -209,17 +223,21 @@ cards:
             max_columns: 1
             layout: horizontal
             cards:
+            
+              ## --------------------------------
+              ## chart: 'bar' stacked
+              ## --------------------------------    
               - type: 'custom:chart-card'
                 title: 'Änderungen Körperwerte'
                 icon: 'mdi:tape-measure'
                 height: 360
-                hours_to_show: 400
+                hours_to_show: 400 
                 chart: 'bar'
                 options:
                   title:
                     text: 'Abweichungen zum Vortag'
                   legend:
-                    position: 'top'
+                    position: 'top'    
                   scales:
                     x:
                       stacked: true
@@ -234,31 +252,85 @@ cards:
                     name: Muskeln
                   - entity: sensor.peter_trend_wasser
                     name: Wasser
-
+                    
+              ## --------------------------------        
+              ## chart: 'bubble'        
+              ## --------------------------------
               - type: 'custom:chart-card'
                 title: 'Körper-Typ'
                 icon: 'mdi:tape-measure'
-                height: 360
+                height: 360 
+                hours_to_show: 400 
                 chart: 'bubble'
                 options:
                   title:
-                    text: 'Verhältnis Gewicht zu Muskeln/Fett'
+                    text: 'Verhältnis BMI zu Muskeln/Fett'
+                  legend:   
+                    position: 'top'
                   chartArea:
-                    backgroundColor: 'rgba(0,0,255,0.05)'
+                    backgroundColor: 'rgba(0,0,255,0.05)' 
+                  scales:
+                     x:
+                       min: 8
+                       max: 18
+                     y:
+                       min: 30
+                       max: 70
                 entities:
-                  - entity: sensor.peter_koperfett ## x-axis
+                  ## first bubble
+                  - entity: sensor.peter_koperfett  ## x-axis
                     name: Fett
                     unit: '%'
-                  - entity: sensor.peter_muskeln ## y-axis
+                  - entity: sensor.peter_muskeln    ## y-axis
                     name: Muskeln
                     unit: '%'
-                  - entity: sensor.peter_gewicht ## bubble
-                    name: Gewicht
+                  ## last holds all options for the bubble    
+                  - entity: sensor.peter_bmi        ## bubble
+                    name: BMI Peter
                     scale: 0.5
                     unit: 'kg'
                     backgroundColor: 'rgb(52,152,219)'
-
-              ## MIXED CHART (LINE & BAR) ------
+                  ## next bubble
+                  - entity: sensor.reni_koperfett  ## x-axis
+                    name: Fett
+                    unit: '%'
+                  - entity: sensor.reni_muskeln    ## y-axis
+                    name: Muskeln
+                    unit: '%'
+                  ## last holds all options for the bubble
+                  - entity: sensor.reni_bmi        ## bubble
+                    name: BMI Reni
+                    scale: 0.5
+                    unit: 'kg'
+                    backgroundColor: 'rgb(255,152,219)' 
+                    
+              
+              ## --------------------------------        
+              ## chart: 'scatter'        
+              ## --------------------------------
+              - type: 'custom:chart-card'
+                title: 'Vergleich Fett vs. BMI'
+                icon: 'mdi:tape-measure'
+                height: 360 
+                hours_to_show: 400 
+                chart: 'scatter'
+                options:
+                  legend:   
+                    position: 'top'
+                entities:
+                 ## first holds all options 
+                 - entity: sensor.reni_koperfett  ## x-axis
+                   name: 'Reni'
+                 - entity: sensor.reni_bmi        ## y-axis
+                 ## first holds all options 
+                 - entity: sensor.peter_koperfett  ## x-axis
+                   name: 'Peter'
+                 - entity: sensor.peter_bmi        ## y-axis
+                     
+                
+              ## --------------------------------        
+              ## MIXED CHART (LINE & BAR)
+              ## --------------------------------
               - type: 'custom:chart-card'
                 title: 'Gewichtsverlauf'
                 icon: 'mdi:scale'
@@ -274,18 +346,18 @@ cards:
                     x:
                       scaleLabel:
                         display: true
-                        labelString: 'Zeitraum'
+                        labelString: "Zeitraum"
                     left:
                       scaleLabel:
                         display: true
-                        labelString: 'Gewicht / Muskeln'
+                        labelString: "Gewicht / Muskeln"
                       ticks:
                         autoSkip: true
                         maxTicksLimit: 12
                     right:
                       scaleLabel:
                         display: true
-                        labelString: 'BMI'
+                        labelString: "BMI"
                       gridLines:
                         drawOnChartArea: false
                       ticks:
@@ -293,22 +365,23 @@ cards:
                         maxTicksLimit: 16
                 entities:
                   - entity: sensor.peter_muskeln
-                    yAxisID: 'left'
-                    type: 'line'
-                  #                    backgroundColor: "#ff9500"
-                  #                    borderColor: "#ff9500"
+                    yAxisID: "left"
+                    type: "line"
+#                    backgroundColor: "#ff9500"
+#                    borderColor: "#ff9500"
                   - entity: sensor.peter_gewicht
-                    yAxisID: 'left'
-                    type: 'line'
-                  #                    backgroundColor: "#ff5722"
-                  #                    borderColor: "#ff5722"
+                    yAxisID: "left"
+                    type: "line"
+#                    backgroundColor: "#ff5722"
+#                    borderColor: "#ff5722"
                   - entity: sensor.peter_bmi
-                    yAxisID: 'right'
-                    type: 'bar'
+                    yAxisID: "right"
+                    type: "bar"
                     borderWidth: 0
                     backgroundColor: '#5ac8fa'
-                    borderColor: '#ff9500'
-
+                    borderColor: "#ff9500"
+                    
+                            
       - type: custom:layout-card
         max_width: 720
         column_num: 1
@@ -321,7 +394,9 @@ cards:
             max_columns: 1
             layout: horizontal
             cards:
-              ## LINE CHART ---------------
+              ## --------------------------------
+              ## LINE CHART
+              ## --------------------------------
               - type: 'custom:chart-card'
                 title: 'Temperaturverlauf'
                 icon: 'mdi:fire'
@@ -341,48 +416,49 @@ cards:
                   - options:
                       unit: '°C'
                       borderWidth: 1
-
+                      
                   - entity: sensor.temp_sensor_temperature_aussen
                     fill: true
                     gradient:
                       colors:
-                        - '#03a9f4'
-                        - '#00bcd4'
-                        - '#8bc34a'
-                        - '#e51400'
-                        - '#cddc39'
-                        - '#ff9800'
-                        - '#ff5722'
+                         - '#03a9f4'
+                         - '#00bcd4'
+                         - '#8bc34a'
+                         - '#e51400'
+                         - '#cddc39'
+                         - '#ff9800'
+                         - '#ff5722'
                     name: Aussen
-
+                    
                   - entity: sensor.temp_sensor_temperature_eingang
                     name: Eingang
                     fill: true
                     gradient:
                       colors:
-                        - '#845ec2'
-                        - '#d65db1'
-                        - '#ff6f91'
-                        - '#ff9671'
-                        - '#ffc75f'
+                        - "#845ec2"
+                        - "#d65db1"
+                        - "#ff6f91"
+                        - "#ff9671"
+                        - "#ffc75f"
                   - entity: sensor.temp_sensor_temperature_kuche
                     name: Küche
                     gradient:
                       colors:
-                        - '#845ec2'
-                        - '#2c73d2'
-                        - '#0081cf'
-                        - '#0089ba'
-                        - '#008e9b'
+                        - "#845ec2"
+                        - "#2c73d2"
+                        - "#0081cf"
+                        - "#0089ba"
+                        - "#008e9b"
                     fill: true
                   - entity: sensor.temp_sensor_temperature_bad
                     name: Bad
                     fill: true
                     gradient:
                       colors:
-                        - '#76a9ff'
-                        - '#9bf992'
-                        - '#ffc75f'
+                        - "#76a9ff"
+                        - "#9bf992"
+                        - "#ffc75f"
+                  
 
       - type: custom:layout-card
         max_width: 720
@@ -396,7 +472,9 @@ cards:
             max_columns: 1
             layout: horizontal
             cards:
-              ## LINE CHART ---------------
+              ## --------------------------------
+              ## LINE CHART
+              ## --------------------------------
               - type: 'custom:chart-card'
                 title: 'Energie Produktion / Verbrauch'
                 height: 540
@@ -412,51 +490,52 @@ cards:
                   legend:
                     position: top
                   chartArea:
-                    backgroundColor: 'rgba(0,0,0,0.5)'
+                    backgroundColor: 'rgba(0,0,0,0.5)'    
                   scales:
                     x:
                       time:
                         unit: 'hour'
-                        locale: 'de-DE'
+                        locale: 'de-DE'  
                       ticks:
                         autoSkip: true
-                        maxTicksLimit: 8
+                        maxTicksLimit: 8 
                       scaleLabel:
                         display: true
-                        labelString: 'Zeitraum'
+                        labelString: "Zeitraum"
                     left:
                       scaleLabel:
                         display: true
-                        labelString: 'Verbrauch / Überschuss (kWh)'
+                        labelString: "Verbrauch / Überschuss (kWh)"
                     right:
                       scaleLabel:
                         display: true
-                        labelString: 'Produktion (kWh)'
-
+                        labelString: "Produktion (kWh)"
+                        
                 entities:
                   - options:
                       unit: 'kWh'
-                      borderWidth: 1
+                      borderWidth: 1  
                   - entity: sensor.energy_production
                     name: Produktion
                     unit: 'kWh'
-                    yAxisID: 'right'
-                    backgroundColor: '#f1c40f'
-                    borderColor: '#f1c40f'
+                    yAxisID: "right"
+                    backgroundColor: "#f1c40f"
+                    borderColor: "#f1c40f"
                     borderWidth: 1
                     type: 'bar'
                   - entity: sensor.energy_consumption
                     name: Verbrauch
                     unit: 'kWh'
-                    yAxisID: 'left'
-                    backgroundColor: '#e74c3c'
-                    borderColor: '#e74c3c'
+                    yAxisID: "left"
+                    backgroundColor: "#e74c3c"
+                    borderColor: "#e74c3c"
                     borderWidth: 0.5
                   - entity: sensor.energy_notused
                     name: Überschuss
-                    unit: 'kWh'
-                    yAxisID: 'left'
-                    backgroundColor: '#8bc34a'
-                    borderColor: '#8bc34a'
+                    unit: 'kWh'    
+                    yAxisID: "left"
+                    backgroundColor: "#8bc34a"
+                    borderColor: "#8bc34a"
                     borderWidth: 0.5
                     type: 'bar'
+                    

@@ -1,55 +1,5 @@
 
 
-# Config
-
-```javascript
-var config = {
-
-        type: 'line',
-
-        data: {
-            labels: [...],
-            datasets: [{
-                label: '...',
-                backgroundColor: window.chartColors.red,
-                borderColor: window.chartColors.red,
-                data: [...],
-                fill: false,
-            }, {
-                label: '...',
-                fill: false,
-                backgroundColor: window.chartColors.blue,
-                borderColor: window.chartColors.blue,
-                data: [....],
-            }]
-        },
-
-        options: {
-            responsive: true,
-            title: {
-                display: true,
-                text: 'Grid Line Settings'
-            },
-            scales: {
-                y: {
-                    gridLines: {
-                        drawBorder: false,
-                        color: function(context) {
-                            if (context.tick.value > 0) {
-                                return window.chartColors.green;
-                            } else if (context.tick.value < 0) {
-                                return window.chartColors.red;
-                            }
-
-                            return '#000000';
-                        },
-                    },
-                }
-            }
-        }
-    };
-```
-
 ## Bar Chart
 
 ### Vertical
@@ -119,136 +69,101 @@ see: https://www.chartjs.org/samples/latest/charts/line/stepped.html
         lineTension: 0  ##!!!
 
     }]
-```                
+```
 see: https://www.chartjs.org/samples/latest/charts/line/interpolation-modes.html
 
 ## Area charts
 
-## Doughnut
+## Pie & Doughnut
 
-## Pie
+#### Data Structure
 
-```json
-{
-  "labels": [
-    "Eiweis",
-    "Fett",
-    "Kohlenhydrate"
-  ],
-  "datasets": [
-    {
-      "data": [
-        "875.0",
-        "375.0",
-        "1250.0"
-      ],
-      "borderWidth": 0,
-      "hoverBorderWidth": 0,
-      "pointRadius": 0,
-      "fill": true,
-      "unit": "",
-      "mode": "current"
-    }
-  ]
-}
+For a pie chart, datasets need to contain an array of data points.  The data points should be a number, Chart.js will total all of the  numbers and calculate the relative proportion of each.
+
+You also need to specify an array of labels so that tooltips appear correctly.
+
+```javascript
+data = {
+    datasets: [{
+        data: [10, 20, 30]
+    }],
+
+    // These labels appear in the legend and in the tooltips when hovering different arcs
+    labels: [
+        'Red',
+        'Yellow',
+        'Blue'
+    ]
+};
 ```
+
+
+
+
 
 ## Line
 
-```json
-{
-  "labels": [
-    "2020-10-27",
-    "2020-10-28",
-    "2020-10-29",
-    "2020-10-30",
-    "2020-10-31",
-    "2020-11-01"
-  ],
-  "datasets": [
-    {
-      "label": "Peter Muskeln",
-      "borderWidth": 3,
-      "hoverBorderWidth": 0,
-      "fill": false,
-      "unit": "%",
-      "data": [
-        "53.16",
-        "52.38",
-        "53.31",
-        "52.41",
-        "52.36",
-        "52.49"
-      ],
-      "minval": 52.36,
-      "maxval": 53.31,
-      "current": "52.49",
-      "mode": "history",
-      "entity": "sensor.peter_muskeln",
-      "yAxisID": "left",
-      "type": "line",
-      "name": "Peter Muskeln",
-      "last_changed": "2020-11-01T05:23:21.010932+00:00",
-      "state": "52.49"
-    },
-    {
-      "label": "Peter Gewicht",
-      "borderWidth": 3,
-      "hoverBorderWidth": 0,
-      "fill": false,
-      "unit": "kg",
-      "data": [
-        "68.40",
-        "68.35",
-        "68.05",
-        "68.55",
-        "68.30",
-        "68.55"
-      ],
-      "minval": 68.05,
-      "maxval": 68.55,
-      "current": "68.55",
-      "mode": "history",
-      "entity": "sensor.peter_gewicht",
-      "yAxisID": "left",
-      "type": "line",
-      "name": "Peter Gewicht",
-      "last_changed": "2020-11-01T05:23:20.979816+00:00",
-      "state": "68.55"
-    },
-    {
-      "label": "Peter BMI",
-      "borderWidth": 0,
-      "hoverBorderWidth": 0,
-      "fill": false,
-      "unit": "kg/㎡",
-      "data": [
-        "22.33",
-        "22.32",
-        "22.22",
-        "22.38",
-        "22.30",
-        "22.38"
-      ],
-      "minval": 22.22,
-      "maxval": 22.38,
-      "current": "22.38",
-      "mode": "history",
-      "entity": "sensor.peter_bmi",
-      "yAxisID": "right",
-      "type": "bar",
-      "backgroundColor": "#5ac8fa",
-      "borderColor": "#ff9500",
-      "name": "Peter BMI",
-      "last_changed": "2020-11-01T05:23:21.009204+00:00",
-      "state": "22.38"
-    }
-  ]
-}
+#### Data Structure
+
+The `data` property of a dataset for a line chart can be passed in two formats.
+
+### number[]
+
+```javascript
+data: [20, 10]
 ```
+
+When the `data` array is an array of numbers, the x axis is generally a [category](https://www.chartjs.org/docs/latest/axes/cartesian/category.html#category-cartesian-axis). The points are placed onto the axis using their position in the array. When a line chart is created with a category axis, the `labels` property of the data object must be specified.
+
+
+
+
+
 ## Polar area
 
+#### Data Structure
+
+For a polar area chart, datasets need to contain an array of data  points. The data points should be a number, Chart.js will total all of  the numbers and calculate the relative proportion of each.
+
+You also need to specify an array of labels so that tooltips appear correctly for each slice.
+
+```javascript
+data = {
+    datasets: [{
+        data: [10, 20, 30]
+    }],
+
+    // These labels appear in the legend and in the tooltips when hovering different arcs
+    labels: [
+        'Red',
+        'Yellow',
+        'Blue'
+    ]
+};
+```
+
+
+
 ## Radar
+
+#### Data Structure
+
+The `data` property of a dataset for a radar chart is  specified as an array of numbers. Each point in the data array  corresponds to the label at the same index.
+
+```javascript
+data: [20, 10]
+```
+
+For a radar chart, to provide context of what each point means, we  include an array of strings that show around each point in the chart.
+
+```javascript
+data: {
+    labels: ['Running', 'Swimming', 'Eating', 'Cycling'],
+    datasets: [{
+        data: [20, 10, 4, 2]
+    }]
+}
+```
 
 ## Combo bar/line
 see: https://www.chartjs.org/samples/latest/charts/combo-bar-line.html
@@ -256,8 +171,41 @@ see: https://www.chartjs.org/samples/latest/charts/combo-bar-line.html
 
 ## Open
 ### Scatter
-### Scatter - Multi axis
+
+#### Data Structure
+
+Unlike the line chart where data can be supplied in two different  formats, the scatter chart only accepts data in a point format.
+
+```javascript
+data: [{
+        x: 10,
+        y: 20
+    }, {
+        x: 15,
+        y: 10
+    }]
+```
+
 ### Bubble Chart
+
+#### Data Structure
+
+Bubble chart datasets need to contain a `data` array of points, each points represented by an object containing the following properties:
+
+```javascript
+{
+    // X Value
+    x: number,
+
+    // Y Value
+    y: number,
+
+    // Bubble radius in pixels (not scaled).
+    r: number
+}
+```
+
+**Important:** the radius property, `r` is **not** scaled by the chart, it is the raw radius in pixels of the bubble that is drawn on the canvas.
 
 
 ## Install beta
