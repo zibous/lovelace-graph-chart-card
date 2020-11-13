@@ -18,7 +18,7 @@
   ],
   "author": "Peter Siebler",
   "license": "MIT",
-  "repository": "https://github.com/zibous/lovelace-graph-chart-card.git",
+  "repository": "https://github.com/zibous/lovelace-graph-chart-card",
   "dependencies": {},
   "scripts": {
     "build": "gulp"

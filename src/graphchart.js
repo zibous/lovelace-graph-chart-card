@@ -6,38 +6,9 @@
  
  * ----------------------------------------------------------*/
 
-/**
- * Deep Merge
- * Used to merge the default and chart options, because the
- * helper.merge will not work...
- *
- * @param  {...any} sources
- * @returns combined object
- */
-function deepMerge(...sources) {
-    let acc = {};
-    for (const source of sources) {
-        if (source instanceof Array) {
-            if (!(acc instanceof Array)) {
-                acc = [];
-            }
-            acc = [...acc, ...source];
-        } else if (source instanceof Object) {
-            for (let [key, value] of Object.entries(source)) {
-                if (value instanceof Object && key in acc) {
-                    value = deepMerge(acc[key], value);
-                }
-                acc = {
-                    ...acc,
-                    [key]: value
-                };
-            }
-        }
-    }
-    return acc;
-}
 
 /**
+ * Lovelaces chartjs
  * graph chart wrapper class
  *
  */
@@ -123,7 +94,10 @@ class graphChart {
     /**
      * set the chart option based on the default
      * and the chart settings.
-     *
+     * 
+     * this.graphData.config holds the configruation data
+     * from the data service
+     * 
      * @called: from rendergraph and updategraph
      */
     _setChartOptions() {
@@ -138,8 +112,7 @@ class graphChart {
         Chart.defaults.defaultFontFamily = this.themeSettings.fontFamily;
 
         Chart.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
-        // zeroLineWidth
-
+    
         // element settings
         if (Chart.defaults.elements && Chart.defaults.elements.arc) Chart.defaults.elements.arc.borderWidth = 0;
 
@@ -224,8 +197,20 @@ class graphChart {
             spanGaps: true,
             plugins: {}
         };
+        
+        if(this.graphData.config.gradient===true && this.graphData.config.mode ==='simple'){
+            //enable gradient colors for state charts
+            options.gradientcolor = {
+                color: true,
+                type: this.chart_type,
+            }
+            options.plugins = {
+                gradient
+            };
+        }
 
         if (gradient && this.graphData.config.gradient) {
+            // enable gradient colors for data series chart
             options.plugins = {
                 gradient
             };
@@ -247,9 +232,11 @@ class graphChart {
                 }
             });
         }
-        // ------------------------------------
+        // ---------------------------------------------------
         // check secondary axis
-        // ------------------------------------
+        // this.graphData.config holds the configruation data
+        // this.graphData.data.datasets data per series
+        // ---------------------------------------------------
         if (
             this.graphData.config.secondaryAxis &&
             this.graphData &&
@@ -429,7 +416,9 @@ class graphChart {
                     } else {
                         // create and draw the new chart with the current settings
                         // and the dataseries. Register all plugins
-                        if (gradient && this.graphData.config.gradient) Chart.register(gradient);
+                        if (gradient && this.graphData.config.gradient) {
+                            Chart.register(gradient);
+                        }
                         if (
                             this.chartconfig &&
                             this.chartconfig.options &&
@@ -458,6 +447,7 @@ class graphChart {
                                 }
                             });
                         }
+                        
                         if (this.chart) {
                             this.chart.destroy(); // sorry, but ...
                         }

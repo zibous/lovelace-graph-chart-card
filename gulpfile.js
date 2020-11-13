@@ -7,10 +7,12 @@ const minify = require("gulp-minify");
 const zip = require("gulp-zip");
 
 const settings = {
-	files: ["./src/chartdata.js", "./src/graphchart.js", "./src/main.js"],
+	files: ["./src/tools.js", "./src/colors.js", "./src/chartdata.js", "./src/graphchart.js", "./src/main.js"],
 	libs: [
 		"./src/libs/chart.js",
-		"./src/libs/chartjs-plugin-gradient.js",
+		"./src/libs/chartjs-gradient.js",
+		// "./src/libs/chartjs-plugin-gradient.js",
+		// "./src/libs/colortranslator.web.js",
 		// "./src/libs/Stacked100Plugin.js",
 	],
 	outfile: "chart-card.js",
@@ -21,6 +23,35 @@ const settings = {
 		"/Volumes/zeususdata/home/homeassistant/.homeassistant/www/community/chart-card",
 };
 
+// Command line option:
+//  --fatal=[warning|error|off]
+var fatalLevel = require('yargs').argv.fatal;
+
+let ERROR_LEVELS = ['error', 'warning'];
+/**
+ * Return true if the given level is equal to or more severe than
+ * the configured fatality error level.
+ * If the fatalLevel is 'off', then this will always return false.
+ * Defaults the fatalLevel to 'error'.
+ * @param {*} level 
+ */
+function isFatal(level) {
+	return ERROR_LEVELS.indexOf(level) <= ERROR_LEVELS.indexOf(fatalLevel || 'error');
+ }
+
+ /**
+  * Handle an error based on its severity level.
+  * Log all levels, and exit the process for fatal levels.
+  * @param {*} level 
+  * @param {*} error 
+  */
+ function handleError(level, error) {
+	console.log(error.message);
+	if (isFatal(level)) {
+	   process.exit(1);
+	}
+ }
+ 
 function onError(error) { handleError.call(this, 'error', error);}
 function onWarning(error) { handleError.call(this, 'warning', error);}
 

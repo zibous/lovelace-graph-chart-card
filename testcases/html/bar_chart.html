@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+
+<head>
+	<title>Bar Chart</title>
+	<script src="assets/chart.js"></script>
+	<script src="assets/utils.js"></script>
+	<script src="assets/chartjs-gradient.js"></script>
+	<script>
+		const gradient = window["chartjs-gradient"];
+	</script>
+	<style>
+		canvas {
+			-moz-user-select: none;
+			-webkit-user-select: none;
+			-ms-user-select: none;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="container" style="width: 75%;">
+		<canvas id="canvas"></canvas>
+	</div>
+
+	<script>
+		var MONTHS = ['Data 1', 'Data 2', 'Data 2'];
+		var color = Chart.helpers.color;
+		var barChartData = {
+			labels: ['Data 1', 'Data 2', 'Data 2'],
+			datasets: [{
+				label: 'Dataset 1',
+				backgroundColor: ['#03a9f4', '#00bcd4', '#8bc34a'],
+				borderWidth: 0,
+				data: [100, 200, 150]
+			}]
+
+		};
+		var options = {
+			type: 'bar',
+			data: barChartData,
+			options: {
+				responsive: true,
+				legend: {
+					display: false,
+				},
+				title: {
+					display: true,
+					text: 'Chart.js Bar Chart'
+				},
+				gradientcolor: {
+					type: 'bar',
+					color: true,
+				},
+				plugins: {
+					gradient,
+				},
+			}
+		};
+
+		function renderbarColor(colors) {
+			var ctx = document.getElementById('canvas').getContext('2d');
+			let _gradients = [];
+			Object.entries(colors).forEach(([, color], index) => {
+				const _bargradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+				_bargradient.addColorStop(0, getRgbaColor(color, 30));
+				_bargradient.addColorStop(1, getRgbaColor(color, 100));
+				_gradients.push(_bargradient);
+			});
+			return _gradients
+		}
+
+		window.onload = function () {
+			Chart.register(gradient);
+			var ctx = document.getElementById('canvas').getContext('2d');
+			window.myBar = new Chart(ctx, options);
+		};
+	</script>
+</body>
+
+</html>

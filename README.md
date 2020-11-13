@@ -54,6 +54,7 @@ Chart.js card for Home Assistant -  Visualize your data in 8 different ways; eac
 | units          | string   |           | Set a custom unit of measurement for all entities.  |
 | ignoreZero   | boolean   |   false       | if true, all date from the series with value 0 will be ignored   |
 | locale          | string   |  de-DE         |  formats the numbers according to the locale and formatting options and set the data string with a language sensitive representation of the date portion of the date|
+| showstate         | boolean  | false         | show the current state. Only if hours_to_show > 0  |
 | options        |          |             | just like chart.js documentation - see: [Chart.js documentation](https://www.chartjs.org/docs/latest/). Optional, if used the options will overwrite the default.global settings. |
 
 <br>
@@ -177,6 +178,7 @@ The following theme variables can be set in your HA theme to customize the appea
 
 <br>
 
+[Data source](https://github.com/zibous/ha-miscale2) - See --> Read weight measurements from Xiaomi Body Scales....
 
 
 ### TODO - Open Tasks
@@ -193,6 +195,7 @@ The following theme variables can be set in your HA theme to customize the appea
 <hr>
 <br>
 
+
 ## Helper
 
 - [YAML to JSON Online](https://www.convertjson.com/yaml-to-json.htm) - Use this online tool to convert YAML into JSON. 
@@ -203,14 +206,16 @@ The following theme variables can be set in your HA theme to customize the appea
 - [Chart.js v3.0.0-beta.6](https://chartjs.org) - Chart.js - Simple yet flexible JavaScript charting for designers & developers
 - [Chart.js Official Guide](https://chartjs.org/docs) - The user guide and documentation site.
 - [Chart.js Samples](https://www.chartjs.org/samples/latest/) - Simple yet flexible JavaScript charting for designers & developers
+- [Colors with Chart.js & D3's](https://codenebula.io/javascript/frontend/dataviz/2019/04/18/automatically-generate-chart-colors-with-chart-js-d3s-color-scales/) - Automatically Generate Chart Colors with Chart.js & D3's Color Scales...
 
 
-## Plugins info
+## Plugins Info
 
 - [colorschemes](https://github.com/nagix/chartjs-plugin-colorschemes) - Enables automatic coloring using predefined color schemes.
 - [datalabels](https://github.com/chartjs/chartjs-plugin-datalabels) - Displays labels on data for any type of charts.
 - [stacked100](https://github.com/y-takey/chartjs-plugin-stacked100) - Draws 100% stacked bar chart.
 - [style](https://github.com/nagix/chartjs-plugin-style) - Provides styling options such as shadow, bevel, glow or overlay effects.
+
 
 <hr>
 
