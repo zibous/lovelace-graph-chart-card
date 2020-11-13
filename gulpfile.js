@@ -25,7 +25,8 @@ const settings = {
 
 // Command line option:
 //  --fatal=[warning|error|off]
-var fatalLevel = require('yargs').argv.fatal;
+// var fatalLevel = require('yargs').argv.fatal;
+var fatalLevel = 'error'
 
 let ERROR_LEVELS = ['error', 'warning'];
 /**
