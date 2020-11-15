@@ -2,7 +2,9 @@
 
 Chart.js card for Home Assistant -  Visualize your data in 8 different ways; each of them animated and customisable.
 
-> DEVELOPER PREVIEW VERSION
+> DEVELOPER PREVIEW VERSION, CHART.JS BETA NOT FINAL
+I'm still looking for help and would be happy if someone would get in touch to help me complete and improve (data processing, display / color selection charts ...) the graph-chartjs-card.
+
 
 ![graph-chartjs-card.png](docs/graph-chartjs-card.png)
 
@@ -125,7 +127,7 @@ The following theme variables can be set in your HA theme to customize the appea
 ### Example: doughnut chart
 
 ```yaml
- - type: 'custom:graph-chartjs-card'
+ - type: 'custom:chart-card'
    title: 'Makro Nährstoffe'
    height: 240
    chart: 'doughnut'
@@ -152,7 +154,7 @@ The following theme variables can be set in your HA theme to customize the appea
 ### Example: bar chart
 
 ```yaml
-  - type: 'custom:graph-chartjs-card'
+  - type: 'custom:chart-card'
     title: 'Makro Nährstoffe'
     chartTitle: 'Aufstellung der Nährstoffe'
     height: 240

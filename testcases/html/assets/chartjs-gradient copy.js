@@ -18,10 +18,7 @@
      * @param {*} value
      */
     const isString = (value) => typeof value === "string";
-    var gradient = null;
-    var width = null;
-    var height = null;
-
+    
     var helpers = Chart.helpers;
 
     /**
@@ -100,7 +97,7 @@
                         _piegradient.addColorStop(1, getRgbaColor(color, 100));
                         _gradients.push(_piegradient);
                     });
-                    break
+                    return _gradients;
                 }
             case "bar":
                 if (colors && colors.length && isString(colors[0])) {
@@ -113,81 +110,71 @@
                     });
                     return _gradients;
                 }
-                break
             default:
                 break;
         }
         return colors;
     }
 
-    function createSimpleGradient(ctx, color, area){
-        
-
-    }
     /**
      * plugin gradient
-     * https://github.com/nagix/chartjs-plugin-colorschemes/blob/master/src/plugins/plugin.colorschemes.js
      */
     var plugin_gradient = {
         id: "gradient",
-
+        
         beforeDatasetsUpdate(chart) {
+            console.log();
             const ctx = chart.ctx;
             const area = chart.chartArea;
-            if (!area) {
-                // This case happens on initial chart load
-                return null;
-            }
-            // series data, create the gradients for bar, line...
-            chart.data.datasets.forEach((dataset, i) => {
-                const _chartType = dataset.type || chart.config.type;
-                var chartWidth = area.right - area.left;
-				var chartHeight = area.bottom - area.top;
-                switch (_chartType) {
-                    case "line":
-                    case "radar":
-                    case "scatter":  
-                        if (gradient === null || width !== chartWidth || height !== chartHeight) {
-                            let color = dataset.backgroundColor;
-                            console.log('beforeUpdate',_chartType, i, color, helpers.color(color).alpha(0.5).rgbString());
-                            gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
-                            gradient.addColorStop(0, helpers.color(color).alpha(0.95).rgbString());
-                            gradient.addColorStop(0.5, helpers.color(color).alpha(0.5).rgbString());
-                            gradient.addColorStop(1.0, helpers.color(color).alpha(0.25).rgbString());
-                            dataset.backgroundColor = gradient;
-                        }
-                        break;
-                    // For doughnut and pie chart, backgroundColor is set to an array of colors
-                    case "doughnut":
-                    case "pie":
-                    case "polarArea":     
-                        // For the other chart, only backgroundColor is set
-                        dataset.backgroundColor = dataset.data.map(function (data, dataIndex) {
-                            console.log('beforeUpdate',_chartType, dataIndex, data);
+            if (chart.options.gradientcolor && chart.options.gradientcolor.type !== undefined) {
+                // simple graph pie, bar check o.k, create the gradients
+                chart.data.datasets.forEach((dataset, i) => {
+                    const _chartType = dataset.type || chart.config.type;
+                    const colors = chart.data.datasets[i].backgroundColor;
+                    console.log(_chartType, colors);
+                    chart.data.datasets[0].backgroundColor = backgroundGradient(ctx, _chartType, area, colors);
+                });
+            } else {
+                // series data, create the gradients for bar, line...
+                chart.data.datasets.forEach((dataset, i) => {
+                    const _chartType = dataset.type || chart.config.type;
+                    switch (_chartType) {
+                        case "line":
+                        case "radar":
+                        case "scatter":
+                            // dataset.backgroundColor = ''
+                            console.log(_chartType, helpers.color(color).alpha(0.5).rgbString())
+
+                            break;
+                        // For doughnut and pie chart, backgroundColor is set to an array of colors
+                        case "doughnut":
+                        case "pie":
+                        case "polarArea":
+                            // For the other chart, only backgroundColor is set
+                            dataset.backgroundColor = dataset.data.map(function (data, dataIndex) {
+                                console.log(_chartType, dataIndex,data)
+                            });
+                            break;
+                        default:
+                            console.log(_chartType, dataset.backgroundColor)
+                            break;
+                    }
+                    const gradient = dataset.gradient;
+                    if (gradient && area) {
+                        Object.keys(gradient).forEach((prop) => {
+                            const { axis, colors } = gradient[prop];
+                            const meta = chart.getDatasetMeta(i);
+                            if (colors && colors.length) {
+                                const _gradient = createGradient(ctx, axis, area, colors);
+                                if (_gradient) dataset.backgroundColor = _gradient;
+                            }
                         });
-                        break;
-                    default:
-                        console.log('beforeUpdate', _chartType, dataset.backgroundColor);
-                        break;
-                }
-                // const gradient = dataset.gradient;
-                // if (gradient && area) {
-                //     Object.keys(gradient).forEach((prop) => {
-                //         const { axis, colors } = gradient[prop];
-                //         const meta = chart.getDatasetMeta(i);
-                //         if (colors && colors.length) {
-                //             const _gradient = createGradient(ctx, axis, area, colors);
-                //             if (_gradient) dataset.backgroundColor = _gradient;
-                //         }
-                //     });
-                // }
-            });
+                    }
+                });
+            }
         },
         afterUpdate: function (chart) {
-            chart.data.datasets.forEach((dataset, i) => {
-                const _chartType = dataset.type || chart.config.type;
-                console.log('afterUpdate', _chartType, dataset.backgroundColor);
-            });
+            chart.data.datasets.forEach((dataset, i) => {});
         }
     };
     return plugin_gradient;

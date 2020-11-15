@@ -225,12 +225,6 @@ class graphChart {
                     zeroLineWidth: 8,
                 }
             });
-        } else {
-            Chart.defaults.set("scale", {
-                gridLines: {
-                    display: false
-                }
-            });
         }
         // ---------------------------------------------------
         // check secondary axis

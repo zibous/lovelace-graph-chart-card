@@ -18,36 +18,16 @@
      * @param {*} value
      */
     const isString = (value) => typeof value === "string";
+    const helpers = Chart.helpers;
+    let thegradient = null;
 
     /**
-     * get the rgba color for the gradient
-     * @param {*} color
-     * @param {*} opacity
-     */
-    function getRgbaColor(color, opacity) {
-        opacity = opacity * 0.01;
-        if (color.substr(0, 5) == "rgba(") {
-            const rgba = color.match(/^rgba\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3}),\s*(\d*(?:\.\d+)?)\)$/);
-            return rgba ? `rgba(${rgba[1]},${rgba[2]},${rgba[3]},${opacity})` : color;
-        }
-        if (color.substr(0, 4) == "rgb(") {
-            const rgb = color.match(/^rgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)$/);
-            return rgb ? `rgba(${rgb[1]},${rgb[2]},${rgb[3]},${opacity})` : color;
-        }
-        if (color.charAt(0) === "#") {
-            const hex = color.replace("#", "");
-            if (hex.length === 6 || hex.length === 3) {
-                color = hex.length === 3 ? color + hex : color;
-                const [r, g, b] = color.match(/\w\w/g).map((x) => parseInt(x, 16));
-                return `rgba(${r},${g},${b},${opacity})`;
-            }
-            return color;
-        }
-        return color;
-    }
-    /**
      * The createLinearGradient() method is specified by four parameters
-     * to build the gradient colors for the chart
+     * to build the gradient colors for the chart. Used for charts with
+     * series data like line, bar..
+     * 
+     * based on the https://github.com/kurkle/chartjs-plugin-gradient
+     * 
      * @param {*} ctx
      * @param {*} axis
      * @param {*} area
@@ -60,10 +40,10 @@
                     ? ctx.createLinearGradient(0, area.bottom, 0, area.top)
                     : ctx.createLinearGradient(area.left, 0, area.right, 0);
             if (colors && colors.length == 1) {
-                _gradient.addColorStop(0, getRgbaColor(colors[0], 20));
-                _gradient.addColorStop(0.3, getRgbaColor(colors[0], 40));
-                _gradient.addColorStop(0.5, getRgbaColor(colors[0], 60));
-                _gradient.addColorStop(1, getRgbaColor(colors[0], 100));
+                _gradient.addColorStop(0, helpers.color(color).alpha(0.2).rgbString());
+                _gradient.addColorStop(0.3, helpers.color(color).alpha(0.4).rgbString());
+                _gradient.addColorStop(0.5, helpers.color(color).alpha(0.6).rgbString());
+                _gradient.addColorStop(1, helpers.color(color).alpha(1.0).rgbString());
             } else {
                 const _step = 1 / (colors.length - 1);
                 Object.entries(colors).forEach(([, value], index) => {
@@ -82,36 +62,43 @@
      * @param {*} area
      * @param {*} colors
      */
-    function backgroundGradient(ctx, type, area, colors) {
+    function createSimpleGradient(ctx, type, area, colors) {
         let _gradients = [];
         switch (type.toLowerCase()) {
             case "pie":
+            case "doughnut":
                 if (colors && colors.length && isString(colors[0])) {
                     const centerX = (area.left + area.right) / 2;
                     const centerY = (area.top + area.bottom) / 2;
                     const r = 1; // ??? Math.min((area.right - area.left) / 2, (area.bottom - area.top) / 2);
                     Object.entries(colors).forEach(([, color], index) => {
                         let _piegradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, r);
-                        _piegradient.addColorStop(0, getRgbaColor(color, 40));
-                        _piegradient.addColorStop(1, getRgbaColor(color, 100));
+                        _piegradient.addColorStop(0, helpers.color(color).alpha(0.4).rgbString());
+                        _piegradient.addColorStop(1, helpers.color(color).alpha(1.0).rgbString());
                         _gradients.push(_piegradient);
                     });
                     return _gradients;
                 }
             case "bar":
-                    Object.entries(colors).forEach(([, color], index) => {
-                        if(isString(color)){
-                            let _bargradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
-                            _bargradient.addColorStop(0, getRgbaColor(color, 100));
-                            _bargradient.addColorStop(0.5, getRgbaColor(color, 50));
-                            _bargradient.addColorStop(1, getRgbaColor(color, 25));
-                            _gradients.push(_bargradient);
-                        }else{
-                            _gradients.push(color);
-                        }
-                    });
-                    return _gradients;
+                Object.entries(colors).forEach(([, color], index) => {
+                    if (isString(color)) {
+                        let _bargradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+                        _bargradient.addColorStop(0, helpers.color(color).alpha(1.0).rgbString());
+                        _bargradient.addColorStop(0.5, helpers.color(color).alpha(0.5).rgbString());
+                        _bargradient.addColorStop(1, helpers.color(color).alpha(1.0).rgbString());
+                        _gradients.push(_bargradient);
+                    } else {
+                        _gradients.push(color);
+                    }
+                });
+                return _gradients;
+
+            case "polarArea":
+            case "radar":
+            case "bubble":
+            case "bubble":
             default:
+                // HOW TO DO ??
                 break;
         }
         return colors;
@@ -125,15 +112,17 @@
         beforeDatasetsUpdate(chart) {
             const ctx = chart.ctx;
             const area = chart.chartArea;
+            if (!area) {
+                return null;
+            }
             if (chart.options.gradientcolor && chart.options.gradientcolor.type !== undefined) {
                 // simple graph pie, bar check o.k, create the gradients
-                const colors = chart.data.datasets[0].backgroundColor;
-                chart.data.datasets[0].backgroundColor = backgroundGradient(
-                    ctx,
-                    chart.options.gradientcolor.type,
-                    area,
-                    colors
-                );
+                const _chartType = chart.data.datasets[0].type || chart.config.type;
+                if (thegradient === null) {
+                    const colors = chart.data.datasets[0].backgroundColor;
+                    thegradient = createSimpleGradient(ctx, _chartType, area, colors);
+                    chart.data.datasets[0].backgroundColor = thegradient;
+                }
             } else {
                 // series data, create the gradients for bar, line...
                 chart.data.datasets.forEach((dataset, i) => {
@@ -141,10 +130,10 @@
                     if (gradient && area) {
                         Object.keys(gradient).forEach((prop) => {
                             const { axis, colors } = gradient[prop];
-                            const meta = chart.getDatasetMeta(i);
+                            //const meta = chart.getDatasetMeta(i);
                             if (colors && colors.length) {
-                                const _gradient = createGradient(ctx, axis, area, colors);
-                                if (_gradient) dataset.backgroundColor = _gradient;
+                                thegradient = createGradient(ctx, axis, area, colors);
+                                dataset.backgroundColor = thegradient;
                             }
                         });
                     }

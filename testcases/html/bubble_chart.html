@@ -2,7 +2,7 @@
 <html>
 
 <head>
-	<title>Bar Chart</title>
+	<title>Bubble Chart</title>
 	<script src="assets/chart.js"></script>
 	<script src="assets/utils.js"></script>
 	<script src="assets/chartjs-gradient.js"></script>
@@ -13,7 +13,7 @@
 </head>
 
 <body>
-
+	
 	<div id="container" class="center">
 		<div class="chard-card">
 			<div class="chard-description">
@@ -25,19 +25,22 @@
 
 	<script>
 		var MONTHS = ['Data 1', 'Data 2', 'Data 2'];
-		var color = Chart.helpers.color;
 		var data = {
 			labels: ['Data 1', 'Data 2', 'Data 2'],
 			datasets: [{
 				label: 'Dataset 1',
 				backgroundColor: ['#03a9f4', '#00bcd4', '#8bc34a'],
 				borderWidth: 0,
-				data: [100, 200, 150]
+				data: [
+					{x:100,y:100,r:10},
+					{x:200,y:200,r:10},
+					{x:300,y:300,r:10},
+				]
 			}]
-
 		};
+		
 		var options = {
-			type: 'bar',
+			type: 'bubble',
 			data: data,
 			options: {
 				responsive: true,
@@ -47,22 +50,15 @@
 				},
 				title: {
 					display: true,
-					text: 'Chart.js Bar Chart'
-				},
-				gradientcolor: {
-					type: 'bar',
-					color: true,
-				},
-				plugins: {
-					gradient,
-				},
+					text: 'Chart.js Bubble Chart'
+				}
 			}
 		};
-
+		
 		window.onload = function () {
-			Chart.register(gradient);
+			// Chart.register(gradient);
 			var ctx = document.getElementById('canvas').getContext('2d');
-			window.myBar = new Chart(ctx, options);
+			window.myBubble = new Chart(ctx, options);
 		};
 	</script>
 </body>

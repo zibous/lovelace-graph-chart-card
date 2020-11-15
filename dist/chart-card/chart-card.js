@@ -1021,12 +1021,6 @@ class graphChart {
                     zeroLineWidth: 8,
                 }
             });
-        } else {
-            Chart.defaults.set("scale", {
-                gridLines: {
-                    display: false
-                }
-            });
         }
         // ---------------------------------------------------
         // check secondary axis
@@ -1280,7 +1274,7 @@ import "/hacsfiles/chart-card/chart.js?module";
 const gradient = window["chartjs-gradient"];
 
 console.info(
-    "%c CHARTJS-CARD-DEV %c ".concat("1.0.0", " "),
+    "%c CHARTJS-CARD-DEV %c ".concat("1.0.1", " "),
     "color: white; background: #2980b9; font-weight: 700;",
     "color: white; background: #e74c3c; font-weight: 700;"
 );

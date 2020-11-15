@@ -2,7 +2,7 @@
 <html>
 
 <head>
-	<title>Bar Chart</title>
+	<title>Scatter Chart</title>
 	<script src="assets/chart.js"></script>
 	<script src="assets/utils.js"></script>
 	<script src="assets/chartjs-gradient.js"></script>
@@ -13,7 +13,7 @@
 </head>
 
 <body>
-
+	
 	<div id="container" class="center">
 		<div class="chard-card">
 			<div class="chard-description">
@@ -22,7 +22,6 @@
 			<canvas id="canvas"></canvas>
 		</div>
 	</div>
-
 	<script>
 		var MONTHS = ['Data 1', 'Data 2', 'Data 2'];
 		var color = Chart.helpers.color;
@@ -32,12 +31,16 @@
 				label: 'Dataset 1',
 				backgroundColor: ['#03a9f4', '#00bcd4', '#8bc34a'],
 				borderWidth: 0,
-				data: [100, 200, 150]
+				data: [
+					{x:100,y:100},
+					{x:200,y:200},
+					{x:300,y:300},
+				]
 			}]
 
 		};
 		var options = {
-			type: 'bar',
+			type: 'scatter',
 			data: data,
 			options: {
 				responsive: true,
@@ -47,22 +50,15 @@
 				},
 				title: {
 					display: true,
-					text: 'Chart.js Bar Chart'
-				},
-				gradientcolor: {
-					type: 'bar',
-					color: true,
-				},
-				plugins: {
-					gradient,
-				},
+					text: 'Chart.js Scatter Chart'
+				}
 			}
 		};
-
+		
 		window.onload = function () {
-			Chart.register(gradient);
+			// Chart.register(gradient);
 			var ctx = document.getElementById('canvas').getContext('2d');
-			window.myBar = new Chart(ctx, options);
+			window.myScatter = new Chart(ctx, options);
 		};
 	</script>
 </body>
