@@ -294,70 +294,89 @@ When the `data` array is an array of numbers, the x axis is generally a [categor
             fill: true
 ```
 
-## Additional Info
-
-### Basic
-see: https://www.chartjs.org/samples/latest/charts/line/basic.html
-
 ### Multi axis
+With cartesian axes, it is possible to create multiple X and Y axes. To do so, you can add multiple configuration objects to the xAxes and yAxes properties. When adding new axes, it is important to ensure that you specify the type of the new axes as default types are not used in this case.
+
+In the example below, we are creating two Y axes. We then use the yAxisID property to map the datasets to their correct axes.
+
+![line_2ndaxischart.png](charts/line_2ndaxischart.png)
 see: https://www.chartjs.org/samples/latest/charts/line/multi-axis.html
 
-### Stepped
+### Lovelace - Card Settings
 
-```javascript
-    steppedLine: false      ## 'No Step Interpolation',
-    steppedLine: true       ## 'Step Before Interpolation'
-    steppedLine: 'before'   ## 'Step Before Interpolation'
-    steppedLine: 'after'    ## 'Step After Interpolation'
-    steppedLine: 'middle'   ## 'Step Middle Interpolation'
+```yaml
+
+    ## --------------------------------
+    ## LINE CHART - Multi axis
+    ## --------------------------------
+    - type: 'custom:chart-card'
+      title: 'Energie Produktion / Verbrauch'
+      height: 540
+      chart: 'line'
+      units: 'kWh'
+      icon: 'mdi:home'
+      hours_to_show: 144
+      group_by: 'hour'
+      ignoreZero: true
+      showstate: true
+      showdetails:
+        title: 'Daten Übersicht'
+      options:
+        title:
+          text: 'Produktion vs. Verbrauch'
+        legend:
+          position: top
+        chartArea:
+          backgroundColor: 'rgba(0,0,0,0.5)'
+        scales:
+          x:
+            time:
+              unit: 'hour'
+              locale: 'de-DE'
+            ticks:
+              autoSkip: true
+              maxTicksLimit: 8
+            scaleLabel:
+              display: true
+              labelString: 'Zeitraum'
+          left:
+            scaleLabel:
+              display: true
+              labelString: 'Verbrauch / Überschuss (kWh)'
+          right:
+            scaleLabel:
+              display: true
+              labelString: 'Produktion (kWh)'
+
+      entities:
+        - options:
+            unit: 'kWh'
+            borderWidth: 1
+        - entity: sensor.energy_production
+          name: Produktion
+          unit: 'kWh'
+          yAxisID: 'right'
+          backgroundColor: '#f1c40f'
+          borderColor: '#f1c40f'
+          borderWidth: 1
+          type: 'bar'
+        - entity: sensor.energy_consumption
+          name: Verbrauch
+          unit: 'kWh'
+          yAxisID: 'left'
+          backgroundColor: '#e74c3c'
+          borderColor: '#e74c3c'
+          borderWidth: 0.5
+        - entity: sensor.energy_notused
+          name: Überschuss
+          unit: 'kWh'
+          yAxisID: 'left'
+          backgroundColor: '#8bc34a'
+          borderColor: '#8bc34a'
+          borderWidth: 0.5
+          type: 'bar'
+
 ```
-
-```javascript
-datasets: [{
-    label: 'steppedLine: ' + details.steppedLine,
-    steppedLine: **steppedLine**,
-    data: data,
-    borderColor: details.color,
-    fill: false,
-}]
-```
-
-see: https://www.chartjs.org/samples/latest/charts/line/stepped.html
-
-### Interpolation
-
-```javascript
-    datasets: [{
-        label: 'Cubic interpolation (monotone)',
-        data: datapoints,
-        borderColor:'red',
-        backgroundColor: 'rgba(0, 0, 0, 0)',
-        fill: false,
-
-        cubicInterpolationMode: 'monotone'  ##!!!
-
-    }, {
-        label: 'Cubic interpolation (default)',
-        data: datapoints,
-        borderColor: 'blue',
-        backgroundColor: 'rgba(0, 0, 0, 0)',
-        fill: false,
-
-    }, {
-        label: 'Linear interpolation',
-        data: datapoints,
-        borderColor: 'green',
-        backgroundColor: 'rgba(0, 0, 0, 0)',
-        fill: false,
-
-        lineTension: 0  ##!!!
-
-    }]
-```
-
-see: https://www.chartjs.org/samples/latest/charts/line/interpolation-modes.html
-
-
 
 ## Polar area
 
@@ -617,7 +636,7 @@ Bubble chart datasets need to contain a `data` array of points, each points repr
 
 ##Combo Bar Line Chart
 
-![bar_line_chart.png](charts/bar_line_chart.png)
+![bar_linechart.png](charts/bar_linechart.png)
 
 ### Lovelace - Card Settings
 
@@ -678,6 +697,71 @@ Bubble chart datasets need to contain a `data` array of points, each points repr
 ```
 
 see: https://www.chartjs.org/samples/latest/charts/combo-bar-line.html
+
+<hr>
+
+## Additional Info
+
+### Basic
+see: https://www.chartjs.org/samples/latest/charts/line/basic.html
+
+
+### Stepped
+
+```javascript
+    steppedLine: false      ## 'No Step Interpolation',
+    steppedLine: true       ## 'Step Before Interpolation'
+    steppedLine: 'before'   ## 'Step Before Interpolation'
+    steppedLine: 'after'    ## 'Step After Interpolation'
+    steppedLine: 'middle'   ## 'Step Middle Interpolation'
+```
+
+```javascript
+datasets: [{
+    label: 'steppedLine: ' + details.steppedLine,
+    steppedLine: **steppedLine**,
+    data: data,
+    borderColor: details.color,
+    fill: false,
+}]
+```
+
+see: https://www.chartjs.org/samples/latest/charts/line/stepped.html
+
+### Interpolation
+
+```javascript
+    datasets: [{
+        label: 'Cubic interpolation (monotone)',
+        data: datapoints,
+        borderColor:'red',
+        backgroundColor: 'rgba(0, 0, 0, 0)',
+        fill: false,
+
+        cubicInterpolationMode: 'monotone'  ##!!!
+
+    }, {
+        label: 'Cubic interpolation (default)',
+        data: datapoints,
+        borderColor: 'blue',
+        backgroundColor: 'rgba(0, 0, 0, 0)',
+        fill: false,
+
+    }, {
+        label: 'Linear interpolation',
+        data: datapoints,
+        borderColor: 'green',
+        backgroundColor: 'rgba(0, 0, 0, 0)',
+        fill: false,
+
+        lineTension: 0  ##!!!
+
+    }]
+```
+
+see: https://www.chartjs.org/samples/latest/charts/line/interpolation-modes.html
+
+
 
 <hr>
 

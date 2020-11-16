@@ -1210,7 +1210,7 @@ class graphChart {
                     labels: this.graphData.data.labels,
                     datasets: this.graphData.data.datasets
                 };
-
+                
                 // Chart declaration
                 if (this.ctx && this.chartCurrentConfig.data && this.chartCurrentConfig.options) {
                     if (doUpdate) {
