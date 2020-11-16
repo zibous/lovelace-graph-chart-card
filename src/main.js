@@ -21,6 +21,21 @@ console.info(
     "color: white; background: #e74c3c; font-weight: 700;"
 );
 
+// From weather-card
+// fireEvent(this, "hass-more-info", { entityId: aqiSensor.config });
+const fireEvent = (node, type, detail, options) => {
+    options = options || {};
+    detail = detail === null || detail === undefined ? {} : detail;
+    const event = new Event(type, {
+        bubbles: options.bubbles === undefined ? true : options.bubbles,
+        cancelable: Boolean(options.cancelable),
+        composed: options.composed === undefined ? true : options.composed
+    });
+    event.detail = detail;
+    node.dispatchEvent(event);
+    return event;
+};
+
 /**
  * lovelace card chart graph
  */
@@ -109,7 +124,7 @@ class ChartCard extends HTMLElement {
         try {
             return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
         } catch (err) {
-            console.log("ERROR evaluateCssVariable:", v, "ERROR", err);
+            console.log("ERROR evaluateCssVariable:", v, "ERROR", err.message, err);
         }
         return v;
     }
@@ -173,6 +188,10 @@ class ChartCard extends HTMLElement {
                     ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || this.showGridLines,
                 secondaryAxis: false
             };
+            if (this.theme === undefined) {
+                this.theme = { theme: "system", dark: false };
+                this.themeSettings.theme = this.theme;
+            }
             if (this.theme && this.theme.dark != undefined) {
                 this.themeSettings.theme = this.theme;
             }
@@ -183,7 +202,7 @@ class ChartCard extends HTMLElement {
             if (this._config.options && this._config.options.legend) this.themeSettings.showLegend = true;
             return true;
         } catch (err) {
-            console.err("Fatal Error theme settings");
+            console.error("Fatal Error theme settings", err.message, err);
         }
         return false;
     }
@@ -252,7 +271,8 @@ class ChartCard extends HTMLElement {
             }
             if (this.card_title) {
                 const cardTitle = document.createElement("span");
-                cardTitle.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:top;width:70%";
+                cardTitle.style.cssText =
+                    "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:top;width:70%";
                 cardTitle.innerHTML = this.card_title;
                 cardHeader.appendChild(cardTitle);
             }
@@ -272,13 +292,22 @@ class ChartCard extends HTMLElement {
         // create the show state layer
         if (this.chart_showstate) {
             this.currentData = document.createElement("div");
+            this.currentData.id = this.id + "state-view";
             this.currentData.style.cssText =
                 "position:absolute;top:12px;right:24px;background-color:transparent;z-index:100";
         }
 
         // apply the content and the card
         card.appendChild(content);
-        if (this.chart_showstate && this.currentData) card.appendChild(this.currentData);
+        if (this.chart_showstate && this.currentData) {
+            card.appendChild(this.currentData);
+            this.currentData.addEventListener("click", (event) => {
+                // this._showAttributes('hass-more-info', { entityId: config.entity }, null);
+                // const items = this.currentData.getElementsByTagName("div")
+                console.log(this, this.currentData);
+                
+            });
+        }
         content.appendChild(canvas);
         this.root.appendChild(card);
     }
@@ -351,7 +380,7 @@ class ChartCard extends HTMLElement {
             this.data_ignoreZero = this._config.ignoreZero || false;
 
             this.data_units = this._config.units || "";
-            
+
             // check if we can use showstate
             if (["bubble", "scatter"].includes(this.chart_type.toLocaleLowerCase())) {
                 this.chart_showstate = false;
@@ -365,7 +394,7 @@ class ChartCard extends HTMLElement {
             this._creatHACard();
             this._initialized = true;
         } catch (err) {
-            console.log(err.message, config);
+            console.log(err.message, config, err);
         }
     }
 
@@ -377,9 +406,12 @@ class ChartCard extends HTMLElement {
         if (hass === undefined) return;
         if (!this._initialized) return;
 
-        if (this.theme && this.theme.dark !== hass.selectedTheme.dark) {
+        this._hass = hass;
+
+        this.selectedTheme = hass.selectedTheme || { theme: "system", dark: false };
+        if (this.theme && this.theme.dark !== this.selectedTheme.dark) {
             // theme has changed
-            this.theme = hass.selectedTheme;
+            this.theme = this.selectedTheme;
             this._getThemeSettings();
             if (this.graphChart) {
                 this.themeSettings.theme = this.theme;
@@ -387,9 +419,7 @@ class ChartCard extends HTMLElement {
                 this.graphChart.renderGraph(false);
             }
         }
-
-        this._hass = hass;
-        this.theme = hass.selectedTheme;
+        this.theme = this.selectedTheme;
 
         // TODO : find a better methode ??
         if (this.updateInterval) {

@@ -49,20 +49,22 @@
 					display: true,
 					text: 'Chart.js Bar Chart'
 				},
-				gradientcolor: {
-					type: 'bar',
-					color: true,
-				},
-				plugins: {
-					gradient,
-				},
+				// gradientcolor: {
+				// 	type: 'bar',
+				// 	color: true,
+				// },
+				// plugins: {
+				// 	gradient,
+				// },
 			}
 		};
 
 		window.onload = function () {
-			Chart.register(gradient);
+			// Chart.register(gradient);
 			var ctx = document.getElementById('canvas').getContext('2d');
-			window.myBar = new Chart(ctx, options);
+			const gc = new GraphControl(ctx, options)
+			gc.render()
+			// window.myBar = new Chart(ctx, options);
 		};
 	</script>
 </body>

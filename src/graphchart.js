@@ -6,7 +6,6 @@
  
  * ----------------------------------------------------------*/
 
-
 /**
  * Lovelaces chartjs
  * graph chart wrapper class
@@ -43,7 +42,7 @@ class graphChart {
         this.graphData = {}; // the graph data
         this.setting = config.setting;
         this.chart_ready = false; // boolean chart allready exits
-        this.lastUpdate = null
+        this.lastUpdate = null;
     }
 
     /**
@@ -92,40 +91,116 @@ class graphChart {
     }
 
     /**
+     * chart global settings
+     */
+    _setChartDefaults() {
+        // global default settings
+        try {
+            if (Chart && Chart.defaults) {
+                Chart.defaults.responsive = true;
+                Chart.defaults.maintainAspectRatio = false;
+                Chart.defaults.animation = false;
+                Chart.defaults.locale = this.chart_locale;
+                // global font settings
+                Chart.defaults.defaultFontColor = this.themeSettings.fontColor;
+                Chart.defaults.defaultFontFamily = this.themeSettings.fontFamily;
+                // gridlines
+                if (this.themeSettings && this.themeSettings.showGridLines) {
+                    Chart.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
+                    Chart.defaults.set("scale", {
+                        gridLines: {
+                            display: true,
+                            color: this.themeSettings.gridlineColor,
+                            drawBorder: true,
+                            borderDash: this.themeSettings.borderDash,
+                            zeroLineWidth: 8
+                        }
+                    });
+                }
+                // element settings
+                if (Chart.defaults.elements && Chart.defaults.elements.arc) Chart.defaults.elements.arc.borderWidth = 0;
+                if (Chart.defaults.elements && Chart.defaults.elements.line) {
+                    Chart.defaults.elements.line.fill = false;
+                    Chart.defaults.elements.line.tension = 0;
+                }
+                if (Chart.defaults.elements && Chart.defaults.elements.point) {
+                    Chart.defaults.elements.point.radius = 0;
+                    Chart.defaults.elements.point.borderWidth = 0;
+                    Chart.defaults.elements.point.hoverRadius = 8;
+                }
+                // chart type based
+                switch (this.chart_type.toLowerCase()) {
+                    case "radar":
+                        Chart.defaults.set("controllers.radar.scales.r", {
+                            ticks: {
+                                backdropColor: "transparent"
+                            },
+                            angleLines: {
+                                display: true,
+                                color: this.themeSettings.gridlineColor,
+                                lineWidth: this.themeSettings.gridLineWidth
+                            },
+                            gridLines: {
+                                circular: true
+                            }
+                        });
+                        Chart.defaults.set("scale", {
+                            gridLines: {
+                                display: true,
+                                lineWidth: this.themeSettings.gridLineWidth * 2,
+                                borderDash: [0]
+                            }
+                        });
+                        break;
+                    case "polararea":
+                        Chart.defaults.set("controllers.polarArea.scales.r", {
+                            ticks: {
+                                backdropColor: "transparent"
+                            },
+                            angleLines: {
+                                display: true,
+                                color: this.themeSettings.gridlineColor,
+                                lineWidth: this.themeSettings.gridLineWidth * 2
+                            },
+                            gridLines: {
+                                circular: true,
+                                lineWidth: this.themeSettings.gridLineWidth * 1.6,
+                                borderDash: [0]
+                            }
+                        });
+                        Chart.defaults.set("scale", {
+                            gridLines: {
+                                display: true
+                            }
+                        });
+                        break;
+                    case "scatter":
+                    case "bubble":
+                    case "line":
+                    case "bar":
+                    case "pie":
+                    case "doughnut":
+                    default:
+                        break;
+                }
+            }
+        } catch (err) {
+            console.error("Error Set Chart defaults for", this.chart_type, ": ", err, this.chartCurrentConfig,err,err.message);
+        }
+    }
+
+    /**
      * set the chart option based on the default
      * and the chart settings.
-     * 
+     *
      * this.graphData.config holds the configruation data
      * from the data service
-     * 
+     *
      * @called: from rendergraph and updategraph
      */
     _setChartOptions() {
-
-        // global default settings
-        Chart.defaults.responsive = true;
-        Chart.defaults.maintainAspectRatio = false;
-        Chart.defaults.animation = false;
-        Chart.defaults.locale = this.chart_locale;
-
-        Chart.defaults.defaultFontColor = this.themeSettings.fontColor;
-        Chart.defaults.defaultFontFamily = this.themeSettings.fontFamily;
-
-        Chart.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
-    
-        // element settings
-        if (Chart.defaults.elements && Chart.defaults.elements.arc) Chart.defaults.elements.arc.borderWidth = 0;
-
-        if (Chart.defaults.elements && Chart.defaults.elements.line) {
-            Chart.defaults.elements.line.fill = false;
-            Chart.defaults.elements.line.tension = 0;
-        }
-
-        if (Chart.defaults.elements && Chart.defaults.elements.point) {
-            Chart.defaults.elements.point.radius = 0;
-            Chart.defaults.elements.point.borderWidth = 0;
-            Chart.defaults.elements.point.hoverRadius = 8;
-        }
+        // chart global settings
+        this._setChartDefaults();
 
         // chart default options
         let options = {
@@ -197,13 +272,13 @@ class graphChart {
             spanGaps: true,
             plugins: {}
         };
-        
-        if(this.graphData.config.gradient===true && this.graphData.config.mode ==='simple'){
+
+        if (this.graphData.config.gradient === true && this.graphData.config.mode === "simple") {
             //enable gradient colors for state charts
             options.gradientcolor = {
                 color: true,
-                type: this.chart_type,
-            }
+                type: this.chart_type
+            };
             options.plugins = {
                 gradient
             };
@@ -215,17 +290,7 @@ class graphChart {
                 gradient
             };
         }
-        if (this.themeSettings.showGridLines) {
-            Chart.defaults.set("scale", {
-                gridLines: {
-                    display: true,
-                    color: this.themeSettings.gridlineColor,
-                    drawBorder: true,
-                    borderDash: this.themeSettings.borderDash,
-                    zeroLineWidth: 8,
-                }
-            });
-        }
+
         // ---------------------------------------------------
         // check secondary axis
         // this.graphData.config holds the configruation data
@@ -270,97 +335,37 @@ class graphChart {
                 options.scales = _scaleOptions;
             }
         }
-
-        switch (this.chart_type.toLowerCase()) {
-            case "radar":
-                Chart.defaults.set("controllers.radar.scales.r", {
-                    ticks: {
-                        backdropColor: "transparent"
-                    },
-                    angleLines: {
+        // set the axis label based on the data settings
+        if (this.chart_type.toLowerCase() === "bubble") {
+            let labelX = this.card_config.entities[0].name;
+            labelX += this.card_config.entities[0].unit ? " (" + this.card_config.entities[0].unit + ")" : "";
+            let labelY = this.card_config.entities[1].name;
+            labelY += this.card_config.entities[1].unit ? " (" + this.card_config.entities[1].unit + ")" : "";
+            options.scales = {
+                x: {
+                    id: "x",
+                    scaleLabel: {
                         display: true,
-                        color: this.themeSettings.gridlineColor,
-                        lineWidth: this.themeSettings.gridLineWidth
-                    },
-                    gridLines: {
-                        circular: true
+                        labelString: labelX
                     }
-                });
-                Chart.defaults.set("scale", {
-                    gridLines: {
+                },
+                y: {
+                    id: "y",
+                    scaleLabel: {
                         display: true,
-                        lineWidth: this.themeSettings.gridLineWidth * 2,
-                        borderDash: [0]
+                        labelString: labelY
                     }
-                });
-                break;
-            case "polararea":
-                Chart.defaults.set("controllers.polarArea.scales.r", {
-                    ticks: {
-                        backdropColor: "transparent"
-                    },
-                    angleLines: {
-                        display: true,
-                        color: this.themeSettings.gridlineColor,
-                        lineWidth: this.themeSettings.gridLineWidth * 2
-                    },
-                    gridLines: {
-                        circular: true,
-                        lineWidth: this.themeSettings.gridLineWidth * 1.6,
-                        borderDash: [0]
+                }
+            };
+            // scale bubble (optional)
+            options.elements = {
+                point: {
+                    radius: (context) => {
+                        const value = context.dataset.data[context.dataIndex];
+                        return value._r * 0.5;
                     }
-                });
-                Chart.defaults.set("scale", {
-                    gridLines: {
-                        display: true
-                    }
-                });
-                break;
-            case "bubble":
-                let labelX = this.card_config.entities[0].name;
-                labelX += this.card_config.entities[0].unit ? " (" + this.card_config.entities[0].unit + ")" : "";
-                let labelY = this.card_config.entities[1].name;
-                labelY += this.card_config.entities[1].unit ? " (" + this.card_config.entities[1].unit + ")" : "";
-                options.scales = {
-                    x: {
-                        id: "x",
-                        scaleLabel: {
-                            display: true,
-                            labelString: labelX
-                        }
-                    },
-                    y: {
-                        id: "y",
-                        scaleLabel: {
-                            display: true,
-                            labelString: labelY
-                        }
-                    }
-                };
-                options.elements = {
-                    point: {
-                        radius: (context) => {
-                            const value = context.dataset.data[context.dataIndex];
-                            return value._r * 0.5;
-                        }
-                    }
-                };
-                break;
-            case "scatter":
-                Chart.defaults.elements.point.hoverRadius = 20;
-                options.elements = {
-                    point: {
-                        radius: 15,
-                        hitRadius: 20
-                    }
-                };
-                break;
-            case "line":
-            case "bar":
-            case "pie":
-            case "doughnut":
-            default:
-                break;
+                }
+            };
         }
 
         this.chartCurrentConfig = {
@@ -372,7 +377,9 @@ class graphChart {
             options: {}
         };
 
+        // ---------------------------------------
         // merge default with chart config options
+        // ---------------------------------------
         if (this.chartconfig.options) {
             this.chartCurrentConfig.options = deepMerge(options, this.chartconfig.options);
         } else {
@@ -441,7 +448,7 @@ class graphChart {
                                 }
                             });
                         }
-                        
+
                         if (this.chart) {
                             this.chart.destroy(); // sorry, but ...
                         }
@@ -455,7 +462,7 @@ class graphChart {
                 console.log("Missing settings or data", this.chartCurrentConfig);
             }
         } catch (err) {
-            console.error("Render Graph Error on ", this.chart_type, ": ", err, this.chartCurrentConfig);
+            console.error("Render Graph Error on ", this.chart_type, ": ", err, this.chartCurrentConfig,err, err.message);
         }
     }
 }

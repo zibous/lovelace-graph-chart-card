@@ -108,7 +108,7 @@ class chartData {
                 });
             });
         } catch (err) {
-            console.error("Build Histroydata", err.message);
+            console.error("Build Histroydata", err.message,err);
         }
     }
 
@@ -153,6 +153,9 @@ class chartData {
                 let _options = {
                     label: _attr.name || "",
                     unit: _attr.unit || "",
+                    hoverRadius: 20,
+                    radius: 15,
+                    hitRadius: 20,
                     backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[20 + i],
                     borderColor: _attr.borderColor || COLOR_BUBBLECHAT
                 };
@@ -317,7 +320,7 @@ class chartData {
             }
             return this.graphData;
         } catch (err) {
-            console.error("Current entities GraphData", err.message);
+            console.error("Current entities GraphData", err.message,err);
         }
         return null;
     }
@@ -407,6 +410,9 @@ class chartData {
                 let _options = {
                     label: _attr.name || "",
                     unit: _attr.unit || "",
+                    hoverRadius: 20,
+                    radius: 15,
+                    hitRadius: 20,
                     backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[10 + r],
                     borderColor: _attr.borderColor || DEFAULT_COLORS[10 + r]
                     // TODO: min, max, avg values ???
@@ -543,7 +549,7 @@ class chartData {
                 return this.graphData;
             }
         } catch (err) {
-            console.error("Build History GraphData", err.message);
+            console.error("Build History GraphData",err.message,err);
         }
         return null;
     }
