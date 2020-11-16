@@ -300,6 +300,9 @@ With cartesian axes, it is possible to create multiple X and Y axes. To do so, y
 In the example below, we are creating two Y axes. We then use the yAxisID property to map the datasets to their correct axes.
 
 ![line_2ndaxischart.png](charts/line_2ndaxischart.png)
+
+<br>
+
 see: https://www.chartjs.org/samples/latest/charts/line/multi-axis.html
 
 ### Lovelace - Card Settings
@@ -634,7 +637,7 @@ Bubble chart datasets need to contain a `data` array of points, each points repr
 **Important:** the radius property, `r` is **not** scaled by the chart, it is the raw radius in pixels of the bubble that is drawn on the canvas.
 
 
-##Combo Bar Line Chart
+## Combo Bar Line Chart
 
 ![bar_linechart.png](charts/bar_linechart.png)
 
