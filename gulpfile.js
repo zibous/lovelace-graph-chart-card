@@ -1,5 +1,6 @@
 const gulp = require("gulp");
 const concat = require("gulp-concat");
+var less = require('gulp-less');
 const del = require("del");
 const plumber = require("gulp-plumber");
 const headerComment = require("gulp-header-comment");
@@ -17,6 +18,7 @@ const settings = {
 	],
 	outfile: "chart-card.js",
 	libsfile: "chart.js",
+	lessfiles: "./src/chartjs.less",
 	distfolder: "./dist/chart-card",
 	releasefolder: "./release",
 	hassfolder:
@@ -61,7 +63,7 @@ function onWarning(error) { handleError.call(this, 'warning', error);}
  */
 gulp.task("cleanup", function () {
 	return del([
-		settings.distfolder + "/*.js",
+		settings.distfolder + "/*.*",
 		settings.releasefolder + "/*.zip",
 	]);
 });
@@ -73,7 +75,7 @@ gulp.task("cleanup", function () {
 gulp.task("deploy", function () {
 	if (settings.hassfolder) {
 		return gulp
-			.src(settings.distfolder + "/*.js")
+			.src(settings.distfolder + "/*.*")
 			.pipe(gulp.dest(settings.hassfolder))
 			.on('error', onError);
 	} else {
@@ -105,6 +107,14 @@ gulp.task("build-libs", function () {
 		.on('error', onError);
 });
 
+gulp.task("build-css", function () {
+	return gulp
+		.src(settings.lessfiles)
+		.pipe(less())
+		.pipe(minify())
+		.pipe(gulp.dest(settings.distfolder))
+		.on('error', onError);
+});
 /**
  * build the custom card
  */
@@ -131,7 +141,7 @@ gulp.task("build", function () {
 gulp.task(
 	"default",
 	gulp.series(
-		["cleanup", "build", "build-libs", "release", "deploy"],
+		["cleanup", "build", "build-libs","release", "deploy"],
 		function (done) {
 			// task code here
 			done();

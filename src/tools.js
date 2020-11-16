@@ -93,6 +93,7 @@ function formatDate(d, fmt) {
  * @param {*} locale
  */
 function localDate(d, locale) {
+    if(!d) return ''
     const date = new Date(d);
     return new Intl.DateTimeFormat(locale).format(date);
 }
@@ -103,6 +104,7 @@ function localDate(d, locale) {
  * @param {*} locale
  */
 function localDatetime(d, locale) {
+    if(!d) return ''
     const date = new Date(d);
     return new Intl.DateTimeFormat(locale, {
         year: "numeric",
@@ -115,6 +117,7 @@ function localDatetime(d, locale) {
 }
 
 function timeStampLabel(d, locale) {
+    if(!d) return ''
     const date = new Date(d);
     const datestr = new Intl.DateTimeFormat(locale, {
         month: "short",

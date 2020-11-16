@@ -464,6 +464,7 @@ class chartData {
                 sumval: 0.0,
                 avgval: 0.0,
                 current: _attr.state || 0.0,
+                last_changed: items[0].last_changed || new Date(),
                 mode: "history"
             };
 
