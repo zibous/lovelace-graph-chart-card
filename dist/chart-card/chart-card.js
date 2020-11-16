@@ -94,12 +94,20 @@ function formatDate(d, fmt) {
 //   }
 
 /**
+ * show info
+ * @param {*} args
+ */
+function logInfo(enabled, ...args) {
+    if (enabled) console.info(new Date().toISOString(), ...args);
+}
+
+/**
  * get the date based on the locale
  * @param {*} d
  * @param {*} locale
  */
 function localDate(d, locale) {
-    if(!d) return ''
+    if (!d) return "";
     const date = new Date(d);
     return new Intl.DateTimeFormat(locale).format(date);
 }
@@ -110,7 +118,7 @@ function localDate(d, locale) {
  * @param {*} locale
  */
 function localDatetime(d, locale) {
-    if(!d) return ''
+    if (!d) return "";
     const date = new Date(d);
     return new Intl.DateTimeFormat(locale, {
         year: "numeric",
@@ -123,7 +131,7 @@ function localDatetime(d, locale) {
 }
 
 function timeStampLabel(d, locale) {
-    if(!d) return ''
+    if (!d) return "";
     const date = new Date(d);
     const datestr = new Intl.DateTimeFormat(locale, {
         month: "short",
@@ -153,7 +161,6 @@ function reject(obj, keys) {
 function num(n) {
     return n === parseInt(n) ? parseInt(n) : parseFloat(n).toFixed(2);
 }
-
 
 /**
  * Deep Merge
@@ -274,6 +281,14 @@ class chartData {
         this.settings = config.settings;
         this.data_aggregate = config.aggregate || "last";
         this.graphData = {};
+    }
+
+     /**
+     * show info 
+     * @param {*} args 
+     */
+    _logInfo(...args) {
+        if (this.loginfo) console.info(new Date().toISOString(), ...args);
     }
 
     /**
@@ -851,6 +866,7 @@ class graphChart {
         this.lastUpdate = null;
     }
 
+    
     /**
      * change the theme settings
      * @param {*} options
@@ -1361,7 +1377,6 @@ class ChartCard extends HTMLElement {
         this.entityNames = [];
 
         // data service
-        this.updateInterval = 60;
         this.data_hoursToShow = 0;
         this.data_group_by = "day";
         this.data_dateGroup = null;
@@ -1372,6 +1387,7 @@ class ChartCard extends HTMLElement {
         this.skipRender = false;
         this.lastUpdate = null;
         this.ready = false;
+        this.loginfo_enabled = true;
         this._initialized = false;
     }
 
@@ -1576,7 +1592,7 @@ class ChartCard extends HTMLElement {
         // detail view layer
         if (this.chart_showdetails) {
             this.detailData = document.createElement("div");
-            this.detailData.style.cssText = "padding:12px 50px;border-top:1px dotted" // height:" + this.card_height + "px;";
+            this.detailData.style.cssText = "padding:12px 50px;border-top:1px dotted"; // height:" + this.card_height + "px;";
             this.detailData.id = this.id + "detail-info";
             this.currentData.setAttribute("data-view", this.detailData.id);
         }
@@ -1622,6 +1638,7 @@ class ChartCard extends HTMLElement {
 
             // get the config from the lovelace
             this._config = config;
+            this.loginfo_enabled = this._config.loginfo || true;
 
             // ha-card settings
             this.card_title = this._config.title || "";
@@ -1660,7 +1677,6 @@ class ChartCard extends HTMLElement {
             this.chart_locale = this._config.locale || "de-DE";
 
             // setting for data handling
-            this.updateInterval = this._config.update || 60;
             this.data_hoursToShow = this._config.hours_to_show || 0;
             this.data_group_by = this._config.group_by || "day";
             this.data_dateGroup = this._dateFormatPattern(this.data_group_by);
@@ -1709,18 +1725,22 @@ class ChartCard extends HTMLElement {
         }
         this.theme = this.selectedTheme;
 
-        // TODO : find a better methode ??
-        if (this.updateInterval) {
-            let endTime = new Date();
-            let elapsed = (endTime.getTime() - this.startTime.getTime()) / 1000;
-            if (elapsed >= this.updateInterval) {
-                // refresh and update the graph
-                this._getThemeSettings();
-                this.graphChart.setThemeSettings(this.themeSettings);
-                this._getHistory();
-                this.startTime = new Date();
-                if (this.skipRender) return;
+        // check if we has changes
+        if (this.hassEntities && this.hassEntities.length) {
+            const newItems = this.hassEntities.filter((item) => {
+                return item.last_changed !== hass.states[item.entity_id].last_changed;
+            });
+            this.hasChanged = Boolean(newItems.length);
+            if (this.hasChanged) {
+                logInfo(this.loginfo_enabled,this.card_title, "Entities has changed !", newItems);
             }
+        }
+
+        if (this.hasChanged) {
+            // refresh and update the graph
+            this._getThemeSettings();
+            this.graphChart.setThemeSettings(this.themeSettings);
+            this._getHistory();
         }
 
         if (!this.graphChart) {
@@ -1729,20 +1749,6 @@ class ChartCard extends HTMLElement {
             this.themeSettings.theme = this.theme;
             this._setChartConfig();
         }
-
-        // check if the Entities has changed
-        if (this.skipRender && this.hassEntities && this.hassEntities.length) {
-            let changed = false;
-            this.hassEntities.forEach((entity) => {
-                changed = changed || Boolean(this.hass && hass.states[entity] !== this._hass.states[entity]);
-            });
-            if (changed) {
-                console.log("NEW DATA !!!!");
-                this.skipRender = false;
-            }
-        }
-
-        if (this.skipRender) return;
 
         // An object list containing the states of all entities in Home Assistant.
         // The key is the entity_id, the value is the state object.
@@ -1753,6 +1759,8 @@ class ChartCard extends HTMLElement {
         // check if we have valid entities and skip if we can'nt find the
         // entities in the hass entities list.
         if (!this.hassEntities || this.hassEntities.length === 0) return;
+
+        if (this.skipRender) return;
 
         // all entity data
         this.entityData = this.hassEntities.map((x) => (x === undefined ? 0 : x.state));
@@ -1879,7 +1887,9 @@ class ChartCard extends HTMLElement {
                 _html = [];
                 if (this.chart_showdetails.title) _html.push("<h2>" + this.chart_showdetails.title + "</h2>");
 
-                _html.push('<div><table style="margin: 0 auto;font-size:0.95em;font-weight:300;border-spacing:10px;border-collapse: separate;table-layout: fixed;">');
+                _html.push(
+                    '<div><table style="margin: 0 auto;font-size:0.95em;font-weight:300;border-spacing:10px;border-collapse: separate;table-layout: fixed;">'
+                );
                 _html.push('<tbody><tr style="text-align:left;font-size:1.0em">');
                 _html.push('<th width="30%"><b>Statistics</b></th>');
                 _html.push('<th style="padding: 0 24px;">Min</th>');
@@ -1890,7 +1900,9 @@ class ChartCard extends HTMLElement {
                 for (const item of data) {
                     _html.push("<tr>");
                     _html.push(
-                        '<td><span style="font-size:4em;color:'+item.color+';vertical-align:top;padding-right:8px">&bull;</span>' +
+                        '<td><span style="font-size:4em;color:' +
+                            item.color +
+                            ';vertical-align:top;padding-right:8px">&bull;</span>' +
                             item.name +
                             "</td>"
                     );

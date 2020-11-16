@@ -49,7 +49,6 @@ I'm still looking for help and would be happy if someone would get in touch to h
 | icon          | string   |             | Set a custom icon from any of the available mdi icons.   |
 | height         | integer  | 240         | Set a custom height of the card.  |
 | chart          | string   | bar          | chart type: `bar`, `horizontalBar`, `line`, `pie` , `doughnut`, `polarArea`, `radar`, `bubble`,`scatter`  |
-| updateInterval        |  integer        | 60            | Specify a custom update interval of the history data (in seconds), instead of on every state change. |
 | hours_to_show          | integer   | 0          | Specify how many hours of history the graph should present. If not set (hours_to_show===0) only the current state values are used for the chart.  |
 | aggregate          | string   | day          | Specify aggregate function used to calculate point/bar in the graph. |
 | group_by          | string   | day          | Specify type of grouping of data by date or hour. If not set, all data from the entity will be used for the chart.  |

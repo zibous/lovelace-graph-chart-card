@@ -88,12 +88,20 @@ function formatDate(d, fmt) {
 //   }
 
 /**
+ * show info
+ * @param {*} args
+ */
+function logInfo(enabled, ...args) {
+    if (enabled) console.info(new Date().toISOString(), ...args);
+}
+
+/**
  * get the date based on the locale
  * @param {*} d
  * @param {*} locale
  */
 function localDate(d, locale) {
-    if(!d) return ''
+    if (!d) return "";
     const date = new Date(d);
     return new Intl.DateTimeFormat(locale).format(date);
 }
@@ -104,7 +112,7 @@ function localDate(d, locale) {
  * @param {*} locale
  */
 function localDatetime(d, locale) {
-    if(!d) return ''
+    if (!d) return "";
     const date = new Date(d);
     return new Intl.DateTimeFormat(locale, {
         year: "numeric",
@@ -117,7 +125,7 @@ function localDatetime(d, locale) {
 }
 
 function timeStampLabel(d, locale) {
-    if(!d) return ''
+    if (!d) return "";
     const date = new Date(d);
     const datestr = new Intl.DateTimeFormat(locale, {
         month: "short",
@@ -147,7 +155,6 @@ function reject(obj, keys) {
 function num(n) {
     return n === parseInt(n) ? parseInt(n) : parseFloat(n).toFixed(2);
 }
-
 
 /**
  * Deep Merge

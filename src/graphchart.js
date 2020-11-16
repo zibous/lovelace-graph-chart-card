@@ -45,6 +45,7 @@ class graphChart {
         this.lastUpdate = null;
     }
 
+    
     /**
      * change the theme settings
      * @param {*} options

@@ -28,6 +28,14 @@ class chartData {
         this.graphData = {};
     }
 
+     /**
+     * show info 
+     * @param {*} args 
+     */
+    _logInfo(...args) {
+        if (this.loginfo) console.info(new Date().toISOString(), ...args);
+    }
+
     /**
      * build the grouped historydata
      *
