@@ -1,6 +1,6 @@
 /** --------------------------------------------------------------------
 
-  Custom Chart Card
+  Custom Chart Card 
   based on https://github.com/sdelliot/pie-chart-card
 
   chartjs:    https://www.chartjs.org/
@@ -9,7 +9,7 @@
 /** -------------------------------------------------------------------*/
 
 // Chart.js v3.0.0-beta.4 and used plugins, production use min.js
-import "/hacsfiles/chart-card/chart.js?module";
+import "/hacsfiles/chart-card/chart.js?v=1.0.2&module";
 
 // gradient
 // const gradient = window["chartjs-plugin-gradient"];
@@ -186,10 +186,12 @@ class ChartCard extends HTMLElement {
                     this.themeSettings.showLegend,
                 showGridLines:
                     ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || this.showGridLines,
-                secondaryAxis: false
+                secondaryAxis: false,
+                themecolor : this._evaluateCssVariable("--chartjs-theme") || false,
             };
+            // get the theme from the hass or private theme settings
             if (this.theme === undefined) {
-                this.theme = { theme: "system", dark: false };
+                this.theme = { theme: "system", dark: this.themeSettings.themecolor ==='dark' || false };
                 this.themeSettings.theme = this.theme;
             }
             if (this.theme && this.theme.dark != undefined) {

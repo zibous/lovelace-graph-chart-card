@@ -96,6 +96,7 @@ The following theme variables can be set in your HA theme to customize the appea
 ####  theme-settings
 ```yaml
  # Chart.js colors
+  chartjs-theme: 'dark'
   chartjs-text-fontColor: '#2F3846'
   chartjs-fontFamily: "Quicksand, Roboto, 'Open Sans','Rubik',sans-serif"
   chartjs-gridline-color: '#EAEEF1'

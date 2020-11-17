@@ -21,14 +21,16 @@ Home Assistant:
   primary-color: '#03a9f4'
   
   # Chart.js  colors
-  chartjs-text-fontColor: '#2F3846'
-  chartjs-fontFamily: "Quicksand, Roboto, 'Open Sans','Rubik',sans-serif"
-  chartjs-gridline-color: '#EAEEF1'
-  chartjs-zero-gridline-color: '#C9CBD0'
-  chartjs-tooltip-background: '#EAEEF1'
-  chartjs-text-fontcolor: '#292F33'
+  # chartjs-theme: 'light'
+  # chartjs-text-fontColor: '#2F3846'
+  # chartjs-fontFamily: "Quicksand, Roboto, 'Open Sans','Rubik',sans-serif"
+  # chartjs-gridline-color: '#EAEEF1'
+  # chartjs-zero-gridline-color: '#C9CBD0'
+  # chartjs-tooltip-background: '#EAEEF1'
+  # chartjs-text-fontcolor: '#292F33'
 
   # Chart.js  dark theme colors
+  chartjs-theme: 'dark'
   chartjs-text-fontColor: '#ecf0f1'
   chartjs-fontFamily: "Quicksand, Roboto, 'Open Sans','Rubik',sans-serif"
   chartjs-gridline-color: '#d3d7cf'

@@ -45,7 +45,6 @@ class graphChart {
         this.lastUpdate = null;
     }
 
-    
     /**
      * change the theme settings
      * @param {*} options
@@ -108,15 +107,17 @@ class graphChart {
                 // gridlines
                 if (this.themeSettings && this.themeSettings.showGridLines) {
                     Chart.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
-                    Chart.defaults.set("scale", {
-                        gridLines: {
-                            display: true,
-                            color: this.themeSettings.gridlineColor,
-                            drawBorder: true,
-                            borderDash: this.themeSettings.borderDash,
-                            zeroLineWidth: 8
-                        }
-                    });
+                    if (Chart.defaults.set) {
+                        Chart.defaults.set("scale", {
+                            gridLines: {
+                                display: true,
+                                color: this.themeSettings.gridlineColor,
+                                drawBorder: true,
+                                borderDash: this.themeSettings.borderDash,
+                                zeroLineWidth: 8
+                            }
+                        });
+                    }
                 }
                 // element settings
                 if (Chart.defaults.elements && Chart.defaults.elements.arc) Chart.defaults.elements.arc.borderWidth = 0;
@@ -130,63 +131,74 @@ class graphChart {
                     Chart.defaults.elements.point.hoverRadius = 8;
                 }
                 // chart type based
-                switch (this.chart_type.toLowerCase()) {
-                    case "radar":
-                        Chart.defaults.set("controllers.radar.scales.r", {
-                            ticks: {
-                                backdropColor: "transparent"
-                            },
-                            angleLines: {
-                                display: true,
-                                color: this.themeSettings.gridlineColor,
-                                lineWidth: this.themeSettings.gridLineWidth
-                            },
-                            gridLines: {
-                                circular: true
-                            }
-                        });
-                        Chart.defaults.set("scale", {
-                            gridLines: {
-                                display: true,
-                                lineWidth: this.themeSettings.gridLineWidth * 2,
-                                borderDash: [0]
-                            }
-                        });
-                        break;
-                    case "polararea":
-                        Chart.defaults.set("controllers.polarArea.scales.r", {
-                            ticks: {
-                                backdropColor: "transparent"
-                            },
-                            angleLines: {
-                                display: true,
-                                color: this.themeSettings.gridlineColor,
-                                lineWidth: this.themeSettings.gridLineWidth * 2
-                            },
-                            gridLines: {
-                                circular: true,
-                                lineWidth: this.themeSettings.gridLineWidth * 1.6,
-                                borderDash: [0]
-                            }
-                        });
-                        Chart.defaults.set("scale", {
-                            gridLines: {
-                                display: true
-                            }
-                        });
-                        break;
-                    case "scatter":
-                    case "bubble":
-                    case "line":
-                    case "bar":
-                    case "pie":
-                    case "doughnut":
-                    default:
-                        break;
+                if (Chart.defaults.set) {
+                    switch (this.chart_type.toLowerCase()) {
+                        case "radar":
+                            Chart.defaults.set("controllers.radar.scales.r", {
+                                ticks: {
+                                    backdropColor: "transparent"
+                                },
+                                angleLines: {
+                                    display: true,
+                                    color: this.themeSettings.gridlineColor,
+                                    lineWidth: this.themeSettings.gridLineWidth
+                                },
+                                gridLines: {
+                                    circular: true
+                                }
+                            });
+                            Chart.defaults.set("scale", {
+                                gridLines: {
+                                    display: true,
+                                    lineWidth: this.themeSettings.gridLineWidth * 2,
+                                    borderDash: [0]
+                                }
+                            });
+
+                            break;
+                        case "polararea":
+                            Chart.defaults.set("controllers.polarArea.scales.r", {
+                                ticks: {
+                                    backdropColor: "transparent"
+                                },
+                                angleLines: {
+                                    display: true,
+                                    color: this.themeSettings.gridlineColor,
+                                    lineWidth: this.themeSettings.gridLineWidth * 2
+                                },
+                                gridLines: {
+                                    circular: true,
+                                    lineWidth: this.themeSettings.gridLineWidth * 1.6,
+                                    borderDash: [0]
+                                }
+                            });
+                            Chart.defaults.set("scale", {
+                                gridLines: {
+                                    display: true
+                                }
+                            });
+                            break;
+                        case "scatter":
+                        case "bubble":
+                        case "line":
+                        case "bar":
+                        case "pie":
+                        case "doughnut":
+                        default:
+                            break;
+                    }
                 }
             }
         } catch (err) {
-            console.error("Error Set Chart defaults for", this.chart_type, ": ", err, this.chartCurrentConfig,err,err.message);
+            console.error(
+                "Error Set Chart defaults for",
+                this.chart_type,
+                ": ",
+                err,
+                this.chartCurrentConfig,
+                err,
+                err.message
+            );
         }
     }
 
@@ -405,7 +417,7 @@ class graphChart {
                     labels: this.graphData.data.labels,
                     datasets: this.graphData.data.datasets
                 };
-                
+
                 // Chart declaration
                 if (this.ctx && this.chartCurrentConfig.data && this.chartCurrentConfig.options) {
                     if (doUpdate) {
@@ -463,7 +475,15 @@ class graphChart {
                 console.log("Missing settings or data", this.chartCurrentConfig);
             }
         } catch (err) {
-            console.error("Render Graph Error on ", this.chart_type, ": ", err, this.chartCurrentConfig,err, err.message);
+            console.error(
+                "Render Graph Error on ",
+                this.chart_type,
+                ": ",
+                err,
+                this.chartCurrentConfig,
+                err,
+                err.message
+            );
         }
     }
 }
