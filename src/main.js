@@ -349,7 +349,7 @@ class ChartCard extends HTMLElement {
 
             // get the config from the lovelace
             this._config = config;
-            this.loginfo_enabled = this._config.loginfo || true;
+            this.loginfo_enabled = this._config.loginfo || false;
 
             // ha-card settings
             this.card_title = this._config.title || "";
