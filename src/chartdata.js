@@ -24,6 +24,7 @@ class chartData {
         this.stateHistories = config.stateHistories;
         this.data_dateGroup = config.data_dateGroup || "%Y-%M-%d %H:00:00";
         this.settings = config.settings;
+        this.chart_locale = config.chart_locale;
         this.data_aggregate = config.aggregate || "last";
         this.graphData = {};
     }
@@ -525,7 +526,7 @@ class chartData {
             _graphData.data.labels = items.map((l) => l.x);
             _graphData.config.labelType = this.data_dateGroup === "%Y-%M-%d %H:00:00" ? "timestamp" : "default";
             if (_graphData.config.labelType === "timestamp") {
-                _graphData.data.labels = items.map((l) => timeStampLabel(l.x));
+                _graphData.data.labels = items.map((l) => timeStampLabel(l.x, this.chart_locale));
             }
             _graphData.data.datasets.push(_options);
             _graphData.config.series++;

@@ -6,7 +6,7 @@ Chart.js card `Version 1.0.2` for Home Assistant -  Visualize your data in 8 dif
 I'm still looking for help and would be happy if someone would get in touch to help me complete and improve (data processing, display / color selection charts ...) the graph-chartjs-card.
 
 
-![graph-chartjs-card.png](docs/graph-chartjs-card.png)
+![charts2.png](docs/charts/charts.png)
 
 
 ## Requirements

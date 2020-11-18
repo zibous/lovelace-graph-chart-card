@@ -13,7 +13,6 @@
  */
 function formatDate(d, fmt) {
     const date = new Date(d);
-
     function pad(value) {
         return value.toString().length < 2 ? "0" + value : value;
     }
@@ -102,7 +101,9 @@ function logInfo(enabled, ...args) {
  */
 function localDate(d, locale) {
     if (!d) return "";
-    const date = new Date(d);
+    if (!locale) locale = navigator.language || navigator.userLanguage || "en-GB";
+    const date = new Date(d.replace(/-/g, "/")); // bugfix Safari
+    if(isNaN(date)) return d;
     return new Intl.DateTimeFormat(locale).format(date);
 }
 
@@ -113,7 +114,9 @@ function localDate(d, locale) {
  */
 function localDatetime(d, locale) {
     if (!d) return "";
+    if (!locale) locale = navigator.language || navigator.userLanguage || "en-GB";
     const date = new Date(d);
+    if(isNaN(date)) return d;
     return new Intl.DateTimeFormat(locale, {
         year: "numeric",
         month: "numeric",
@@ -126,7 +129,9 @@ function localDatetime(d, locale) {
 
 function timeStampLabel(d, locale) {
     if (!d) return "";
-    const date = new Date(d);
+    if (!locale) locale = navigator.language || navigator.userLanguage || "en-GB";
+    const date = new Date(d.replace(/-/g, "/")); // bugfix Safari
+    if(isNaN(date)) return d;
     const datestr = new Intl.DateTimeFormat(locale, {
         month: "short",
         day: "numeric",

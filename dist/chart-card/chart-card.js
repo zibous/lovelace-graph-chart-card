@@ -19,7 +19,6 @@
  */
 function formatDate(d, fmt) {
     const date = new Date(d);
-
     function pad(value) {
         return value.toString().length < 2 ? "0" + value : value;
     }
@@ -108,7 +107,9 @@ function logInfo(enabled, ...args) {
  */
 function localDate(d, locale) {
     if (!d) return "";
-    const date = new Date(d);
+    if (!locale) locale = navigator.language || navigator.userLanguage || "en-GB";
+    const date = new Date(d.replace(/-/g, "/")); // bugfix Safari
+    if(isNaN(date)) return d;
     return new Intl.DateTimeFormat(locale).format(date);
 }
 
@@ -119,7 +120,9 @@ function localDate(d, locale) {
  */
 function localDatetime(d, locale) {
     if (!d) return "";
+    if (!locale) locale = navigator.language || navigator.userLanguage || "en-GB";
     const date = new Date(d);
+    if(isNaN(date)) return d;
     return new Intl.DateTimeFormat(locale, {
         year: "numeric",
         month: "numeric",
@@ -132,7 +135,9 @@ function localDatetime(d, locale) {
 
 function timeStampLabel(d, locale) {
     if (!d) return "";
-    const date = new Date(d);
+    if (!locale) locale = navigator.language || navigator.userLanguage || "en-GB";
+    const date = new Date(d.replace(/-/g, "/")); // bugfix Safari
+    if(isNaN(date)) return d;
     const datestr = new Intl.DateTimeFormat(locale, {
         month: "short",
         day: "numeric",
@@ -279,6 +284,7 @@ class chartData {
         this.stateHistories = config.stateHistories;
         this.data_dateGroup = config.data_dateGroup || "%Y-%M-%d %H:00:00";
         this.settings = config.settings;
+        this.chart_locale = config.chart_locale;
         this.data_aggregate = config.aggregate || "last";
         this.graphData = {};
     }
@@ -780,7 +786,7 @@ class chartData {
             _graphData.data.labels = items.map((l) => l.x);
             _graphData.config.labelType = this.data_dateGroup === "%Y-%M-%d %H:00:00" ? "timestamp" : "default";
             if (_graphData.config.labelType === "timestamp") {
-                _graphData.data.labels = items.map((l) => timeStampLabel(l.x));
+                _graphData.data.labels = items.map((l) => timeStampLabel(l.x, this.chart_locale));
             }
             _graphData.data.datasets.push(_options);
             _graphData.config.series++;
@@ -1498,11 +1504,11 @@ class ChartCard extends HTMLElement {
                 showGridLines:
                     ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || this.showGridLines,
                 secondaryAxis: false,
-                themecolor : this._evaluateCssVariable("--chartjs-theme") || false,
+                themecolor: this._evaluateCssVariable("--chartjs-theme") || false
             };
             // get the theme from the hass or private theme settings
             if (this.theme === undefined) {
-                this.theme = { theme: "system", dark: this.themeSettings.themecolor ==='dark' || false };
+                this.theme = { theme: "system", dark: this.themeSettings.themecolor === "dark" || false };
                 this.themeSettings.theme = this.theme;
             }
             if (this.theme && this.theme.dark != undefined) {
@@ -1638,6 +1644,22 @@ class ChartCard extends HTMLElement {
     }
 
     /**
+     * method returns an array containing the canonical locale names.
+     * Duplicates will be omitted and elements will be
+     * validated as structurally valid language tags.
+     * @param {string} locale
+     */
+    _checkLocale(locale) {
+        try {
+            Intl.getCanonicalLocales(locale);
+        } catch (err) {
+            console.error(" RangeError: invalid language tag:", _this.config);
+            return navigator.language || navigator.userLanguage;
+        }
+        return locale;
+    }
+
+    /**
      * Home Assistant will call setConfig(config) when the configuration changes (rare).
      * If you throw an exception if the configuration is invalid,
      * Lovelace will render an error card to notify the user.
@@ -1696,7 +1718,10 @@ class ChartCard extends HTMLElement {
             if (this.chart_type.toLowerCase() === "horizontalbar") {
                 this.chart_type = "bar";
             }
-            this.chart_locale = this._config.locale || "de-DE";
+
+            const _browserlocale = navigator.language || navigator.userLanguage || "en-GB";
+            this.chart_locale = this._config.locale || _browserlocale;
+            this._checkLocale();
 
             // setting for data handling
             this.data_hoursToShow = this._config.hours_to_show || 0;
@@ -1754,7 +1779,7 @@ class ChartCard extends HTMLElement {
             });
             this.hasChanged = Boolean(newItems.length);
             if (this.hasChanged) {
-                logInfo(this.loginfo_enabled,this.card_title, "Entities has changed !", newItems);
+                logInfo(this.loginfo_enabled, this.card_title, "Entities has changed !", newItems);
             }
         }
 
@@ -1908,7 +1933,6 @@ class ChartCard extends HTMLElement {
             if (this.detailData) {
                 _html = [];
                 if (this.chart_showdetails.title) _html.push("<h2>" + this.chart_showdetails.title + "</h2>");
-
                 _html.push(
                     '<div><table style="margin: 0 auto;font-size:0.95em;font-weight:300;border-spacing:10px;border-collapse: separate;table-layout: fixed;">'
                 );
@@ -1931,7 +1955,7 @@ class ChartCard extends HTMLElement {
                     _html.push("<td align='right'>" + item.min + " " + item.unit + "</td>");
                     _html.push("<td align='right'>" + item.max + " " + item.unit + "</td>");
                     _html.push("<td align='right'>" + item.current + " " + item.unit + "</td>");
-                    _html.push("<td>" + localDatetime(item.timestamp, this.locale) + "</span>");
+                    _html.push("<td>" + localDatetime(item.timestamp, this.chart_locale) + "</span>");
                     _html.push("</tr></tbody>");
                 }
                 _html.push("</table></div><br/>");
@@ -1951,6 +1975,7 @@ class ChartCard extends HTMLElement {
         if ((mode === 1 && !stateHistories) || (stateHistories && !stateHistories.length)) {
             return null;
         }
+
         // start get chart data
         const _chartData = new chartData({
             chart_type: this.chart_type,
@@ -1963,6 +1988,7 @@ class ChartCard extends HTMLElement {
             data_dateGroup: this.data_dateGroup,
             data_aggregate: this.data_aggregate,
             setting: this._config,
+            chart_locale: this.chart_locale,
             lastUpdate: this.lastUpdate
         });
 
