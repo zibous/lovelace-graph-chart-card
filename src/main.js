@@ -14,9 +14,10 @@ import "/hacsfiles/chart-card/chart.js?v=1.0.2&module";
 // gradient
 // const gradient = window["chartjs-plugin-gradient"];
 const gradient = window["chartjs-gradient"];
+const vsinVersion = '1.0.3';
 
 console.info(
-    "%c CHARTJS-CARD-DEV %c ".concat("1.0.2", " "),
+    "%c CHARTJS-CARD-DEV %c ".concat(vsinVersion, " "),
     "color: white; background: #2980b9; font-weight: 700;",
     "color: white; background: #e74c3c; font-weight: 700;"
 );
@@ -190,7 +191,7 @@ class ChartCard extends HTMLElement {
                 themecolor: this._evaluateCssVariable("--chartjs-theme") || false
             };
             // get the theme from the hass or private theme settings
-            if (this.theme === undefined) {
+            if (this.theme === undefined || this.theme.dark === undefined) {
                 this.theme = { theme: "system", dark: this.themeSettings.themecolor === "dark" || false };
                 this.themeSettings.theme = this.theme;
             }

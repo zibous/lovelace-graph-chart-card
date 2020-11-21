@@ -289,9 +289,9 @@ class chartData {
         this.graphData = {};
     }
 
-     /**
-     * show info 
-     * @param {*} args 
+    /**
+     * show info
+     * @param {*} args
      */
     _logInfo(...args) {
         if (this.loginfo) console.info(new Date().toISOString(), ...args);
@@ -309,6 +309,8 @@ class chartData {
      */
     _getGroupHistoryData(array, fmt, aggr) {
         try {
+            if (!array) return;
+            if (array && !array.length) return;
             let groups = {};
             array.forEach(function (o) {
                 let group = formatDate(o.last_changed, fmt);
@@ -377,7 +379,7 @@ class chartData {
                 });
             });
         } catch (err) {
-            console.error("Build Histroydata", err.message,err);
+            console.error("Build Histroydata", err.message, err);
         }
     }
 
@@ -589,7 +591,7 @@ class chartData {
             }
             return this.graphData;
         } catch (err) {
-            console.error("Current entities GraphData", err.message,err);
+            console.error("Current entities GraphData", err.message, err);
         }
         return null;
     }
@@ -600,6 +602,8 @@ class chartData {
     getSeriesData() {
         let _seriesData = [];
         for (const list of this.stateHistories) {
+            if (list.length === 0) continue;
+            if (!list[0].state) continue;
             const items = this._getGroupHistoryData(list, this.data_dateGroup, this.data_aggregate);
             _seriesData.push(items);
         }
@@ -710,9 +714,12 @@ class chartData {
         let _graphData = this.getDefaultGraphData();
         _graphData.config.options.fill = false;
         _graphData.config.mode = "history";
-        
+
         // all for other carts
         for (const list of this.stateHistories) {
+            if (list.length === 0) continue;
+            if (!list[0].state) continue;
+
             // interate throw all entities data
             const items = this._getGroupHistoryData(list, this.data_dateGroup, this.data_aggregate);
 
@@ -749,15 +756,15 @@ class chartData {
 
             // simple merge the entity options
             if (_attr) _options = { ..._options, ..._attr };
-            
+
             if (_attr.fill !== undefined) {
                 _graphData.config.options.fill = _attr.fill;
-            }else{
-                _attr.fill = ['bar','horizontalbar'].includes(this.card_config.chart.toLowerCase())
+            } else {
+                _attr.fill = ["bar", "horizontalbar"].includes(this.card_config.chart.toLowerCase());
             }
 
             if (_attr.fill && _attr.gradient && _attr.gradient.colors) {
-                const _axis = _options.indexAxis === "y"?"x":"y"
+                const _axis = _options.indexAxis === "y" ? "x" : "y";
                 _options.gradient = {
                     backgroundColor: {
                         axis: _axis,
@@ -819,7 +826,7 @@ class chartData {
                 return this.graphData;
             }
         } catch (err) {
-            console.error("Build History GraphData",err.message,err);
+            console.error("Build History GraphData", err.message, err);
         }
         return null;
     }
@@ -1331,9 +1338,10 @@ import "/hacsfiles/chart-card/chart.js?v=1.0.2&module";
 // gradient
 // const gradient = window["chartjs-plugin-gradient"];
 const gradient = window["chartjs-gradient"];
+const vsinVersion = '1.0.3';
 
 console.info(
-    "%c CHARTJS-CARD-DEV %c ".concat("1.0.2", " "),
+    "%c CHARTJS-CARD-DEV %c ".concat(vsinVersion, " "),
     "color: white; background: #2980b9; font-weight: 700;",
     "color: white; background: #e74c3c; font-weight: 700;"
 );
@@ -1507,7 +1515,7 @@ class ChartCard extends HTMLElement {
                 themecolor: this._evaluateCssVariable("--chartjs-theme") || false
             };
             // get the theme from the hass or private theme settings
-            if (this.theme === undefined) {
+            if (this.theme === undefined || this.theme.dark === undefined) {
                 this.theme = { theme: "system", dark: this.themeSettings.themecolor === "dark" || false };
                 this.themeSettings.theme = this.theme;
             }
