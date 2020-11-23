@@ -95,6 +95,9 @@ class graphChart {
      */
     _setChartDefaults() {
         // global default settings
+        if(this.themeSettings.charttheme)
+            console.log(this.themeSettings)
+            
         try {
             if (Chart && Chart.defaults) {
                 Chart.defaults.responsive = true;
@@ -102,8 +105,8 @@ class graphChart {
                 Chart.defaults.animation = false;
                 Chart.defaults.locale = this.chart_locale;
                 // global font settings
-                Chart.defaults.defaultFontColor = this.themeSettings.fontColor;
-                Chart.defaults.defaultFontFamily = this.themeSettings.fontFamily;
+                Chart.defaults.font.color = this.themeSettings.fontColor;
+                Chart.defaults.font.family = this.themeSettings.fontFamily;
                 // gridlines
                 if (this.themeSettings && this.themeSettings.showGridLines) {
                     Chart.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
@@ -154,8 +157,8 @@ class graphChart {
                                     borderDash: [0]
                                 }
                             });
-
                             break;
+                            
                         case "polararea":
                             Chart.defaults.set("controllers.polarArea.scales.r", {
                                 ticks: {

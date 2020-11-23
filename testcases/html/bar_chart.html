@@ -4,18 +4,13 @@
 <head>
 	<title>Bar Chart</title>
 	<script src="assets/chart.js"></script>
-	<script src="assets/utils.js"></script>
-	<script src="assets/chartjs-gradient.js"></script>
 	<link rel="stylesheet" type="text/css" href="assets/style.css" />
-	<script>
-		const gradient = window["chartjs-gradient"];
-	</script>
 </head>
 
 <body>
 
 	<div id="container" class="center">
-		<div class="chard-card">
+		<div class="chard-card" style="background:linear-gradient(to bottom, #009fff, #ec2f4b) !important;">
 			<div class="chard-description">
 				<h1>Testcase simple data</h1>
 			</div>
@@ -40,31 +35,23 @@
 			type: 'bar',
 			data: data,
 			options: {
-				responsive: true,
-				maintainAspectRatio: false,
 				legend: {
-					display: false,
+					display: true,
 				},
 				title: {
 					display: true,
 					text: 'Chart.js Bar Chart'
 				},
-				// gradientcolor: {
-				// 	type: 'bar',
-				// 	color: true,
-				// },
-				// plugins: {
-				// 	gradient,
-				// },
 			}
 		};
 
 		window.onload = function () {
-			// Chart.register(gradient);
+			Chart.defaults.responsive = true;
+            Chart.defaults.maintainAspectRatio = false;
+			Chart.defaults.animation = false;
+			Chart.defaults.defaultFontColor = "#FFFFFF";
 			var ctx = document.getElementById('canvas').getContext('2d');
-			const gc = new GraphControl(ctx, options)
-			gc.render()
-			// window.myBar = new Chart(ctx, options);
+			window.myBar = new Chart(ctx, options)
 		};
 	</script>
 </body>

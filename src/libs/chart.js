@@ -1,5 +1,5 @@
 /*!
- * Chart.js v3.0.0-beta.5
+ * Chart.js v3.0.6-master
  * https://www.chartjs.org
  * (c) 2020 Chart.js Contributors
  * Released under the MIT License
@@ -472,9 +472,8 @@ var Defaults = function () {
     this.showLine = true;
     this.plugins = {};
     this.scale = undefined;
-    this.doughnut = undefined;
     this.scales = {};
-    this.controllers = undefined;
+    this.controllers = {};
   }
   var _proto = Defaults.prototype;
   _proto.set = function set(scope, values) {
@@ -975,9 +974,8 @@ function getCanvasPosition(evt, canvas) {
   var offsetX = source.offsetX,
       offsetY = source.offsetY;
   var box = false;
-  // TODO : CHECK THIS !!!!!!!!!!!
-  offsetX = offsetY = 0;
   var x, y;
+  offsetX = offsetY = 0;
   if (offsetX > 0 || offsetY > 0) {
     x = offsetX;
     y = offsetY;
@@ -2499,6 +2497,47 @@ function finallyConstructor(callback) {
   });
 }
 
+function allSettled(arr) {
+  var P = this;
+  return new P(function (resolve, reject) {
+    if (!(arr && typeof arr.length !== 'undefined')) {
+      return reject(new TypeError(typeof arr + ' ' + arr + ' is not iterable(cannot read property Symbol(Symbol.iterator))'));
+    }
+    var args = Array.prototype.slice.call(arr);
+    if (args.length === 0) return resolve([]);
+    var remaining = args.length;
+    function res(i, val) {
+      if (val && (typeof val === 'object' || typeof val === 'function')) {
+        var then = val.then;
+        if (typeof then === 'function') {
+          then.call(val, function (val) {
+            res(i, val);
+          }, function (e) {
+            args[i] = {
+              status: 'rejected',
+              reason: e
+            };
+            if (--remaining === 0) {
+              resolve(args);
+            }
+          });
+          return;
+        }
+      }
+      args[i] = {
+        status: 'fulfilled',
+        value: val
+      };
+      if (--remaining === 0) {
+        resolve(args);
+      }
+    }
+    for (var i = 0; i < args.length; i++) {
+      res(i, args[i]);
+    }
+  });
+}
+
 var setTimeoutFunc = setTimeout;
 function isArray$1(x) {
   return Boolean(x && typeof x.length !== 'undefined');
@@ -2647,6 +2686,7 @@ Promise.all = function (arr) {
     }
   });
 };
+Promise.allSettled = allSettled;
 Promise.resolve = function (value) {
   if (value && typeof value === 'object' && value.constructor === Promise) {
     return value;
@@ -3922,6 +3962,9 @@ function createDatasetContext(parent, index, dataset) {
       get: function get() {
         return this.datasetIndex;
       }
+    },
+    type: {
+      value: 'dataset'
     }
   });
 }
@@ -3944,7 +3987,16 @@ function createDataContext(parent, index, point, element) {
       get: function get() {
         return this.dataIndex;
       }
+    },
+    type: {
+      value: 'data'
     }
+  });
+}
+function clearStacks(meta, items) {
+  items = items || meta._parsed;
+  items.forEach(function (parsed) {
+    delete parsed._stacks[meta.vScale.id][meta.index];
   });
 }
 var optionKeys = function optionKeys(optionNames) {
@@ -4034,8 +4086,12 @@ var DatasetController = function () {
   }
   ;
   _proto._destroy = function _destroy() {
+    var meta = this._cachedMeta;
     if (this._data) {
       unlistenArrayEvents(this._data, this);
+    }
+    if (meta._stacked) {
+      clearStacks(meta);
     }
   }
   ;
@@ -4077,9 +4133,7 @@ var DatasetController = function () {
     meta._stacked = isStacked(meta.vScale, meta);
     if (meta.stack !== dataset.stack) {
       stackChanged = true;
-      meta._parsed.forEach(function (parsed) {
-        delete parsed._stacks[meta.vScale.id][meta.index];
-      });
+      clearStacks(meta);
       meta.stack = dataset.stack;
     }
     me._resyncElements();
@@ -4089,9 +4143,8 @@ var DatasetController = function () {
   }
   ;
   _proto.configure = function configure() {
-    var _me$chart$options$me$;
     var me = this;
-    me._config = merge(Object.create(null), [defaults.controllers[me._type].datasets, (_me$chart$options$me$ = me.chart.options[me._type]) == null ? void 0 : _me$chart$options$me$.datasets, me.getDataset()], {
+    me._config = merge(Object.create(null), [defaults.controllers[me._type].datasets, (me.chart.options[me._type] || {}).datasets, me.getDataset()], {
       merger: function merger(key, target, source) {
         if (key !== 'data') {
           _merger(key, target, source);
@@ -4526,14 +4579,12 @@ var DatasetController = function () {
   ;
   _proto._resyncElements = function _resyncElements() {
     var me = this;
-    var meta = me._cachedMeta;
-    var numMeta = meta.data.length;
+    var numMeta = me._cachedMeta.data.length;
     var numData = me._data.length;
     if (numData > numMeta) {
       me._insertElements(numMeta, numData - numMeta);
     } else if (numData < numMeta) {
-      meta.data.splice(numData, numMeta - numData);
-      meta._parsed.splice(numData, numMeta - numData);
+      me._removeElements(numData, numMeta - numData);
     }
     me.parse(0, Math.min(numData, numMeta));
   }
@@ -4559,10 +4610,14 @@ var DatasetController = function () {
   ;
   _proto._removeElements = function _removeElements(start, count) {
     var me = this;
+    var meta = me._cachedMeta;
     if (me._parsing) {
-      me._cachedMeta._parsed.splice(start, count);
+      var removed = meta._parsed.splice(start, count);
+      if (meta._stacked) {
+        clearStacks(meta, removed);
+      }
     }
-    me._cachedMeta.data.splice(start, count);
+    meta.data.splice(start, count);
   }
   ;
   _proto._onDataPush = function _onDataPush() {
@@ -4861,6 +4916,9 @@ function createScaleContext(parent, scale) {
   return Object.create(parent, {
     scale: {
       value: scale
+    },
+    type: {
+      value: 'scale'
     }
   });
 }
@@ -4871,6 +4929,9 @@ function createTickContext(parent, index, tick) {
     },
     index: {
       value: index
+    },
+    type: {
+      value: 'tick'
     }
   });
 }
@@ -6335,8 +6396,14 @@ function mergeConfig()
     }
   });
 }
-function includeDefaults(options, type) {
-  return mergeConfig(defaults, defaults.controllers[type], options || {});
+function includeDefaults(config, options) {
+  var scaleConfig = mergeScaleConfig(config, options);
+  options = mergeConfig(defaults, defaults.controllers[config.type], options || {});
+  options.hover = merge(Object.create(null), [defaults.interaction, defaults.hover, options.interaction, options.hover]);
+  options.scales = scaleConfig;
+  options.title = options.title !== false && merge(Object.create(null), [defaults.plugins.title, options.title]);
+  options.tooltips = options.tooltips !== false && merge(Object.create(null), [defaults.interaction, defaults.plugins.tooltip, options.interaction, options.tooltips]);
+  return options;
 }
 function initConfig(config) {
   config = config || {};
@@ -6346,12 +6413,7 @@ function initConfig(config) {
   };
   data.datasets = data.datasets || [];
   data.labels = data.labels || [];
-  var scaleConfig = mergeScaleConfig(config, config.options);
-  var options = config.options = includeDefaults(config.options, config.type);
-  options.hover = merge(Object.create(null), [defaults.interaction, defaults.hover, options.interaction, options.hover]);
-  options.scales = scaleConfig;
-  options.title = options.title !== false && merge(Object.create(null), [defaults.plugins.title, options.title]);
-  options.tooltips = options.tooltips !== false && merge(Object.create(null), [defaults.interaction, defaults.plugins.tooltip, options.interaction, options.tooltips]);
+  config.options = includeDefaults(config, config.options);
   return config;
 }
 var Config = function () {
@@ -6361,10 +6423,7 @@ var Config = function () {
   var _proto = Config.prototype;
   _proto.update = function update(options) {
     var config = this._config;
-    var scaleConfig = mergeScaleConfig(config, options);
-    options = includeDefaults(options, config.type);
-    options.scales = scaleConfig;
-    config.options = options;
+    config.options = includeDefaults(config, options);
   };
   _createClass(Config, [{
     key: "type",
@@ -6393,7 +6452,7 @@ var Config = function () {
   return Config;
 }();
 
-var version = "3.0.0-beta.3";
+var version = "3.0.0-master";
 
 var KNOWN_POSITIONS = ['top', 'bottom', 'left', 'right', 'chartArea'];
 function positionIsHorizontal(position, axis) {
@@ -6641,12 +6700,25 @@ var Chart = function () {
       metasets.splice(numData, numMeta - numData);
     }
     me._sortedMetasets = metasets.slice(0).sort(compare2Level('order', 'index'));
+  }
+  ;
+  _proto._removeUnreferencedMetasets = function _removeUnreferencedMetasets() {
+    var me = this;
+    var datasets = me.data.datasets;
+    me._metasets.forEach(function (meta, index) {
+      if (datasets.filter(function (x) {
+        return x === meta._dataset;
+      }).length === 0) {
+        me._destroyDatasetMeta(index);
+      }
+    });
   };
   _proto.buildOrUpdateControllers = function buildOrUpdateControllers() {
     var me = this;
     var newControllers = [];
     var datasets = me.data.datasets;
     var i, ilen;
+    me._removeUnreferencedMetasets();
     for (i = 0, ilen = datasets.length; i < ilen; i++) {
       var dataset = datasets[i];
       var meta = me.getDatasetMeta(i);
@@ -6886,7 +6958,7 @@ var Chart = function () {
     var dataset = me.data.datasets[datasetIndex];
     var metasets = me._metasets;
     var meta = metasets.filter(function (x) {
-      return x._dataset === dataset;
+      return x && x._dataset === dataset;
     }).pop();
     if (!meta) {
       meta = metasets[datasetIndex] = {
@@ -6910,6 +6982,9 @@ var Chart = function () {
     return this.$context || (this.$context = Object.create(null, {
       chart: {
         value: this
+      },
+      type: {
+        value: 'chart'
       }
     }));
   };
@@ -8052,7 +8127,7 @@ var BarController = function (_DatasetController) {
       start += value;
     }
     var startValue = !isNullOrUndef(baseValue) && !floating ? baseValue : start;
-    var base = _limitValue(vScale.getPixelForValue(startValue), vScale._startPixel - 10, vScale._endPixel + 10);
+    var base = vScale.getPixelForValue(startValue);
     if (this.chart.getDataVisibility(index)) {
       head = vScale.getPixelForValue(start + length);
     } else {
@@ -8175,10 +8250,10 @@ var BubbleController = function (_DatasetController) {
   _proto.getMaxOverflow = function getMaxOverflow() {
     var me = this;
     var meta = me._cachedMeta;
-    var i = (meta.data || []).length - 1;
+    var data = meta.data;
     var max = 0;
-    for (; i >= 0; --i) {
-      max = Math.max(max, me.getStyle(i, true).radius);
+    for (var i = data.length - 1; i >= 0; --i) {
+      max = Math.max(max, data[i].size());
     }
     return max > 0 && max;
   }
@@ -8345,16 +8420,23 @@ var DoughnutController = function (_DatasetController) {
     return ringIndex;
   }
   ;
+  _proto._getRotation = function _getRotation() {
+    return toRadians(valueOrDefault(this._config.rotation, this.chart.options.rotation) - 90);
+  }
+  ;
+  _proto._getCircumference = function _getCircumference() {
+    return toRadians(valueOrDefault(this._config.circumference, this.chart.options.circumference));
+  }
+  ;
   _proto._getRotationExtents = function _getRotationExtents() {
     var min = TAU;
     var max = -TAU;
     var me = this;
-    var opts = me.chart.options;
     for (var i = 0; i < me.chart.data.datasets.length; ++i) {
       if (me.chart.isDatasetVisible(i)) {
-        var dataset = me.chart.data.datasets[i];
-        var rotation = toRadians(valueOrDefault(dataset.rotation, opts.rotation) - 90);
-        var circumference = toRadians(valueOrDefault(dataset.circumference, opts.circumference));
+        var controller = me.chart.getDatasetMeta(i).controller;
+        var rotation = controller._getRotation();
+        var circumference = controller._getCircumference();
         min = Math.min(min, rotation);
         max = Math.max(max, rotation + circumference);
       }
@@ -8400,7 +8482,7 @@ var DoughnutController = function (_DatasetController) {
     var me = this;
     var opts = me.chart.options;
     var meta = me._cachedMeta;
-    var circumference = toRadians(valueOrDefault(me._config.circumference, opts.circumference));
+    var circumference = me._getCircumference();
     return reset && opts.animation.animateRotate ? 0 : this.chart.getDataVisibility(i) ? me.calculateCircumference(meta._parsed[i] * circumference / TAU) : 0;
   };
   _proto.updateElements = function updateElements(arcs, start, count, mode) {
@@ -8418,7 +8500,7 @@ var DoughnutController = function (_DatasetController) {
     var firstOpts = me.resolveDataElementOptions(start, mode);
     var sharedOptions = me.getSharedOptions(firstOpts);
     var includeOptions = me.includeOptions(mode, sharedOptions);
-    var startAngle = toRadians(valueOrDefault(me._config.rotation, opts.rotation) - 90);
+    var startAngle = me._getRotation();
     var i;
     for (i = 0; i < start; ++i) {
       startAngle += me._circumference(i, reset);

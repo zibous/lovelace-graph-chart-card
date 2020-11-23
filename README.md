@@ -1,8 +1,8 @@
 # Lovelace - graph-chartjs-card
 
-Chart.js card `Version 1.0.3` for Home Assistant -  Visualize your data in 8 different ways; each of them animated and customisable.
+Chart.js card `Version 1.0.4` for Home Assistant -  Visualize your data in 8 different ways; each of them animated and customisable.
 
-> DEVELOPER PREVIEW VERSION, CHART.JS BETA NOT FINAL
+> DEVELOPER PREVIEW VERSION, CHART.JS v3.0.0-beta.6 NOT FINAL
 I'm still looking for help and would be happy if someone would get in touch to help me complete and improve (data processing, display / color selection charts ...) the graph-chartjs-card.
 
 
@@ -55,7 +55,9 @@ I'm still looking for help and would be happy if someone would get in touch to h
 | units          | string   |           | Set a custom unit of measurement for all entities.  |
 | ignoreZero   | boolean   |   false       | if true, all date from the series with value 0 will be ignored   |
 | locale          | string   |  de-DE         |  formats the numbers according to the locale and formatting options and set the data string with a language sensitive representation of the date portion of the date|
-| showstate         | boolean  | false         | show the current state. Only if hours_to_show > 0  |
+| showstate         | string  | left,center,right         | show the current state. Only if hours_to_show > 0  |
+| theme         | list  | none         | overwrite the default theme settings for the current chart  |
+
 | options        |          |             | just like chart.js documentation - see: [Chart.js documentation](https://www.chartjs.org/docs/latest/). Optional, if used the options will overwrite the default.global settings. |
 
 <br>
@@ -93,6 +95,7 @@ The following theme variables can be set in your HA theme to customize the appea
 | chartjs-tooltip-background | #EAEEF1| default color tooltip background|
 | chartjs-text-fontcolor|#292F33 | default color tooltip  |
 
+
 ####  theme-settings
 ```yaml
  # Chart.js colors
@@ -104,6 +107,23 @@ The following theme variables can be set in your HA theme to customize the appea
   chartjs-tooltip-background: '#EAEEF1'
   chartjs-text-fontcolor: '#292F33'
 ```
+
+Another possibility is that the theme settings for a chart are set in the card definition:
+
+```yaml
+- type: "custom:chart-card"
+  .....
+  theme:
+    fontcolor: "#FFFFFF"
+    gridlinecolor: "#FFFFFF"
+    zerolinecolor: "#FFFFFF"
+    tooltipsbackground: "#FFFFFF"
+    tooltipsfontcolor: "#555555"
+    cardbackground: "linear-gradient(to bottom, #009fff, #ec2f4b);"
+```
+
+
+## Examples
 
 <br>
 

@@ -60,18 +60,26 @@ class chartData {
                 groups[group].push(o);
             });
             return Object.keys(groups).map(function (group) {
-                let items = groups[group].filter((item) => !isNaN(parseFloat(item.state)) && isFinite(item.state));
+                let items = groups[group].filter(
+                    (item) => item.state && !isNaN(parseFloat(item.state)) && isFinite(item.state)
+                );
+                if (items && items.length === 0) {
+                    return {
+                        y: 0.0,
+                        x: ""
+                    };
+                }
                 if (aggr == "first") {
                     const item = items.shift();
                     return {
-                        y: num(item.state),
+                        y: num(item.state || 0.0),
                         x: item.last_changed
                     };
                 }
                 if (aggr == "last") {
                     const item = items[items.length - 1];
                     return {
-                        y: num(item.state),
+                        y: num(item.state || 0.0),
                         x: item.last_changed
                     };
                 }
@@ -79,7 +87,7 @@ class chartData {
                     return items.reduce((a, b) =>
                         a.state > b.state
                             ? {
-                                  y: num(a.state),
+                                  y: num(a.state || 0.0),
                                   x: a.last_changed
                               }
                             : { y: num(b.state), x: b.last_changed }
@@ -89,31 +97,31 @@ class chartData {
                     return items.reduce((a, b) =>
                         a.state < b.state
                             ? {
-                                  y: num(a.state),
+                                  y: num(a.state || 0.0),
                                   x: a.last_changed
                               }
                             : {
-                                  y: num(b.state),
+                                  y: num(b.state || 0.0),
                                   x: b.last_changed
                               }
                     );
                 if (aggr == "sum") {
                     const val = items.reduce((sum, entry) => sum + num(entry.state), 0);
                     return {
-                        y: num(val),
+                        y: num(val || 0.0),
                         x: items[0].last_changed
                     };
                 }
                 if (aggr == "avg") {
                     const val = items.reduce((sum, entry) => sum + num(entry.state), 0) / items.length;
                     return {
-                        y: num(val),
+                        y: num(val || 0.0),
                         x: items[0].last_changed
                     };
                 }
                 return items.map((items) => {
                     return {
-                        y: num(items.state),
+                        y: num(items.state || 0.0),
                         x: items.timestamp
                     };
                 });

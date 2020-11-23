@@ -320,18 +320,26 @@ class chartData {
                 groups[group].push(o);
             });
             return Object.keys(groups).map(function (group) {
-                let items = groups[group].filter((item) => !isNaN(parseFloat(item.state)) && isFinite(item.state));
+                let items = groups[group].filter(
+                    (item) => item.state && !isNaN(parseFloat(item.state)) && isFinite(item.state)
+                );
+                if (items && items.length === 0) {
+                    return {
+                        y: 0.0,
+                        x: ""
+                    };
+                }
                 if (aggr == "first") {
                     const item = items.shift();
                     return {
-                        y: num(item.state),
+                        y: num(item.state || 0.0),
                         x: item.last_changed
                     };
                 }
                 if (aggr == "last") {
                     const item = items[items.length - 1];
                     return {
-                        y: num(item.state),
+                        y: num(item.state || 0.0),
                         x: item.last_changed
                     };
                 }
@@ -339,7 +347,7 @@ class chartData {
                     return items.reduce((a, b) =>
                         a.state > b.state
                             ? {
-                                  y: num(a.state),
+                                  y: num(a.state || 0.0),
                                   x: a.last_changed
                               }
                             : { y: num(b.state), x: b.last_changed }
@@ -349,31 +357,31 @@ class chartData {
                     return items.reduce((a, b) =>
                         a.state < b.state
                             ? {
-                                  y: num(a.state),
+                                  y: num(a.state || 0.0),
                                   x: a.last_changed
                               }
                             : {
-                                  y: num(b.state),
+                                  y: num(b.state || 0.0),
                                   x: b.last_changed
                               }
                     );
                 if (aggr == "sum") {
                     const val = items.reduce((sum, entry) => sum + num(entry.state), 0);
                     return {
-                        y: num(val),
+                        y: num(val || 0.0),
                         x: items[0].last_changed
                     };
                 }
                 if (aggr == "avg") {
                     const val = items.reduce((sum, entry) => sum + num(entry.state), 0) / items.length;
                     return {
-                        y: num(val),
+                        y: num(val || 0.0),
                         x: items[0].last_changed
                     };
                 }
                 return items.map((items) => {
                     return {
-                        y: num(items.state),
+                        y: num(items.state || 0.0),
                         x: items.timestamp
                     };
                 });
@@ -929,6 +937,9 @@ class graphChart {
      */
     _setChartDefaults() {
         // global default settings
+        if(this.themeSettings.charttheme)
+            console.log(this.themeSettings)
+            
         try {
             if (Chart && Chart.defaults) {
                 Chart.defaults.responsive = true;
@@ -936,8 +947,8 @@ class graphChart {
                 Chart.defaults.animation = false;
                 Chart.defaults.locale = this.chart_locale;
                 // global font settings
-                Chart.defaults.defaultFontColor = this.themeSettings.fontColor;
-                Chart.defaults.defaultFontFamily = this.themeSettings.fontFamily;
+                Chart.defaults.font.color = this.themeSettings.fontColor;
+                Chart.defaults.font.family = this.themeSettings.fontFamily;
                 // gridlines
                 if (this.themeSettings && this.themeSettings.showGridLines) {
                     Chart.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
@@ -988,8 +999,8 @@ class graphChart {
                                     borderDash: [0]
                                 }
                             });
-
                             break;
+                            
                         case "polararea":
                             Chart.defaults.set("controllers.polarArea.scales.r", {
                                 ticks: {
@@ -1332,18 +1343,20 @@ class graphChart {
 
 /** -------------------------------------------------------------------*/
 
-// Chart.js v3.0.0-beta.4 and used plugins, production use min.js
+// Chart.js v3.0.0-beta.6 and used plugins, production use min.js
 import "/hacsfiles/chart-card/chart.js?v=1.0.2&module";
 
 // gradient
 // const gradient = window["chartjs-plugin-gradient"];
 const gradient = window["chartjs-gradient"];
-const vsinVersion = '1.0.3';
-
+const appinfo = {
+    name: "✓  custom:chart-card ",
+    version: "1.0.4"
+};
 console.info(
-    "%c CHARTJS-CARD-DEV %c ".concat(vsinVersion, " "),
-    "color: white; background: #2980b9; font-weight: 700;",
-    "color: white; background: #e74c3c; font-weight: 700;"
+    "%c " + appinfo.name + "    %c ▪︎▪︎▪︎▪︎ Version: " + appinfo.version + " ▪︎▪︎▪︎▪︎ ",
+    "color:#FFFFFF; background:#3498db;display:inline-block;font-size:12px;font-weight:300;padding: 6px 0 6px 0",
+    "color:#2c3e50; background:#ecf0f1;display:inline-block;font-size:12px;font-weight:300;padding: 6px 0 6px 0"
 );
 
 // From weather-card
@@ -1471,6 +1484,11 @@ class ChartCard extends HTMLElement {
         };
     }
     /**
+     * set the card based theme settings
+     * theese will overwrite the all theme settings
+     */
+    _setChartTheme() {}
+    /**
 	 * THEME SETTINGS
 	 * get the font and colorsettings from the hass view.
 	 * optional the settings can be overwritten by the
@@ -1481,12 +1499,21 @@ class ChartCard extends HTMLElement {
   		--chartjs-zero-gridline-color: '#C9CBD0'
   		--chartjs-tooltip-background: '#EAEEF1'
         --chartjs-text-fontcolor: '#292F33'
+     * card definition "theme"
+        0: {fontcolor: "#FFFFFF"}
+        1: {gridlinecolor: "#FFFFFF"}
+        2: {zerolinecolor: "#DCDCDC"}
+        3: {tooltipsbackground: "#FFFFFF"}
+        4: {tooltipsfontcolor: "#555555"}
+        5: {cardbackground: "linear-gradient(to bottom, #009fff, #ec2f4b);"}
+
 	 */
     _getThemeSettings() {
         this._setDefaultThemeSettings();
         try {
             this.themeSettings = {
                 fontColor:
+                    (this.chart_themesettings && this.chart_themesettings.fontcolor) ||
                     this._evaluateCssVariable("--chartjs-text-fontColor") ||
                     this._evaluateCssVariable("--primary-text-color") ||
                     this.themeSettings.fontFamily,
@@ -1495,24 +1522,31 @@ class ChartCard extends HTMLElement {
                     this._evaluateCssVariable("--paper-font-common-base_-_font-family") ||
                     "Quicksand, Roboto,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
                 gridlineColor:
+                    (this.chart_themesettings && this.chart_themesettings.gridlinecolor) ||
                     this._evaluateCssVariable("--chartjs-gridline-color") ||
                     this._evaluateCssVariable("--light-primary-color") ||
                     this.themeSettings.gridlineColor,
                 zeroLineColor:
+                    (this.chart_themesettings && this.chart_themesettings.zerolinecolor) ||
                     this._evaluateCssVariable("--chartjs-zero-gridline-color") ||
                     this._evaluateCssVariable("--dark-primary-color") ||
                     this.themeSettings.zeroLineColor,
                 tooltipsBackground:
-                    this._evaluateCssVariable("--chartjs-tooltip-background") || this.themeSettings.tooltipsBackground,
+                    (this.chart_themesettings && this.chart_themesettings.tooltipsbackground) ||
+                    this._evaluateCssVariable("--chartjs-tooltip-background") ||
+                    this.themeSettings.tooltipsBackground,
                 tooltipsFontColor:
-                    this._evaluateCssVariable("--chartjs-text-fontcolor") || this.themeSettings.tooltipsFontColor,
+                    (this.chart_themesettings && this.chart_themesettings.tooltipsfontcolor) ||
+                    this._evaluateCssVariable("--chartjs-text-fontcolor") ||
+                    this.themeSettings.tooltipsFontColor,
                 showLegend:
                     ["pie", "doughnut", "polararea", "line"].includes(this.chart_type.toLowerCase()) ||
                     this.themeSettings.showLegend,
                 showGridLines:
                     ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || this.showGridLines,
                 secondaryAxis: false,
-                themecolor: this._evaluateCssVariable("--chartjs-theme") || false
+                themecolor: this._evaluateCssVariable("--chartjs-theme") || false,
+                charttheme : this.chart_themesettings!==null
             };
             // get the theme from the hass or private theme settings
             if (this.theme === undefined || this.theme.dark === undefined) {
@@ -1576,14 +1610,21 @@ class ChartCard extends HTMLElement {
     _creatHACard() {
         // card and chart elements
         this.id = "i" + Math.random().toString(36).substr(2, 3).toLocaleLowerCase();
+
         const card = document.createElement("ha-card");
+        // the ha-card
+        card.id = this.id + "-card";
+        card.setAttribute("data-graphtype", this.chart_type);
+        if (this.chart_themesettings && this.chart_themesettings.cardbackground) {
+            /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+            card.style.cssText += `background: ${this.chart_themesettings.cardbackground} !important;`;
+            console.log(card.style.cssText);
+        }
+
         const content = document.createElement("div");
         const canvas = document.createElement("canvas");
         this.ctx = canvas.getContext("2d");
         this.canvasId = this.id + "-chart";
-        // the ha-card
-        card.id = this.id + "-card";
-        card.setAttribute("data-graphtype", this.chart_type);
 
         // create the header and icon (optional)
         if (this.card_title || this.card_icon) {
@@ -1699,8 +1740,16 @@ class ChartCard extends HTMLElement {
 
             // all settings for the chart
             this.chart_type = this._config.chart || "bar";
+            // settings: right, left, center
             this.chart_showstate = this._config.showstate || false;
+            this.chart_showstate = this.chart_showstate === true ? "right" : this.chart_showstate;
+            if (this.chart_showstate) {
+                if (!["left", "right", "center"].includes(this.chart_showstate.toLowerCase())) {
+                    this.chart_showstate = false;
+                }
+            }
             this.chart_showdetails = this._config.showdetails;
+            this.chart_themesettings = this._config.theme || null;
 
             const availableTypes = [
                 "line",
@@ -1745,7 +1794,7 @@ class ChartCard extends HTMLElement {
                 this.chart_showstate = false;
             } else {
                 if (this.data_hoursToShow === 0 && this.chart_showstate) {
-                    this.chart_showstate = false;
+                    this.chart_showstate = null;
                 }
             }
 
@@ -1775,7 +1824,7 @@ class ChartCard extends HTMLElement {
             if (this.graphChart) {
                 this.themeSettings.theme = this.theme;
                 this.graphChart.setThemeSettings(this.themeSettings);
-                this.graphChart.renderGraph(false);
+                this._getHistory();
             }
         }
         this.theme = this.selectedTheme;
@@ -1865,10 +1914,6 @@ class ChartCard extends HTMLElement {
             this.skipRender = true;
         }
     }
-
-    // connectedCallback() {
-    // 	console.log("connectedCallback");
-    // }
 
     /**
      * Get all histroy data for all registrated entity ids
@@ -2027,6 +2072,7 @@ class ChartCard extends HTMLElement {
                 this.graphChart.renderGraph(false);
             }
         }
+
         if (mode === 1 && this.chart_showstate) {
             let _data = this.graphData.data.datasets.map(function (item) {
                 return {
