@@ -23,6 +23,7 @@ const settings = {
 	releasefolder: "./release",
 	hassfolder:
 		"/Volumes/zeususdata/home/homeassistant/.homeassistant/www/community/chart-card",
+	rb3afolder: "/Volumes/data-1/home/homeassistant/.homeassistant/www/community/chart-card",
 };
 
 // Command line option:
@@ -77,6 +78,7 @@ gulp.task("deploy", function () {
 		return gulp
 			.src(settings.distfolder + "/*.*")
 			.pipe(gulp.dest(settings.hassfolder))
+			.pipe(gulp.dest(settings.rb3afolder))
 			.on('error', onError);
 	} else {
 		return done();
@@ -126,9 +128,13 @@ gulp.task("build", function () {
 		.pipe(minify())
 		.pipe(
 			headerComment(`
+	  <%= pkg.name %> <%= pkg.version %>		
+	  <%= pkg.homepage %>
+
       License: <%= pkg.license %>
       Generated on <%= moment().format('YYYY') %>
-      Author: <%= _.capitalize(pkg.author) %>
+	  Author: <%= _.capitalize(pkg.author) %>
+	  
     `)
 		)
 		.pipe(gulp.dest(settings.distfolder))

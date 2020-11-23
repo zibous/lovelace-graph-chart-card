@@ -1,4 +1,7 @@
 /**
+ * lovelace-chart-card 1.0.4
+ * https://github.com/zibous/lovelace-graph-chart-card
+ *
  * License: MIT
  * Generated on 2020
  * Author: Peter siebler
