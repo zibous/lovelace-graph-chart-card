@@ -44,7 +44,7 @@ class graphChart {
         this.chart_ready = false; // boolean chart allready exits
         this.lastUpdate = null;
     }
-
+    
     /**
      * change the theme settings
      * @param {*} options

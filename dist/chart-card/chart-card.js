@@ -99,7 +99,7 @@ function formatDate(d, fmt) {
  * show info
  * @param {*} args
  */
-function _logInfo(enabled, ...args) {
+function logInfo(enabled, ...args) {
     if (enabled) console.info(new Date().toISOString(), ...args);
 }
 
@@ -290,14 +290,6 @@ class chartData {
         this.chart_locale = config.chart_locale;
         this.data_aggregate = config.aggregate || "last";
         this.graphData = {};
-    }
-
-    /**
-     * show info
-     * @param {*} args
-     */
-    _logInfo(...args) {
-        if (this.loginfo) console.info(new Date().toISOString(), ...args);
     }
 
     /**
@@ -889,7 +881,7 @@ class graphChart {
         this.chart_ready = false; // boolean chart allready exits
         this.lastUpdate = null;
     }
-
+    
     /**
      * change the theme settings
      * @param {*} options
@@ -1378,7 +1370,6 @@ const fireEvent = (node, type, detail, options) => {
  * lovelace card chart graph
  */
 class ChartCard extends HTMLElement {
-    
     static get properties() {
         return {
             _config: {},
@@ -1438,7 +1429,6 @@ class ChartCard extends HTMLElement {
         this.ready = false;
         this.loginfo_enabled = true;
         this._initialized = false;
-        
     }
 
     /**
@@ -1704,7 +1694,7 @@ class ChartCard extends HTMLElement {
         try {
             Intl.getCanonicalLocales(locale);
         } catch (err) {
-            console.error(" RangeError: invalid language tag:", _this.config);
+            console.error(" RangeError: invalid language tag:", this.config);
             return navigator.language || navigator.userLanguage;
         }
         return locale;
@@ -1734,6 +1724,8 @@ class ChartCard extends HTMLElement {
             // get the config from the lovelace
             this._config = config;
             this.loginfo_enabled = this._config.loginfo || false;
+            const _defaultInterval = 60000 // every minute
+            this.updateIntervall = this._config.update_interval || 1000;
 
             // ha-card settings
             this.card_title = this._config.title || "";
@@ -1806,6 +1798,11 @@ class ChartCard extends HTMLElement {
             // create the card and apply the chartjs config
             this._creatHACard();
             this._initialized = true;
+
+            if (this.updateIntervall) {
+                // this.timerId = setInterval(() => this.updateData(), this.updateIntervall);
+            }
+            
         } catch (err) {
             console.log(err.message, config, err);
         }
@@ -1835,23 +1832,23 @@ class ChartCard extends HTMLElement {
         this.theme = this.selectedTheme;
 
         // check if we has changes
-        if (this.hassEntities && this.hassEntities.length) {
-            const newItems = this.hassEntities.filter((item) => {
-                return item.last_changed !== hass.states[item.entity_id].last_changed;
-            });
-            this.hasChanged = Boolean(newItems.length);
-            if (this.hasChanged) {
-                logInfo(this.loginfo_enabled, this.card_title, "Entities has changed !", newItems);
-            }
-        }
+        // if (this.hassEntities && this.hassEntities.length) {
+        //     const newItems = this.hassEntities.filter((item) => {
+        //         return item.last_changed !== hass.states[item.entity_id].last_changed;
+        //     });
+        //     this.hasChanged = Boolean(newItems.length);
+        //     if (this.hasChanged) {
+        //         logInfo(this.loginfo_enabled, this.card_title, "Entities has changed !", newItems);
+        //     }
+        // }
 
-        if (this.hasChanged) {
-            // refresh and update the graph
-            this._getThemeSettings();
-            this.graphChart.setThemeSettings(this.themeSettings);
-            this._getHistory();
-        }
-
+        // if (this.hasChanged) {
+        //     // refresh and update the graph
+        //     this._getThemeSettings();
+        //     this.graphChart.setThemeSettings(this.themeSettings);
+        //     this._getHistory();
+        // }
+        
         if (!this.graphChart) {
             // create the graph chart
             this._getThemeSettings();
@@ -1868,6 +1865,8 @@ class ChartCard extends HTMLElement {
         // check if we have valid entities and skip if we can'nt find the
         // entities in the hass entities list.
         if (!this.hassEntities || this.hassEntities.length === 0) return;
+
+        this.updateData();
 
         if (this.skipRender) return;
 
@@ -1914,9 +1913,50 @@ class ChartCard extends HTMLElement {
 
         if (this.skipRender == false && this._initialized) {
             // get the histroy data and render the graph
+            this._getThemeSettings();
             this.themeSettings.theme = this.theme;
+            this.graphChart.setThemeSettings(this.themeSettings);
             this._getHistory();
             this.skipRender = true;
+            this.updating = false;
+        }
+    }
+    
+    /**
+     * update data
+     */
+    updateData() {
+        if (this.updating) return;
+
+        // check if we has changes
+        if (this.hassEntities && this.hassEntities.length && this._hass) {
+
+            this.hasChanged = false;
+            this.updating = true;
+
+            // reload the hass entities
+            this.hassEntities = this._config.entities
+                .map((x) =>this._hass.states[x.entity])
+                .filter((notUndefined) => notUndefined !== undefined);
+
+            // check for update
+            for (let entity of this.entities) {
+                const h = this.hassEntities.find((x) => x.entity_id === entity.entity);
+                if(h && entity.last_changed!==h.last_changed){
+                    // update the data for this entity
+                    entity.last_changed = h.last_changed;
+                    entity.state = h.state;
+                    this.hasChanged=true;  
+                    logInfo(true, this.card_title, "Entities has changed !", entity);
+                }
+            }
+            if (this.hasChanged) {
+                // refresh and update the graph
+                this._getThemeSettings();
+                this.graphChart.setThemeSettings(this.themeSettings);
+                this._getHistory();
+            }
+            this.updating = false;
         }
     }
 
@@ -2095,6 +2135,14 @@ class ChartCard extends HTMLElement {
             if (_data) this.renderStateData(_data);
             return true;
         }
+    }
+
+    connectedCallback() {
+        // logInfo(true, "connectedCallback")
+    }
+
+    disconnectedCallback() {
+        // logInfo(true, "connectedCallback")
     }
 
     /**
