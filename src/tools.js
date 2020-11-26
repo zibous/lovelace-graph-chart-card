@@ -90,7 +90,7 @@ function formatDate(d, fmt) {
  * show info
  * @param {*} args
  */
-function logInfo(enabled, ...args) {
+function _logInfo(enabled, ...args) {
     if (enabled) console.info(new Date().toISOString(), ...args);
 }
 

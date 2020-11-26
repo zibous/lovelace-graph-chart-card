@@ -95,9 +95,6 @@ class graphChart {
      */
     _setChartDefaults() {
         // global default settings
-        if(this.themeSettings.charttheme)
-            console.log(this.themeSettings)
-            
         try {
             if (Chart && Chart.defaults) {
                 Chart.defaults.responsive = true;
@@ -158,7 +155,7 @@ class graphChart {
                                 }
                             });
                             break;
-                            
+
                         case "polararea":
                             Chart.defaults.set("controllers.polarArea.scales.r", {
                                 ticks: {
@@ -238,10 +235,10 @@ class graphChart {
             },
             layout: {
                 padding: {
-                    left: 16,
-                    right: 16,
+                    left: 24,
+                    right: 24,
                     top: 0,
-                    bottom: 16
+                    bottom: 24
                 }
             },
             chartArea: {

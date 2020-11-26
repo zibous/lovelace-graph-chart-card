@@ -102,7 +102,8 @@ gulp.task("release", function () {
 gulp.task("build-libs", function () {
 	return gulp
 		.src(settings.libs)
-		.pipe(plumber())
+		//.pipe(plumber())
+		.pipe(plumber({errorHandler: console.log}))
 		.pipe(concat(settings.libsfile))
 		.pipe(minify())
 		.pipe(gulp.dest(settings.distfolder))

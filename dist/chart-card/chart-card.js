@@ -99,7 +99,7 @@ function formatDate(d, fmt) {
  * show info
  * @param {*} args
  */
-function logInfo(enabled, ...args) {
+function _logInfo(enabled, ...args) {
     if (enabled) console.info(new Date().toISOString(), ...args);
 }
 
@@ -940,9 +940,6 @@ class graphChart {
      */
     _setChartDefaults() {
         // global default settings
-        if(this.themeSettings.charttheme)
-            console.log(this.themeSettings)
-            
         try {
             if (Chart && Chart.defaults) {
                 Chart.defaults.responsive = true;
@@ -1003,7 +1000,7 @@ class graphChart {
                                 }
                             });
                             break;
-                            
+
                         case "polararea":
                             Chart.defaults.set("controllers.polarArea.scales.r", {
                                 ticks: {
@@ -1083,10 +1080,10 @@ class graphChart {
             },
             layout: {
                 padding: {
-                    left: 16,
-                    right: 16,
+                    left: 24,
+                    right: 24,
                     top: 0,
-                    bottom: 16
+                    bottom: 24
                 }
             },
             chartArea: {
@@ -1347,17 +1344,17 @@ class graphChart {
 /** -------------------------------------------------------------------*/
 
 // Chart.js v3.0.0-beta.6 and used plugins, production use min.js
-import "/hacsfiles/chart-card/chart.js?v=1.0.2&module";
+import "/hacsfiles/chart-card/chart.js?module";
 
 // gradient
 // const gradient = window["chartjs-plugin-gradient"];
 const gradient = window["chartjs-gradient"];
 const appinfo = {
-    name: "✓  custom:chart-card ",
-    version: "1.0.4"
+    name: "✓ custom:chart-card ",
+    version: "1.0.6"
 };
 console.info(
-    "%c " + appinfo.name + "    %c ▪︎▪︎▪︎▪︎ Version: " + appinfo.version + " ▪︎▪︎▪︎▪︎ ",
+    "%c " + appinfo.name + "     %c ▪︎▪︎▪︎▪︎ Version: " + appinfo.version + " ▪︎▪︎▪︎▪︎ ",
     "color:#FFFFFF; background:#3498db;display:inline-block;font-size:12px;font-weight:300;padding: 6px 0 6px 0",
     "color:#2c3e50; background:#ecf0f1;display:inline-block;font-size:12px;font-weight:300;padding: 6px 0 6px 0"
 );
@@ -1381,6 +1378,7 @@ const fireEvent = (node, type, detail, options) => {
  * lovelace card chart graph
  */
 class ChartCard extends HTMLElement {
+    
     static get properties() {
         return {
             _config: {},
@@ -1394,6 +1392,7 @@ class ChartCard extends HTMLElement {
     constructor() {
         // TODO: Why is this called 3-6 times on startup ?
         super();
+        // console.log(new Date().toISOString(), appinfo.name, "Constructor");
 
         this._hass = null;
         this._config = null;
@@ -1439,6 +1438,7 @@ class ChartCard extends HTMLElement {
         this.ready = false;
         this.loginfo_enabled = true;
         this._initialized = false;
+        
     }
 
     /**
@@ -1549,7 +1549,7 @@ class ChartCard extends HTMLElement {
                     ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || this.showGridLines,
                 secondaryAxis: false,
                 themecolor: this._evaluateCssVariable("--chartjs-theme") || false,
-                charttheme : this.chart_themesettings!==null
+                charttheme: this.chart_themesettings !== null
             };
             // get the theme from the hass or private theme settings
             if (this.theme === undefined || this.theme.dark === undefined) {
@@ -1621,7 +1621,6 @@ class ChartCard extends HTMLElement {
         if (this.chart_themesettings && this.chart_themesettings.cardbackground) {
             /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
             card.style.cssText += `background: ${this.chart_themesettings.cardbackground} !important;`;
-            console.log(card.style.cssText);
         }
 
         const content = document.createElement("div");
@@ -1785,6 +1784,9 @@ class ChartCard extends HTMLElement {
 
             // setting for data handling
             this.data_hoursToShow = this._config.hours_to_show || 0;
+            if (this.chart_type === "line" && this.data_hoursToShow === 0) {
+                this.data_hoursToShow = 24 * 7; // show the last 7 days...
+            }
             this.data_group_by = this._config.group_by || "day";
             this.data_dateGroup = this._dateFormatPattern(this.data_group_by);
             this.data_aggregate = this._config.aggregate || "last";
