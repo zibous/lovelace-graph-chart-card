@@ -939,8 +939,10 @@ class graphChart {
                 Chart.defaults.animation = false;
                 Chart.defaults.locale = this.chart_locale;
                 // global font settings
-                Chart.defaults.font.color = this.themeSettings.fontColor;
-                Chart.defaults.font.family = this.themeSettings.fontFamily;
+                if(Chart.defaults && Chart.defaults.font){
+                    Chart.defaults.font.color = this.themeSettings.fontColor;
+                    Chart.defaults.font.family = this.themeSettings.fontFamily;
+                }
                 // gridlines
                 if (this.themeSettings && this.themeSettings.showGridLines) {
                     Chart.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
@@ -1343,7 +1345,7 @@ import "/hacsfiles/chart-card/chart.js?module";
 const gradient = window["chartjs-gradient"];
 const appinfo = {
     name: "✓ custom:chart-card ",
-    version: "1.0.6"
+    version: "1.0.7"
 };
 console.info(
     "%c " + appinfo.name + "     %c ▪︎▪︎▪︎▪︎ Version: " + appinfo.version + " ▪︎▪︎▪︎▪︎ ",
@@ -1370,12 +1372,12 @@ const fireEvent = (node, type, detail, options) => {
  * lovelace card chart graph
  */
 class ChartCard extends HTMLElement {
-    static get properties() {
-        return {
-            _config: {},
-            _hass: {}
-        };
-    }
+    // static get properties() {
+    //     return {
+    //         _config: {},
+    //         _hass: {}
+    //     };
+    // }
 
     /**
      * Chartjs Card constructor
@@ -1724,8 +1726,6 @@ class ChartCard extends HTMLElement {
             // get the config from the lovelace
             this._config = config;
             this.loginfo_enabled = this._config.loginfo || false;
-            const _defaultInterval = 60000 // every minute
-            this.updateIntervall = this._config.update_interval || 1000;
 
             // ha-card settings
             this.card_title = this._config.title || "";
@@ -1798,11 +1798,7 @@ class ChartCard extends HTMLElement {
             // create the card and apply the chartjs config
             this._creatHACard();
             this._initialized = true;
-
-            if (this.updateIntervall) {
-                // this.timerId = setInterval(() => this.updateData(), this.updateIntervall);
-            }
-            
+            this.updating = false;
         } catch (err) {
             console.log(err.message, config, err);
         }
@@ -1831,24 +1827,6 @@ class ChartCard extends HTMLElement {
         }
         this.theme = this.selectedTheme;
 
-        // check if we has changes
-        // if (this.hassEntities && this.hassEntities.length) {
-        //     const newItems = this.hassEntities.filter((item) => {
-        //         return item.last_changed !== hass.states[item.entity_id].last_changed;
-        //     });
-        //     this.hasChanged = Boolean(newItems.length);
-        //     if (this.hasChanged) {
-        //         logInfo(this.loginfo_enabled, this.card_title, "Entities has changed !", newItems);
-        //     }
-        // }
-
-        // if (this.hasChanged) {
-        //     // refresh and update the graph
-        //     this._getThemeSettings();
-        //     this.graphChart.setThemeSettings(this.themeSettings);
-        //     this._getHistory();
-        // }
-        
         if (!this.graphChart) {
             // create the graph chart
             this._getThemeSettings();
@@ -1921,33 +1899,31 @@ class ChartCard extends HTMLElement {
             this.updating = false;
         }
     }
-    
+
     /**
      * update data
      */
     updateData() {
-        if (this.updating) return;
+        if (this.updating) return false;
 
         // check if we has changes
         if (this.hassEntities && this.hassEntities.length && this._hass) {
-
             this.hasChanged = false;
             this.updating = true;
 
             // reload the hass entities
             this.hassEntities = this._config.entities
-                .map((x) =>this._hass.states[x.entity])
+                .map((x) => this._hass.states[x.entity])
                 .filter((notUndefined) => notUndefined !== undefined);
 
             // check for update
             for (let entity of this.entities) {
                 const h = this.hassEntities.find((x) => x.entity_id === entity.entity);
-                if(h && entity.last_changed!==h.last_changed){
+                if (h && entity.last_changed !== h.last_changed) {
                     // update the data for this entity
                     entity.last_changed = h.last_changed;
                     entity.state = h.state;
-                    this.hasChanged=true;  
-                    logInfo(true, this.card_title, "Entities has changed !", entity);
+                    this.hasChanged = true;
                 }
             }
             if (this.hasChanged) {
@@ -1957,6 +1933,7 @@ class ChartCard extends HTMLElement {
                 this._getHistory();
             }
             this.updating = false;
+            return this.hasChanged;
         }
     }
 

@@ -102,8 +102,10 @@ class graphChart {
                 Chart.defaults.animation = false;
                 Chart.defaults.locale = this.chart_locale;
                 // global font settings
-                Chart.defaults.font.color = this.themeSettings.fontColor;
-                Chart.defaults.font.family = this.themeSettings.fontFamily;
+                if(Chart.defaults && Chart.defaults.font){
+                    Chart.defaults.font.color = this.themeSettings.fontColor;
+                    Chart.defaults.font.family = this.themeSettings.fontFamily;
+                }
                 // gridlines
                 if (this.themeSettings && this.themeSettings.showGridLines) {
                     Chart.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
