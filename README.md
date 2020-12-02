@@ -58,7 +58,6 @@ I'm still looking for help and would be happy if someone would get in touch to h
 | showstate         | string  | left,center,right         | show the current state. Only if hours_to_show > 0  |
 | loader         | string  |  `spinning-circles`        | set the loader animation. you can use `audio`, `ball-triangle`, `bars`, `circles` , `grid`, `hearts`, `oval`, `pfuff`,`rings`,`spinning-circles`,`tail-spin`,`three-dots`  |
 | theme         | list  | none         | overwrite the default theme settings for the current chart  |
-
 | options        |          |             | just like chart.js documentation - see: [Chart.js documentation](https://www.chartjs.org/docs/latest/). Optional, if used the options will overwrite the default.global settings. |
 
 <br>
