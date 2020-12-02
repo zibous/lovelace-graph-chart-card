@@ -39,12 +39,14 @@ class graphChart {
         this.themeSettings = config.themeSettings || {}; // the theme settings (dark or light)
         this.chartconfig = config.chartconfig || {}; // the chart config from the template
         this.chartCurrentConfig = this.chartconfig; // current chart settings
+        this.loader = config.loader; // the loading animation
         this.graphData = {}; // the graph data
         this.setting = config.setting;
         this.chart_ready = false; // boolean chart allready exits
         this.lastUpdate = null;
+        this.ChartControl = Chart;
     }
-    
+
     /**
      * change the theme settings
      * @param {*} options
@@ -96,21 +98,21 @@ class graphChart {
     _setChartDefaults() {
         // global default settings
         try {
-            if (Chart && Chart.defaults) {
-                Chart.defaults.responsive = true;
-                Chart.defaults.maintainAspectRatio = false;
-                Chart.defaults.animation = false;
-                Chart.defaults.locale = this.chart_locale;
+            if (this.ChartControl && this.ChartControl.defaults) {
+                this.ChartControl.defaults.responsive = true;
+                this.ChartControl.defaults.maintainAspectRatio = false;
+                this.ChartControl.defaults.animation = false;
+                this.ChartControl.defaults.locale = this.chart_locale;
                 // global font settings
-                if(Chart.defaults && Chart.defaults.font){
-                    Chart.defaults.font.color = this.themeSettings.fontColor;
-                    Chart.defaults.font.family = this.themeSettings.fontFamily;
+                if (this.ChartControl.defaults && this.ChartControl.defaults.font) {
+                    this.ChartControl.defaults.font.color = this.themeSettings.fontColor;
+                    this.ChartControl.defaults.font.family = this.themeSettings.fontFamily;
                 }
                 // gridlines
                 if (this.themeSettings && this.themeSettings.showGridLines) {
-                    Chart.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
-                    if (Chart.defaults.set) {
-                        Chart.defaults.set("scale", {
+                    this.ChartControl.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
+                    if (this.ChartControl.defaults.set) {
+                        this.ChartControl.defaults.set("scale", {
                             gridLines: {
                                 display: true,
                                 color: this.themeSettings.gridlineColor,
@@ -122,21 +124,22 @@ class graphChart {
                     }
                 }
                 // element settings
-                if (Chart.defaults.elements && Chart.defaults.elements.arc) Chart.defaults.elements.arc.borderWidth = 0;
-                if (Chart.defaults.elements && Chart.defaults.elements.line) {
-                    Chart.defaults.elements.line.fill = false;
-                    Chart.defaults.elements.line.tension = 0;
+                if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.arc)
+                    this.ChartControl.defaults.elements.arc.borderWidth = 0;
+                if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.line) {
+                    this.ChartControl.defaults.elements.line.fill = false;
+                    this.ChartControl.defaults.elements.line.tension = 0;
                 }
-                if (Chart.defaults.elements && Chart.defaults.elements.point) {
-                    Chart.defaults.elements.point.radius = 0;
-                    Chart.defaults.elements.point.borderWidth = 0;
-                    Chart.defaults.elements.point.hoverRadius = 8;
+                if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.point) {
+                    this.ChartControl.defaults.elements.point.radius = 0;
+                    this.ChartControl.defaults.elements.point.borderWidth = 0;
+                    this.ChartControl.defaults.elements.point.hoverRadius = 8;
                 }
                 // chart type based
-                if (Chart.defaults.set) {
+                if (this.ChartControl.defaults.set) {
                     switch (this.chart_type.toLowerCase()) {
                         case "radar":
-                            Chart.defaults.set("controllers.radar.scales.r", {
+                            this.ChartControl.defaults.set("controllers.radar.scales.r", {
                                 ticks: {
                                     backdropColor: "transparent"
                                 },
@@ -149,7 +152,7 @@ class graphChart {
                                     circular: true
                                 }
                             });
-                            Chart.defaults.set("scale", {
+                            this.ChartControl.defaults.set("scale", {
                                 gridLines: {
                                     display: true,
                                     lineWidth: this.themeSettings.gridLineWidth * 2,
@@ -159,7 +162,7 @@ class graphChart {
                             break;
 
                         case "polararea":
-                            Chart.defaults.set("controllers.polarArea.scales.r", {
+                            this.ChartControl.defaults.set("controllers.polarArea.scales.r", {
                                 ticks: {
                                     backdropColor: "transparent"
                                 },
@@ -174,7 +177,7 @@ class graphChart {
                                     borderDash: [0]
                                 }
                             });
-                            Chart.defaults.set("scale", {
+                            this.ChartControl.defaults.set("scale", {
                                 gridLines: {
                                     display: true
                                 }
@@ -216,7 +219,7 @@ class graphChart {
     _setChartOptions() {
         // chart global settings
         this._setChartDefaults();
-
+        const _loader = this.loader;
         // chart default options
         let options = {
             type: this.chart_type,
@@ -285,7 +288,12 @@ class graphChart {
                 }
             },
             spanGaps: true,
-            plugins: {}
+            plugins: {},
+            animation: {
+                onComplete: function () {
+                    if (_loader) _loader.style.display = "none";
+                }
+            }
         };
 
         if (this.graphData.config.gradient === true && this.graphData.config.mode === "simple") {
@@ -433,7 +441,7 @@ class graphChart {
                         // create and draw the new chart with the current settings
                         // and the dataseries. Register all plugins
                         if (gradient && this.graphData.config.gradient) {
-                            Chart.register(gradient);
+                            this.ChartControl.register(gradient);
                         }
                         if (
                             this.chartconfig &&
@@ -441,7 +449,7 @@ class graphChart {
                             this.chartconfig.options.chartArea &&
                             this.chartconfig.options.chartArea.backgroundColor !== ""
                         ) {
-                            Chart.register({
+                            this.ChartControl.register({
                                 id: "chardbackground",
                                 beforeDraw: function (chart) {
                                     if (

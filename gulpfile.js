@@ -16,6 +16,7 @@ const settings = {
 		// "./src/libs/colortranslator.web.js",
 		// "./src/libs/Stacked100Plugin.js",
 	],
+	assetsfolder:"assets",
 	outfile: "chart-card.js",
 	libsfile: "chart.js",
 	lessfiles: "./src/chartjs.less",
@@ -23,7 +24,7 @@ const settings = {
 	releasefolder: "./release",
 	hassfolder:
 		"/Volumes/zeususdata/home/homeassistant/.homeassistant/www/community/chart-card",
-	rb3afolder: "/Volumes/data-1/home/homeassistant/.homeassistant/www/community/chart-card",
+	rb3afolder: "/Volumes/rb3a-data/home/homeassistant/.homeassistant/www/community/chart-card",
 };
 
 // Command line option:
@@ -64,7 +65,7 @@ function onWarning(error) { handleError.call(this, 'warning', error);}
  */
 gulp.task("cleanup", function () {
 	return del([
-		settings.distfolder + "/*.*",
+		settings.distfolder + "/**/*",
 		settings.releasefolder + "/*.zip",
 	]);
 });
@@ -76,7 +77,7 @@ gulp.task("cleanup", function () {
 gulp.task("deploy", function () {
 	if (settings.hassfolder) {
 		return gulp
-			.src(settings.distfolder + "/*.*")
+			.src(settings.distfolder + "/**/*")
 			.pipe(gulp.dest(settings.hassfolder))
 			.pipe(gulp.dest(settings.rb3afolder))
 			.on('error', onError);
@@ -118,6 +119,13 @@ gulp.task("build-css", function () {
 		.pipe(gulp.dest(settings.distfolder))
 		.on('error', onError);
 });
+
+gulp.task("build-assets", function () {
+	return gulp
+		.src(['./src/'+settings.assetsfolder+'/**/*'])
+		.pipe(gulp.dest(settings.distfolder+'/assets'))
+		.on('error', onError);
+});
 /**
  * build the custom card
  */
@@ -148,7 +156,7 @@ gulp.task("build", function () {
 gulp.task(
 	"default",
 	gulp.series(
-		["cleanup", "build", "build-libs","release", "deploy"],
+		["cleanup", "build", "build-libs","build-assets", "release", "deploy"],
 		function (done) {
 			// task code here
 			done();

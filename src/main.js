@@ -14,9 +14,11 @@ import "/hacsfiles/chart-card/chart.js?module";
 // gradient
 // const gradient = window["chartjs-plugin-gradient"];
 const gradient = window["chartjs-gradient"];
+
 const appinfo = {
     name: "✓ custom:chart-card ",
-    version: "1.0.7"
+    version: "1.0.8",
+    assets: "/hacsfiles/chart-card/assets/"
 };
 console.info(
     "%c " + appinfo.name + "     %c ▪︎▪︎▪︎▪︎ Version: " + appinfo.version + " ▪︎▪︎▪︎▪︎ ",
@@ -260,7 +262,8 @@ class ChartCard extends HTMLElement {
                 chart_type: this.chart_type,
                 themeSettings: this.themeSettings,
                 chartconfig: this.chartconfig,
-                setting: this._config
+                setting: this._config,
+                loader: this.loader
             };
             this.graphChart = new graphChart(settings);
         } else {
@@ -317,12 +320,22 @@ class ChartCard extends HTMLElement {
         content.id = this.id + "-view";
         content.style.height = this.card_height + "px";
         content.style.width = "100%";
-        content.style.overflow = "auto";
+        content.style.overflow = "hidden";
 
         // the canvas element for chartjs (required)
         canvas.id = this.canvasId;
         canvas.height = this.card_height;
         canvas.style.cssText = "-moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;";
+
+        // create the loader
+        if (this.loaderart) {
+            this.loader = document.createElement("img");
+            this.loader.id = this.id + "-loader";
+            this.loader.alt = "loading...";
+            this.loader.style.width = "60";
+            this.loader.src = appinfo.assets + this.loaderart + ".svg";
+            this.loader.style.cssText = "position:absolute;top:42%;left:38%;width:60px;z-index:500;margin: 0 auto";
+        }
 
         // create the show state layer
         if (this.chart_showstate) {
@@ -340,6 +353,8 @@ class ChartCard extends HTMLElement {
         }
 
         content.appendChild(canvas);
+        if (this.loader) content.append(this.loader);
+
         if (this.chart_showdetails && this.detailData) content.append(this.detailData);
 
         // create the content
@@ -415,6 +430,24 @@ class ChartCard extends HTMLElement {
             }
             this.chart_showdetails = this._config.showdetails;
             this.chart_themesettings = this._config.theme || null;
+            this.loaderart = this._config.loader || "spinning-circles";
+            const loaderFiles = [
+                "audio",
+                "ball-triangle",
+                "bars",
+                "circles",
+                "grid",
+                "hearts",
+                "oval",
+                "pfuff",
+                "rings",
+                "spinning-circles",
+                "tail-spin",
+                "three-dots"
+            ];
+            if (!loaderFiles.includes(this.loaderart)) {
+                this.loaderart = "spinning-circles";
+            }
 
             const availableTypes = [
                 "line",
@@ -595,6 +628,7 @@ class ChartCard extends HTMLElement {
                     entity.last_changed = h.last_changed;
                     entity.state = h.state;
                     this.hasChanged = true;
+                    // logInfo(true, this.card_title, "Entities has changed !", entity);
                 }
             }
             if (this.hasChanged) {
