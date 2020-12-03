@@ -154,6 +154,20 @@ gulp.task("build", function () {
  * default task
  */
 gulp.task(
+	"release",
+	gulp.series(
+		["cleanup", "build", "build-libs","build-assets", "release"],
+		function (done) {
+			// task code here
+			done();
+		}
+	)
+);
+
+/**
+ * default task
+ */
+gulp.task(
 	"default",
 	gulp.series(
 		["cleanup", "build", "build-libs","build-assets", "release", "deploy"],
