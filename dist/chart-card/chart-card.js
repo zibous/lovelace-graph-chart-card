@@ -1767,7 +1767,7 @@ class ChartCard extends HTMLElement {
             }
             this.chart_showdetails = this._config.showdetails;
             this.chart_themesettings = this._config.theme || null;
-            this.loaderart = this._config.loader || "spinning-circles";
+            this.loaderart = this._config.loader || "three-dots";
             const loaderFiles = [
                 "audio",
                 "ball-triangle",

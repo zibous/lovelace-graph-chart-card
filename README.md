@@ -56,7 +56,7 @@ I'm still looking for help and would be happy if someone would get in touch to h
 | ignoreZero   | boolean   |   false       | if true, all date from the series with value 0 will be ignored   |
 | locale          | string   |  de-DE         |  formats the numbers according to the locale and formatting options and set the data string with a language sensitive representation of the date portion of the date|
 | showstate         | string  | left,center,right         | show the current state. Only if hours_to_show > 0  |
-| loader         | string  |  `spinning-circles`        | set the loader animation. you can use `audio`, `ball-triangle`, `bars`, `circles` , `grid`, `hearts`, `oval`, `pfuff`,`rings`,`spinning-circles`,`tail-spin`,`three-dots`  |
+| loader         | string  |  `three-dots`        | set the loader animation. you can use `audio`, `ball-triangle`, `bars`, `circles` , `grid`, `hearts`, `oval`, `pfuff`,`rings`,`spinning-circles`,`tail-spin`,`three-dots`  |
 | theme         | list  | none         | overwrite the default theme settings for the current chart  |
 | options        |          |             | just like chart.js documentation - see: [Chart.js documentation](https://www.chartjs.org/docs/latest/). Optional, if used the options will overwrite the default.global settings. |
 
