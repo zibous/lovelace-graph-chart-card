@@ -1,0 +1,232 @@
+<!doctype html>
+<html>
+
+<head>
+	<title>Segment Bar Chart - Water Consumption</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.0-beta.7/chart.min.js"></script>
+	<style>
+		html {
+			line-height: 1.15;
+			-webkit-text-size-adjust: 100%;
+			-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+		}
+
+		body {
+			font-family: "Roboto, Quicksand,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
+			-webkit-font-smoothing: antialiased;
+			background: #3f77a4;
+			background: linear-gradient(to bottom, #24c6dc, #514a9d);
+		}
+
+		#canvas {
+			-moz-user-select: none;
+			-webkit-user-select: none;
+			-ms-user-select: none;
+			max-height: 18em;
+		}
+
+		.center {
+			height: 100vh;
+			width: 100%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.chard-card {
+			height: 24em;
+			width: 32em;
+			padding: 1em;
+			display: -webkit-box;
+			display: -ms-flexbox;
+			display: flex;
+			-webkit-box-orient: vertical;
+			-webkit-box-direction: normal;
+			-ms-flex-direction: column;
+			flex-direction: column;
+			position: relative;
+			border-radius: 16px;
+			overflow: hidden;
+			box-shadow: 0px 8px 8px rgba(255, 255, 255, 0.5);
+			background: #333
+		}
+	</style>
+</head>
+
+<body>
+
+	<div id="container" class="center">
+		<div class="chard-card">
+			<canvas id="mybar"></canvas>
+		</div>
+	</div>
+
+	<script>
+		var barIcons = {
+			id: "baricons",
+			beforeInit: function (chartInstance) {},
+			afterInit: function (chartInstance) {},
+			resize: function (chartInstance, newChartSize) {},
+			beforeUpdate: function (chartInstance) {},
+			afterScaleUpdate: function (chartInstance) {},
+			beforeDatasetsUpdate: function (chartInstance) {},
+			afterDatasetsUpdate: function (chartInstance) {},
+			afterUpdate: function (chartInstance) {},
+			beforeRender: function (chartInstance) {},
+			beforeDraw: function (chartInstance, easing) {},
+			afterDraw: function (chartInstance, easing) {},
+			beforeDatasetsDraw: function (chartInstance, easing) {},
+			afterDatasetsDraw: function (chartInstance, easing) {
+				var ctx = chartInstance.ctx;
+				const y1 = chartInstance.chartArea.height - 24;
+				chartInstance.data.datasets.forEach(function (dataset) {
+					for (var i = 0; i < dataset.data.length; i++) {
+						if (!dataset.pointStyle) {
+							continue;
+						}
+						const model = {
+							index: i,
+							x: chartInstance.getDatasetMeta(0).data[i].x,
+							y: chartInstance.getDatasetMeta(0).data[i].base - y1,
+							width: chartInstance.getDatasetMeta(0).data[i].width,
+							base: chartInstance.getDatasetMeta(0).data[i].base,
+							icons: dataset.pointStyle || null,
+							color: dataset.color || Chart.defaults.color,
+							value: chartInstance.data.datasets[0].data[i].toLocaleString(Chart.defaults.locale),
+							unit: chartInstance.data.datasets[0].unit || "",
+						}
+						if (model.icons) {
+							ctx.textAlign = 'start';
+							ctx.font = Chart.helpers.fontString(18, 'normal', Chart.defaults.font.family);
+							ctx.textBaseline = 'middle';
+							ctx.fillStyle = model.color;
+							ctx.save();
+							ctx.fillText(model.icons[i], model.x - 9, model.y);
+							ctx.font = Chart.helpers.fontString(14, 'normal', Chart.defaults.font.family);
+							ctx.fillStyle = Chart.defaults.color
+							ctx.fillText(model.value + " " + model.unit, model.x - 18, model.base - 24);
+							ctx.restore();
+						}
+					}
+				});
+
+			},
+			destroy: function (chartInstance) {}
+		};
+
+
+		var data = {
+			labels: ['Current', 'Today', 'Month', 'Year'],
+			datasets: [{
+					label: 'Water Consumtion 2020',
+					backgroundColor: '#2980b9',
+					borderWidth: 0,
+					data: [15, 150, 1500, 6000],
+					unit: 'l',
+					barThickness: 90,
+					maxBarThickness: 90,
+					borderSkipped: false,
+					borderRadius: {
+						bottomRight: 25,
+						bottomLeft: 25,
+					}
+				},
+				{
+					borderWidth: 0,
+					tooltip: false,
+					data: [9985, 9850, 8500, 4000],
+					showLine: false,
+					pointRadius: 8,
+					barThickness: 90,
+					maxBarThickness: 90,
+					borderSkipped: false,
+					color: '#2980b9',
+					pointStyle: ['▲', '▼', '≃', '▲']
+				}
+			]
+
+		};
+
+		var options = {
+			type: 'bar',
+			data: data,
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				showDatapoints: true,
+				scales: {
+					x: {
+						stacked: true,
+						ticks: {
+							major: {
+								enabled: true,
+							},
+						},
+					},
+					y: {
+						stacked: true,
+						ticks: {
+							major: {
+								enabled: true,
+							},
+						},
+						display: false,
+					}
+				},
+				plugins: {
+					legend: {
+						display: false,
+					},
+					title: {
+						display: true,
+						text: 'Consumption of water 2020'
+					},
+					tooltip: {
+						callbacks: {
+							label: (chart) => {
+								if (chart.dataset.tooltip === false) {
+									return null;
+								}
+								return chart.formattedValue + " " + chart.dataset.unit || "";
+							}
+						}
+					},
+				}
+			},
+		};
+
+		window.onload = function () {
+			// global
+			Chart.defaults.responsive = true;
+			Chart.defaults.maintainAspectRatio = false;
+			Chart.defaults.animation = false;
+			Chart.defaults.locale = "de-AT";
+			// default font and -color
+			Chart.defaults.font.family = "Roboto, Quicksand,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
+			Chart.defaults.color = '#FFFFFF';
+			Chart.defaults.font.size = 14;
+			// title settings
+			Chart.defaults.plugins.title.font.size = 20
+			Chart.defaults.plugins.title.font.style = "normal";
+			// gridlines
+			Chart.defaults.scale.gridLines.display = false
+			Chart.defaults.scale.display = true;
+			// tooltips
+			Chart.defaults.plugins.tooltip.enabled = true;
+			Chart.defaults.plugins.tooltip.backgroundColor = "#ecf0f1";
+			Chart.defaults.plugins.tooltip.titleColor = "#2c3e50"
+			Chart.defaults.plugins.tooltip.bodyColor = "#607D8B"
+			Chart.defaults.plugins.tooltip.footerColor = "#34495e"
+
+			// plugin barIcons
+			Chart.register(barIcons);
+
+			// create the chart
+			var ctx = document.getElementById('mybar').getContext('2d');
+
+			window.myBar = new Chart(ctx, options);
+		};
+	</script>
+</body>
+
+</html>

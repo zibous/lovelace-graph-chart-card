@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+
+<head>
+	<title>Segment Bar Chart</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.0-beta.7/chart.min.js"></script>
+	<style>
+		html {
+			line-height: 1.15;
+			-webkit-text-size-adjust: 100%;
+			-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+		}
+
+		body {
+			font-family: "Roboto, Quicksand,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
+			-webkit-font-smoothing: antialiased;
+			background: #3f77a4;
+			background: linear-gradient(45deg, #5fc9f8, #fecb2e, #fd9426, #fc3158, #147efb, #53d769);
+
+		}
+
+		#canvas {
+			-moz-user-select: none;
+			-webkit-user-select: none;
+			-ms-user-select: none;
+			max-height: 18em;
+		}
+
+		.center {
+			height: 100vh;
+			width: 100%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.chard-card {
+			height: 24em;
+			width: 36em;
+			padding: 1em;
+			display: -webkit-box;
+			display: -ms-flexbox;
+			display: flex;
+			-webkit-box-orient: vertical;
+			-webkit-box-direction: normal;
+			-ms-flex-direction: column;
+			flex-direction: column;
+			position: relative;
+			border-radius: 16px;
+			overflow: hidden;
+			box-shadow: 0px 8px 8px rgba(255, 255, 255, 0.5)
+		}
+	</style>
+</head>
+
+<body>
+
+	<div id="container" class="center">
+		<div class="chard-card" style="background:linear-gradient(to bottom, #009fff, #ec2f4b) !important;">
+			<canvas id="mybar"></canvas>
+		</div>
+	</div>
+
+	<script>
+		var data = {
+			labels: ['Water', 'Electricity', 'Gas'],
+			datasets: [{
+					label: 'Consumtion 2020',
+					backgroundColor: ['#03a9f4', '#e74c3c', '#ff9800'],
+					borderWidth: 0,
+					data: [30, 80, 45],
+					unit: '%',
+					showLine: false
+				},
+				{
+					borderWidth: 0,
+					tooltip: false, 
+					data: [70, 20, 55],
+					backgroundColor: [Chart.helpers.color('#03a9f4').alpha(0.25).rgbString(),
+						Chart.helpers.color('#e74c3c').alpha(0.25).rgbString(),
+						Chart.helpers.color('#ff9800').alpha(0.25).rgbString()
+					],
+					showLine: false
+				}
+			]
+
+		};
+		var options = {
+			type: 'bar',
+			data: data,
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				scales: {
+					x: {
+						stacked: true,
+						ticks: {
+							major: {
+								enabled: true,
+							},
+						},
+					},
+					y: {
+						stacked: true,
+						ticks: {
+							major: {
+								enabled: true,
+							},
+						},
+					}
+				},
+				plugins: {
+					legend: {
+						display: false,
+					},
+					title: {
+						display: true,
+						text: 'Segment Bar Chart'
+					},
+					tooltip: {
+						// callbacks: {
+						// 	label: (chart) => {
+						// 		const datasetLabel = chart.dataset.label;
+						// 		if (!datasetLabel) {
+						// 			return null;
+						// 		}
+						// 		return `${datasetLabel}: ${chart.dataPoint.y}`;
+						// 	}
+						// }
+						callbacks: {
+							label: (chart) => {
+								if (chart.dataset.tooltip===false) {
+									return null;
+								}
+								//return `${chart.for}`;
+								return chart.formattedValue + chart.dataset.unit || "";
+							}
+						}
+					},
+				},
+			}
+		};
+
+		window.onload = function () {
+			// global
+			Chart.defaults.responsive = true;
+			Chart.defaults.maintainAspectRatio = false;
+			Chart.defaults.animation = false;
+			Chart.defaults.locale = "de-AT";
+			// default font and -color
+			Chart.defaults.font.family = "Roboto, Quicksand,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
+			Chart.defaults.color = '#ffffff';
+			Chart.defaults.font.size = 14;
+			// title settings
+			Chart.defaults.plugins.title.font.size = 20
+			Chart.defaults.plugins.title.font.style = "normal";
+			Chart.defaults.plugins.title.color = '#FFFFFF';
+			// gridlines
+			Chart.defaults.scale.gridLines.lineWidth = 0.50;
+			Chart.defaults.scale.gridLines.color = '#FFFFFF';
+			Chart.defaults.scale.gridLines.zeroLineColor = '#000000';
+			Chart.defaults.scale.gridLines.display = false
+			Chart.defaults.scale.gridLines.borderDash = [.1,.1]
+			// tooltips
+			Chart.defaults.plugins.tooltip.enabled = true;
+			Chart.defaults.plugins.tooltip.backgroundColor = "#ecf0f1";
+			Chart.defaults.plugins.tooltip.titleColor = "#2c3e50"
+			Chart.defaults.plugins.tooltip.bodyColor = "#607D8B"
+			Chart.defaults.plugins.tooltip.footerColor = "#34495e"
+			// create the chart
+			var ctx = document.getElementById('mybar').getContext('2d');
+			window.myBar = new Chart(ctx, options);
+		};
+	</script>
+</body>
+
+</html>

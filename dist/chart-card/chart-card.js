@@ -289,6 +289,22 @@ class chartData {
         this.settings = config.settings;
         this.chart_locale = config.chart_locale;
         this.data_aggregate = config.aggregate || "last";
+        this.data_pointStyles = [
+            "circle",
+            "triangle",
+            "rectRounded",
+            "rect",
+            "rectRot",
+            "cross",
+            "star",
+            "line",
+            "dash"
+        ];
+        this.indicators = {
+            up: "▲",
+            down: "▼",
+            equal: "≃"
+        };
         this.graphData = {};
     }
 
@@ -484,6 +500,13 @@ class chartData {
                 if (this.entityOptions && this.entityOptions.gradient !== undefined) {
                     _graphData.config.gradient = true;
                 }
+                if (_attr && _attr.pointStyle) {
+                    _options.pointStyle = _attr.pointStyle;
+                    _options.pointRadius = 6;
+                }
+                if (_attr && _attr.pointRadius) {
+                    _options.pointRadius = _attr.pointRadius;
+                }
                 _options.data = [
                     {
                         x: _entities[i].state || 0.0,
@@ -501,6 +524,23 @@ class chartData {
     }
 
     /**
+     * create the segment data for the bars
+     * @param {*} dataset
+     */
+    createSimpleBarSegmentedData(dataset) {
+        if (dataset.data && dataset.data.length) {
+            dataset.data = dataset.data.map((i) => Number(i));
+            const _max = Math.max(...dataset.data);
+            const _min = Math.min(...dataset.data);
+            const _helpers = Chart.helpers;
+            return {
+                data: dataset.data.map((i) => _max - i),
+                backgroundColors: dataset.backgroundColor.map((color) => _helpers.color(color).alpha(0.25).rgbString())
+            };
+        }
+    }
+
+    /**
      * create chart data
      * this is used for pie-, doughnut-, polarArea-,radar-, simple bar chart
      * because we do not need time series - only the current state values.
@@ -510,8 +550,12 @@ class chartData {
      */
     createChartData() {
         let _data = [];
+
+        // console.log(this.entities)
+
         const emptyIndexes = this.entityData.reduce((arr, e, i) => (e == 0 && arr.push(i), arr), []);
         _data = this.entityData.filter((element, index, array) => !emptyIndexes.includes(index));
+
         if (_data.length === 0) {
             console.error("No Histroydata present !");
             return null;
@@ -535,6 +579,8 @@ class chartData {
         // merge dataset_config
         _graphData.data.labels = this.entityNames.filter((element, index, array) => !emptyIndexes.includes(index));
         _graphData.data.datasets[0] = _defaultDatasetConfig;
+        _graphData.data.datasets[0].unit = this.card_config.units || "";
+        _graphData.data.datasets[0].label = this.card_config.title || "";
 
         // case horizontal bar
         if (this.card_config.chart.toLowerCase() === "horizontalbar") {
@@ -555,6 +601,7 @@ class chartData {
         if (entityColors.length === _graphData.data.labels.length) {
             // list entity colors "backgroundColor": []
             _graphData.data.datasets[0].backgroundColor = entityColors;
+            _graphData.data.datasets[0].showLine = false;
         } else {
             if (this.chart_type === "radar") {
                 _graphData.data.datasets[0].backgroundColor = COLOR_RADARCHART;
@@ -562,16 +609,34 @@ class chartData {
                 _graphData.data.datasets[0].borderWidth = 1;
                 _graphData.data.datasets[0].pointBorderColor = COLOR_RADARCHART;
                 _graphData.data.datasets[0].pointBackgroundColor = COLOR_RADARCHART;
+                _graphData.data.datasets[0].tooltip = true;
                 _graphData.config.gradient = false;
             } else {
                 // geht backgroundcolor from DEFAULT_COLORS
                 entityColors = DEFAULT_COLORS.slice(1, _data.length + 1);
                 _graphData.data.datasets[0].backgroundColor = entityColors;
+                _graphData.data.datasets[0].borderWidth = 0;
+                _graphData.data.datasets[0].showLine = false;
             }
         }
+        _graphData.data.datasets[0].data = _data;
+        _graphData.config.segmentbar = false;
 
         // add the data series and return the new graph data
-        _graphData.data.datasets[0].data = _data;
+        if (this.chart_type === "bar" && this.card_config.show && this.card_config.show.segmented) {
+            const newData = this.createSimpleBarSegmentedData(_graphData.data.datasets[0]);
+            if (newData) {
+                _graphData.data.datasets[1] = {};
+                _graphData.data.datasets[1].data = newData.data;
+                _graphData.data.datasets[1].tooltip = false;
+                _graphData.data.datasets[1].backgroundColor = newData.backgroundColors;
+                _graphData.data.datasets[1].borderWidth = 0;
+                _graphData.data.datasets[1].showLine = false;
+                _graphData.config.segmentbar = newData.data.length !== 0;
+            }
+            // _graphData.data.datasets[0].label = "DDD"
+        }
+
         return _graphData;
     }
 
@@ -646,6 +711,13 @@ class chartData {
                     borderColor: _attr.borderColor || COLOR_BUBBLECHAT
                     // TODO: min, max, avg values
                 };
+                if (_attr && _attr.pointStyle) {
+                    _options.pointStyle = _attr.pointStyle;
+                    _options.pointRadius = 6;
+                }
+                if (_attr && _attr.pointRadius) {
+                    _options.pointRadius = _attr.pointRadius;
+                }
                 if (this.entityOptions) {
                     // simple merge the default with the global options
                     _options = { ..._options, ...this.entityOptions };
@@ -693,6 +765,13 @@ class chartData {
                     borderColor: _attr.borderColor || DEFAULT_COLORS[10 + r]
                     // TODO: min, max, avg values ???
                 };
+                if (_attr && _attr.pointStyle) {
+                    _options.pointStyle = _attr.pointStyle;
+                    _options.pointRadius = 6;
+                }
+                if (_attr && _attr.pointRadius) {
+                    _options.pointRadius = _attr.pointRadius;
+                }
                 if (this.entityOptions) {
                     // simple merge the default with the global options
                     _options = { ..._options, ...this.entityOptions };
@@ -749,6 +828,14 @@ class chartData {
 
             if (this.card_config.chart.toLowerCase() === "horizontalbar") {
                 _options.indexAxis = "y";
+            }
+
+            if (_attr && _attr.pointStyle) {
+                _options.pointStyle = _attr.pointStyle;
+                _options.pointRadius = 6;
+            }
+            if (_attr && _attr.pointRadius) {
+                _options.pointRadius = _attr.pointRadius;
             }
 
             if (this.entityOptions) {
@@ -892,42 +979,6 @@ class graphChart {
         this.themeSettings = options;
         return true;
     }
-    /**
-     * chartjs Callback for toolips
-     * TODO:// not active !
-     * @param {*} tooltipItem
-     * @param {*} data
-     */
-    _chartTooltips(tooltipItem, data) {
-        const dataset = data.datasets[tooltipItem.datasetIndex];
-        let datasetLabel = "";
-        let suffix = "";
-
-        switch (this.chart_type.toLowerCase()) {
-            case "pie":
-            case "doughnut":
-                const meta = dataset._meta[Object.keys(dataset._meta)[0]];
-                const currentValue = dataset.data[tooltipItem.index];
-                datasetLabel = data.labels[tooltipItem.index] || "";
-                suffix = dataset.unit || "";
-                if (meta.total) {
-                    const percentage = parseFloat(((currentValue / meta.total) * 100).toFixed(1));
-                    suffix += " (" + percentage + "%)";
-                }
-                return " " + datasetLabel + ": " + dataset.data[tooltipItem.index].toLocaleString() + " " + suffix;
-            case "polararea":
-            case "scatter":
-            case "line":
-            case "bar":
-            case "radar":
-            default:
-                // for bar, line, radar ..
-                datasetLabel = dataset.label ? dataset.label + ": " : "";
-                datasetLabel += data.labels[tooltipItem.index] || "";
-                suffix = dataset.unit || "";
-                return " " + datasetLabel + ": " + dataset.data[tooltipItem.index].toLocaleString() + " " + suffix;
-        }
-    }
 
     /**
      * chart global settings
@@ -940,11 +991,33 @@ class graphChart {
                 this.ChartControl.defaults.maintainAspectRatio = false;
                 this.ChartControl.defaults.animation = false;
                 this.ChartControl.defaults.locale = this.chart_locale;
+
                 // global font settings
-                if (this.ChartControl.defaults && this.ChartControl.defaults.font) {
-                    this.ChartControl.defaults.font.color = this.themeSettings.fontColor;
+                if (
+                    this.ChartControl.defaults &&
+                    this.ChartControl.defaults.font &&
+                    this.ChartControl.defaults.font.family
+                ) {
                     this.ChartControl.defaults.font.family = this.themeSettings.fontFamily;
                 }
+                if (this.ChartControl.defaults && this.ChartControl.defaults.color) {
+                    this.ChartControl.defaults.color = this.themeSettings.fontColor;
+                    // new beta 7 !
+                    this.ChartControl.defaults.plugins.legend.labels.color = this.themeSettings.fontColor;
+                }
+
+                // new beta 7 !
+                this.ChartControl.defaults.plugins.legend.position = "bottom";
+                this.ChartControl.defaults.plugins.legend.labels.usePointStyle = true;
+                this.ChartControl.defaults.plugins.legend.labels.boxWidth = 8;
+
+                // Tooltips new beta 7 !
+                this.ChartControl.defaults.plugins.tooltip.enabled = true;
+                this.ChartControl.defaults.plugins.tooltip.backgroundColor = this.themeSettings.tooltipsBackground;
+                this.ChartControl.defaults.plugins.tooltip.titleColor = this.themeSettings.tooltipsFontColor;
+                this.ChartControl.defaults.plugins.tooltip.bodyColor = this.themeSettings.tooltipsFontColor;
+                this.ChartControl.defaults.plugins.tooltip.footerColor = this.themeSettings.tooltipsFontColor;
+
                 // gridlines
                 if (this.themeSettings && this.themeSettings.showGridLines) {
                     this.ChartControl.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
@@ -960,6 +1033,7 @@ class graphChart {
                         });
                     }
                 }
+
                 // element settings
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.arc)
                     this.ChartControl.defaults.elements.arc.borderWidth = 0;
@@ -972,6 +1046,7 @@ class graphChart {
                     this.ChartControl.defaults.elements.point.borderWidth = 0;
                     this.ChartControl.defaults.elements.point.hoverRadius = 8;
                 }
+
                 // chart type based
                 if (this.ChartControl.defaults.set) {
                     switch (this.chart_type.toLowerCase()) {
@@ -996,6 +1071,8 @@ class graphChart {
                                     borderDash: [0]
                                 }
                             });
+                            this.ChartControl.defaults.elements.point.hoverRadius = 8;
+                            this.ChartControl.defaults.elements.point.pointRadius = 8;
                             break;
 
                         case "polararea":
@@ -1067,14 +1144,6 @@ class graphChart {
                 lineHeight: 1.2,
                 lineWidth: 0
             },
-            title: {
-                display: this.chartconfig.title != "",
-                text: "",
-                font: {
-                    style: "normal",
-                    color: this.themeSettings.fontColor
-                }
-            },
             layout: {
                 padding: {
                     left: 24,
@@ -1085,34 +1154,6 @@ class graphChart {
             },
             chartArea: {
                 backgroundColor: "transparent"
-            },
-            legend: {
-                display: this.themeSettings.showLegend || false,
-                position: "bottom",
-                lineWidth: 0,
-                labels: {
-                    usePointStyle: true,
-                    boxWidth: 8
-                }
-            },
-            tooltips: {
-                enabled: true,
-                mode: "nearest",
-                position: "nearest",
-                backgroundColor: this.themeSettings.tooltipsBackground,
-                titleFont: {
-                    style: "normal",
-                    color: this.themeSettings.tooltipsFontColor
-                },
-                bodyFont: {
-                    style: "normal",
-                    color: this.themeSettings.tooltipsFontColor
-                },
-                footerFont: {
-                    style: "normal",
-                    color: this.themeSettings.tooltipsFontColor
-                },
-                animation: false
             },
             hover: {
                 mode: "nearest",
@@ -1125,7 +1166,37 @@ class graphChart {
                 }
             },
             spanGaps: true,
-            plugins: {},
+            plugins: {
+                tooltip: {
+                    // enabled: true,
+                    // mode: "nearest",
+                    // position: "nearest",
+                    backgroundColor: this.themeSettings.tooltipsBackground,
+                    titleFont: {
+                        style: "normal",
+                        color: this.themeSettings.tooltipsFontColor
+                    },
+                    bodyFont: {
+                        style: "normal",
+                        color: this.themeSettings.tooltipsFontColor
+                    },
+                    footerFont: {
+                        style: "normal",
+                        color: this.themeSettings.tooltipsFontColor
+                    },
+                    animation: false
+                },
+                legend: {
+                    display: this.themeSettings.showLegend || false,
+                    position: "bottom",
+                    lineWidth: 0,
+                    labels: {
+                        usePointStyle: true,
+                        boxWidth: 8
+                    }
+                },
+                scales: {}
+            },
             animation: {
                 onComplete: function () {
                     if (_loader) _loader.style.display = "none";
@@ -1228,6 +1299,28 @@ class graphChart {
             };
         }
 
+        // case barchart segment
+        if (this.graphData.config.segmentbar === true) {
+            options.scales = {
+                x: {
+                    id: "x",
+                    stacked: true
+                },
+                y: {
+                    id: "y",
+                    stacked: true
+                }
+            };
+            options.plugins.tooltip.callbacks = {
+                label: (chart) => {
+                    if (chart.dataset.tooltip === false || !chart.dataset.label) {
+                        return null;
+                    }
+                    return chart.formattedValue + " " + chart.dataset.unit || "";
+                }
+            };
+        }
+
         this.chartCurrentConfig = {
             type: this.chart_type,
             data: {
@@ -1239,8 +1332,12 @@ class graphChart {
 
         // ---------------------------------------
         // merge default with chart config options
+        // this.chartconfig.options see yaml config
+        // - chart
+        //   - options:
         // ---------------------------------------
         if (this.chartconfig.options) {
+            //this.chartCurrentConfig.options = Chart.helpers.merge(options, this.chartconfig.options);
             this.chartCurrentConfig.options = deepMerge(options, this.chartconfig.options);
         } else {
             this.chartCurrentConfig.options = options;
@@ -1481,7 +1578,9 @@ class ChartCard extends HTMLElement {
             zeroLineColor: "#555555",
             tooltipsBackground: "#ecf0f1",
             tooltipsFontColor: "#647687",
-            showLegend: ["pie", "doughnut", "polararea", "line"].includes(this.chart_type.toLowerCase()) || false,
+            showLegend:
+                ["pie", "doughnut", "polararea", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) ||
+                false,
             showGridLines: ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || false,
             secondaryAxis: false,
             gridLineWidth: 0.18,
@@ -1657,7 +1756,7 @@ class ChartCard extends HTMLElement {
         content.id = this.id + "-view";
         content.style.height = this.card_height + "px";
         content.style.width = "100%";
-        content.style.overflow = "hidden";
+        content.style.overflow = "auto";
 
         // the canvas element for chartjs (required)
         canvas.id = this.canvasId;
@@ -1692,19 +1791,27 @@ class ChartCard extends HTMLElement {
         content.appendChild(canvas);
         if (this.loader) content.append(this.loader);
 
-        if (this.chart_showdetails && this.detailData) content.append(this.detailData);
+        if (this.chart_showdetails && this.detailData) {
+            content.append(this.detailData);
+        }
 
         // create the content
         card.appendChild(content);
 
         if (this.chart_showstate && this.currentData) {
             card.appendChild(this.currentData);
-            // this.currentData.addEventListener("click", (event) => {
-            //     // this._showAttributes('hass-more-info', { entityId: config.entity }, null);
-            //     const _view = this.root.getElementById(this.currentData.getAttribute("data-view"));
-            //     if (_view) _view.style.display = _view.style.display === "block" ? "none" : "block";
-            // });
         }
+
+        // update info
+        if (this.card_timestamp) {
+            this.timestampLayer = document.createElement("div");
+            this.timestampLayer.id = this.id + "detail-footertext";
+            this.timestampLayer.style.cssText =
+                "position:absolute;right:0.8em;bottom:0;font-weight:200;font-size:0.7em;text-align:right;z-index:800";
+            this.timestampLayer.innerHTML = localDatetime(new Date().toISOString());
+            card.appendChild(this.timestampLayer);
+        }
+
         // create the ha-card
         this.root.appendChild(card);
     }
@@ -1754,6 +1861,7 @@ class ChartCard extends HTMLElement {
             this.card_title = this._config.title || "";
             this.card_icon = this._config.icon || null;
             this.card_height = this._config.height || 240;
+            this.card_timestamp = this._config.cardtimestamp || true;
 
             // all settings for the chart
             this.chart_type = this._config.chart || "bar";
@@ -1817,6 +1925,8 @@ class ChartCard extends HTMLElement {
 
             // setting for data handling
             this.data_hoursToShow = this._config.hours_to_show || 0;
+            this.show = this._config.show || {};
+
             if (this.chart_type === "line" && this.data_hoursToShow === 0) {
                 this.data_hoursToShow = 24 * 7; // show the last 7 days...
             }
@@ -1957,15 +2067,17 @@ class ChartCard extends HTMLElement {
                 .map((x) => this._hass.states[x.entity])
                 .filter((notUndefined) => notUndefined !== undefined);
 
-            // check for update
+            // check for update and set the entity state last and update flag
             for (let entity of this.entities) {
                 const h = this.hassEntities.find((x) => x.entity_id === entity.entity);
+                entity.laststate = entity.state;
+                entity.update = false;
                 if (h && entity.last_changed !== h.last_changed) {
                     // update the data for this entity
                     entity.last_changed = h.last_changed;
                     entity.state = h.state;
+                    entity.update = true;
                     this.hasChanged = true;
-                    // logInfo(true, this.card_title, "Entities has changed !", entity);
                 }
             }
             if (this.hasChanged) {
@@ -1973,6 +2085,7 @@ class ChartCard extends HTMLElement {
                 this._getThemeSettings();
                 this.graphChart.setThemeSettings(this.themeSettings);
                 this._getHistory();
+                if (this.card_timestamp) this.timestampLayer.innerHTML = localDatetime(new Date().toISOString());
             }
             this.updating = false;
             return this.hasChanged;

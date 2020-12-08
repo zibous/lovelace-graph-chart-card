@@ -55,42 +55,6 @@ class graphChart {
         this.themeSettings = options;
         return true;
     }
-    /**
-     * chartjs Callback for toolips
-     * TODO:// not active !
-     * @param {*} tooltipItem
-     * @param {*} data
-     */
-    _chartTooltips(tooltipItem, data) {
-        const dataset = data.datasets[tooltipItem.datasetIndex];
-        let datasetLabel = "";
-        let suffix = "";
-
-        switch (this.chart_type.toLowerCase()) {
-            case "pie":
-            case "doughnut":
-                const meta = dataset._meta[Object.keys(dataset._meta)[0]];
-                const currentValue = dataset.data[tooltipItem.index];
-                datasetLabel = data.labels[tooltipItem.index] || "";
-                suffix = dataset.unit || "";
-                if (meta.total) {
-                    const percentage = parseFloat(((currentValue / meta.total) * 100).toFixed(1));
-                    suffix += " (" + percentage + "%)";
-                }
-                return " " + datasetLabel + ": " + dataset.data[tooltipItem.index].toLocaleString() + " " + suffix;
-            case "polararea":
-            case "scatter":
-            case "line":
-            case "bar":
-            case "radar":
-            default:
-                // for bar, line, radar ..
-                datasetLabel = dataset.label ? dataset.label + ": " : "";
-                datasetLabel += data.labels[tooltipItem.index] || "";
-                suffix = dataset.unit || "";
-                return " " + datasetLabel + ": " + dataset.data[tooltipItem.index].toLocaleString() + " " + suffix;
-        }
-    }
 
     /**
      * chart global settings
@@ -103,11 +67,33 @@ class graphChart {
                 this.ChartControl.defaults.maintainAspectRatio = false;
                 this.ChartControl.defaults.animation = false;
                 this.ChartControl.defaults.locale = this.chart_locale;
+
                 // global font settings
-                if (this.ChartControl.defaults && this.ChartControl.defaults.font) {
-                    this.ChartControl.defaults.font.color = this.themeSettings.fontColor;
+                if (
+                    this.ChartControl.defaults &&
+                    this.ChartControl.defaults.font &&
+                    this.ChartControl.defaults.font.family
+                ) {
                     this.ChartControl.defaults.font.family = this.themeSettings.fontFamily;
                 }
+                if (this.ChartControl.defaults && this.ChartControl.defaults.color) {
+                    this.ChartControl.defaults.color = this.themeSettings.fontColor;
+                    // new beta 7 !
+                    this.ChartControl.defaults.plugins.legend.labels.color = this.themeSettings.fontColor;
+                }
+
+                // new beta 7 !
+                this.ChartControl.defaults.plugins.legend.position = "bottom";
+                this.ChartControl.defaults.plugins.legend.labels.usePointStyle = true;
+                this.ChartControl.defaults.plugins.legend.labels.boxWidth = 8;
+
+                // Tooltips new beta 7 !
+                this.ChartControl.defaults.plugins.tooltip.enabled = true;
+                this.ChartControl.defaults.plugins.tooltip.backgroundColor = this.themeSettings.tooltipsBackground;
+                this.ChartControl.defaults.plugins.tooltip.titleColor = this.themeSettings.tooltipsFontColor;
+                this.ChartControl.defaults.plugins.tooltip.bodyColor = this.themeSettings.tooltipsFontColor;
+                this.ChartControl.defaults.plugins.tooltip.footerColor = this.themeSettings.tooltipsFontColor;
+
                 // gridlines
                 if (this.themeSettings && this.themeSettings.showGridLines) {
                     this.ChartControl.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
@@ -123,6 +109,7 @@ class graphChart {
                         });
                     }
                 }
+
                 // element settings
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.arc)
                     this.ChartControl.defaults.elements.arc.borderWidth = 0;
@@ -135,6 +122,7 @@ class graphChart {
                     this.ChartControl.defaults.elements.point.borderWidth = 0;
                     this.ChartControl.defaults.elements.point.hoverRadius = 8;
                 }
+
                 // chart type based
                 if (this.ChartControl.defaults.set) {
                     switch (this.chart_type.toLowerCase()) {
@@ -159,6 +147,8 @@ class graphChart {
                                     borderDash: [0]
                                 }
                             });
+                            this.ChartControl.defaults.elements.point.hoverRadius = 8;
+                            this.ChartControl.defaults.elements.point.pointRadius = 8;
                             break;
 
                         case "polararea":
@@ -230,14 +220,6 @@ class graphChart {
                 lineHeight: 1.2,
                 lineWidth: 0
             },
-            title: {
-                display: this.chartconfig.title != "",
-                text: "",
-                font: {
-                    style: "normal",
-                    color: this.themeSettings.fontColor
-                }
-            },
             layout: {
                 padding: {
                     left: 24,
@@ -248,34 +230,6 @@ class graphChart {
             },
             chartArea: {
                 backgroundColor: "transparent"
-            },
-            legend: {
-                display: this.themeSettings.showLegend || false,
-                position: "bottom",
-                lineWidth: 0,
-                labels: {
-                    usePointStyle: true,
-                    boxWidth: 8
-                }
-            },
-            tooltips: {
-                enabled: true,
-                mode: "nearest",
-                position: "nearest",
-                backgroundColor: this.themeSettings.tooltipsBackground,
-                titleFont: {
-                    style: "normal",
-                    color: this.themeSettings.tooltipsFontColor
-                },
-                bodyFont: {
-                    style: "normal",
-                    color: this.themeSettings.tooltipsFontColor
-                },
-                footerFont: {
-                    style: "normal",
-                    color: this.themeSettings.tooltipsFontColor
-                },
-                animation: false
             },
             hover: {
                 mode: "nearest",
@@ -288,7 +242,37 @@ class graphChart {
                 }
             },
             spanGaps: true,
-            plugins: {},
+            plugins: {
+                tooltip: {
+                    // enabled: true,
+                    // mode: "nearest",
+                    // position: "nearest",
+                    backgroundColor: this.themeSettings.tooltipsBackground,
+                    titleFont: {
+                        style: "normal",
+                        color: this.themeSettings.tooltipsFontColor
+                    },
+                    bodyFont: {
+                        style: "normal",
+                        color: this.themeSettings.tooltipsFontColor
+                    },
+                    footerFont: {
+                        style: "normal",
+                        color: this.themeSettings.tooltipsFontColor
+                    },
+                    animation: false
+                },
+                legend: {
+                    display: this.themeSettings.showLegend || false,
+                    position: "bottom",
+                    lineWidth: 0,
+                    labels: {
+                        usePointStyle: true,
+                        boxWidth: 8
+                    }
+                },
+                scales: {}
+            },
             animation: {
                 onComplete: function () {
                     if (_loader) _loader.style.display = "none";
@@ -391,6 +375,28 @@ class graphChart {
             };
         }
 
+        // case barchart segment
+        if (this.graphData.config.segmentbar === true) {
+            options.scales = {
+                x: {
+                    id: "x",
+                    stacked: true
+                },
+                y: {
+                    id: "y",
+                    stacked: true
+                }
+            };
+            options.plugins.tooltip.callbacks = {
+                label: (chart) => {
+                    if (chart.dataset.tooltip === false || !chart.dataset.label) {
+                        return null;
+                    }
+                    return chart.formattedValue + " " + chart.dataset.unit || "";
+                }
+            };
+        }
+
         this.chartCurrentConfig = {
             type: this.chart_type,
             data: {
@@ -402,8 +408,12 @@ class graphChart {
 
         // ---------------------------------------
         // merge default with chart config options
+        // this.chartconfig.options see yaml config
+        // - chart
+        //   - options:
         // ---------------------------------------
         if (this.chartconfig.options) {
+            //this.chartCurrentConfig.options = Chart.helpers.merge(options, this.chartconfig.options);
             this.chartCurrentConfig.options = deepMerge(options, this.chartconfig.options);
         } else {
             this.chartCurrentConfig.options = options;

@@ -8,7 +8,7 @@
 
 /** -------------------------------------------------------------------*/
 
-// Chart.js v3.0.0-beta.6 and used plugins, production use min.js
+// Chart.js v3.0.0-beta.7 and used plugins, production use min.js
 import "/hacsfiles/chart-card/chart.js?module";
 
 // gradient
@@ -144,7 +144,9 @@ class ChartCard extends HTMLElement {
             zeroLineColor: "#555555",
             tooltipsBackground: "#ecf0f1",
             tooltipsFontColor: "#647687",
-            showLegend: ["pie", "doughnut", "polararea", "line"].includes(this.chart_type.toLowerCase()) || false,
+            showLegend:
+                ["pie", "doughnut", "polararea", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) ||
+                false,
             showGridLines: ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || false,
             secondaryAxis: false,
             gridLineWidth: 0.18,
@@ -320,7 +322,7 @@ class ChartCard extends HTMLElement {
         content.id = this.id + "-view";
         content.style.height = this.card_height + "px";
         content.style.width = "100%";
-        content.style.overflow = "hidden";
+        content.style.overflow = "auto";
 
         // the canvas element for chartjs (required)
         canvas.id = this.canvasId;
@@ -355,19 +357,27 @@ class ChartCard extends HTMLElement {
         content.appendChild(canvas);
         if (this.loader) content.append(this.loader);
 
-        if (this.chart_showdetails && this.detailData) content.append(this.detailData);
+        if (this.chart_showdetails && this.detailData) {
+            content.append(this.detailData);
+        }
 
         // create the content
         card.appendChild(content);
 
         if (this.chart_showstate && this.currentData) {
             card.appendChild(this.currentData);
-            // this.currentData.addEventListener("click", (event) => {
-            //     // this._showAttributes('hass-more-info', { entityId: config.entity }, null);
-            //     const _view = this.root.getElementById(this.currentData.getAttribute("data-view"));
-            //     if (_view) _view.style.display = _view.style.display === "block" ? "none" : "block";
-            // });
         }
+
+        // update info
+        if (this.card_timestamp) {
+            this.timestampLayer = document.createElement("div");
+            this.timestampLayer.id = this.id + "detail-footertext";
+            this.timestampLayer.style.cssText =
+                "position:absolute;right:0.8em;bottom:0;font-weight:200;font-size:0.7em;text-align:right;z-index:800";
+            this.timestampLayer.innerHTML = localDatetime(new Date().toISOString());
+            card.appendChild(this.timestampLayer);
+        }
+
         // create the ha-card
         this.root.appendChild(card);
     }
@@ -417,6 +427,7 @@ class ChartCard extends HTMLElement {
             this.card_title = this._config.title || "";
             this.card_icon = this._config.icon || null;
             this.card_height = this._config.height || 240;
+            this.card_timestamp = this._config.cardtimestamp || true;
 
             // all settings for the chart
             this.chart_type = this._config.chart || "bar";
@@ -480,6 +491,8 @@ class ChartCard extends HTMLElement {
 
             // setting for data handling
             this.data_hoursToShow = this._config.hours_to_show || 0;
+            this.show = this._config.show || {};
+
             if (this.chart_type === "line" && this.data_hoursToShow === 0) {
                 this.data_hoursToShow = 24 * 7; // show the last 7 days...
             }
@@ -620,15 +633,17 @@ class ChartCard extends HTMLElement {
                 .map((x) => this._hass.states[x.entity])
                 .filter((notUndefined) => notUndefined !== undefined);
 
-            // check for update
+            // check for update and set the entity state last and update flag
             for (let entity of this.entities) {
                 const h = this.hassEntities.find((x) => x.entity_id === entity.entity);
+                entity.laststate = entity.state;
+                entity.update = false;
                 if (h && entity.last_changed !== h.last_changed) {
                     // update the data for this entity
                     entity.last_changed = h.last_changed;
                     entity.state = h.state;
+                    entity.update = true;
                     this.hasChanged = true;
-                    // logInfo(true, this.card_title, "Entities has changed !", entity);
                 }
             }
             if (this.hasChanged) {
@@ -636,6 +651,7 @@ class ChartCard extends HTMLElement {
                 this._getThemeSettings();
                 this.graphChart.setThemeSettings(this.themeSettings);
                 this._getHistory();
+                if (this.card_timestamp) this.timestampLayer.innerHTML = localDatetime(new Date().toISOString());
             }
             this.updating = false;
             return this.hasChanged;

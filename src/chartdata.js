@@ -26,6 +26,22 @@ class chartData {
         this.settings = config.settings;
         this.chart_locale = config.chart_locale;
         this.data_aggregate = config.aggregate || "last";
+        this.data_pointStyles = [
+            "circle",
+            "triangle",
+            "rectRounded",
+            "rect",
+            "rectRot",
+            "cross",
+            "star",
+            "line",
+            "dash"
+        ];
+        this.indicators = {
+            up: "▲",
+            down: "▼",
+            equal: "≃"
+        };
         this.graphData = {};
     }
 
@@ -221,6 +237,13 @@ class chartData {
                 if (this.entityOptions && this.entityOptions.gradient !== undefined) {
                     _graphData.config.gradient = true;
                 }
+                if (_attr && _attr.pointStyle) {
+                    _options.pointStyle = _attr.pointStyle;
+                    _options.pointRadius = 6;
+                }
+                if (_attr && _attr.pointRadius) {
+                    _options.pointRadius = _attr.pointRadius;
+                }
                 _options.data = [
                     {
                         x: _entities[i].state || 0.0,
@@ -238,6 +261,23 @@ class chartData {
     }
 
     /**
+     * create the segment data for the bars
+     * @param {*} dataset
+     */
+    createSimpleBarSegmentedData(dataset) {
+        if (dataset.data && dataset.data.length) {
+            dataset.data = dataset.data.map((i) => Number(i));
+            const _max = Math.max(...dataset.data);
+            const _min = Math.min(...dataset.data);
+            const _helpers = Chart.helpers;
+            return {
+                data: dataset.data.map((i) => _max - i),
+                backgroundColors: dataset.backgroundColor.map((color) => _helpers.color(color).alpha(0.25).rgbString())
+            };
+        }
+    }
+
+    /**
      * create chart data
      * this is used for pie-, doughnut-, polarArea-,radar-, simple bar chart
      * because we do not need time series - only the current state values.
@@ -247,8 +287,12 @@ class chartData {
      */
     createChartData() {
         let _data = [];
+
+        // console.log(this.entities)
+
         const emptyIndexes = this.entityData.reduce((arr, e, i) => (e == 0 && arr.push(i), arr), []);
         _data = this.entityData.filter((element, index, array) => !emptyIndexes.includes(index));
+
         if (_data.length === 0) {
             console.error("No Histroydata present !");
             return null;
@@ -272,6 +316,8 @@ class chartData {
         // merge dataset_config
         _graphData.data.labels = this.entityNames.filter((element, index, array) => !emptyIndexes.includes(index));
         _graphData.data.datasets[0] = _defaultDatasetConfig;
+        _graphData.data.datasets[0].unit = this.card_config.units || "";
+        _graphData.data.datasets[0].label = this.card_config.title || "";
 
         // case horizontal bar
         if (this.card_config.chart.toLowerCase() === "horizontalbar") {
@@ -292,6 +338,7 @@ class chartData {
         if (entityColors.length === _graphData.data.labels.length) {
             // list entity colors "backgroundColor": []
             _graphData.data.datasets[0].backgroundColor = entityColors;
+            _graphData.data.datasets[0].showLine = false;
         } else {
             if (this.chart_type === "radar") {
                 _graphData.data.datasets[0].backgroundColor = COLOR_RADARCHART;
@@ -299,16 +346,34 @@ class chartData {
                 _graphData.data.datasets[0].borderWidth = 1;
                 _graphData.data.datasets[0].pointBorderColor = COLOR_RADARCHART;
                 _graphData.data.datasets[0].pointBackgroundColor = COLOR_RADARCHART;
+                _graphData.data.datasets[0].tooltip = true;
                 _graphData.config.gradient = false;
             } else {
                 // geht backgroundcolor from DEFAULT_COLORS
                 entityColors = DEFAULT_COLORS.slice(1, _data.length + 1);
                 _graphData.data.datasets[0].backgroundColor = entityColors;
+                _graphData.data.datasets[0].borderWidth = 0;
+                _graphData.data.datasets[0].showLine = false;
             }
         }
+        _graphData.data.datasets[0].data = _data;
+        _graphData.config.segmentbar = false;
 
         // add the data series and return the new graph data
-        _graphData.data.datasets[0].data = _data;
+        if (this.chart_type === "bar" && this.card_config.show && this.card_config.show.segmented) {
+            const newData = this.createSimpleBarSegmentedData(_graphData.data.datasets[0]);
+            if (newData) {
+                _graphData.data.datasets[1] = {};
+                _graphData.data.datasets[1].data = newData.data;
+                _graphData.data.datasets[1].tooltip = false;
+                _graphData.data.datasets[1].backgroundColor = newData.backgroundColors;
+                _graphData.data.datasets[1].borderWidth = 0;
+                _graphData.data.datasets[1].showLine = false;
+                _graphData.config.segmentbar = newData.data.length !== 0;
+            }
+            // _graphData.data.datasets[0].label = "DDD"
+        }
+
         return _graphData;
     }
 
@@ -383,6 +448,13 @@ class chartData {
                     borderColor: _attr.borderColor || COLOR_BUBBLECHAT
                     // TODO: min, max, avg values
                 };
+                if (_attr && _attr.pointStyle) {
+                    _options.pointStyle = _attr.pointStyle;
+                    _options.pointRadius = 6;
+                }
+                if (_attr && _attr.pointRadius) {
+                    _options.pointRadius = _attr.pointRadius;
+                }
                 if (this.entityOptions) {
                     // simple merge the default with the global options
                     _options = { ..._options, ...this.entityOptions };
@@ -430,6 +502,13 @@ class chartData {
                     borderColor: _attr.borderColor || DEFAULT_COLORS[10 + r]
                     // TODO: min, max, avg values ???
                 };
+                if (_attr && _attr.pointStyle) {
+                    _options.pointStyle = _attr.pointStyle;
+                    _options.pointRadius = 6;
+                }
+                if (_attr && _attr.pointRadius) {
+                    _options.pointRadius = _attr.pointRadius;
+                }
                 if (this.entityOptions) {
                     // simple merge the default with the global options
                     _options = { ..._options, ...this.entityOptions };
@@ -486,6 +565,14 @@ class chartData {
 
             if (this.card_config.chart.toLowerCase() === "horizontalbar") {
                 _options.indexAxis = "y";
+            }
+
+            if (_attr && _attr.pointStyle) {
+                _options.pointStyle = _attr.pointStyle;
+                _options.pointRadius = 6;
+            }
+            if (_attr && _attr.pointRadius) {
+                _options.pointRadius = _attr.pointRadius;
             }
 
             if (this.entityOptions) {

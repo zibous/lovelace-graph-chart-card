@@ -2,8 +2,9 @@
 
 Chart.js card `Version 1.0.8` for Home Assistant -  Visualize your data in 8 different ways; each of them animated and customisable.
 
-> DEVELOPER PREVIEW VERSION, CHART.JS v3.0.0-beta.6 NOT FINAL
+> DEVELOPER PREVIEW VERSION, CHART.JS v3.0.0-beta.7 NOT FINAL
 I'm still looking for help and would be happy if someone would get in touch to help me complete and improve (data processing, display / color selection charts ...) the graph-chartjs-card.
+CHART.JS v3.0.0-beta.7: https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.0-beta.7/chart.min.js
 
 
 ![charts2.png](docs/charts/charts.png)
@@ -43,6 +44,17 @@ I'm still looking for help and would be happy if someone would get in touch to h
 
 ### Card options
 
+
+```yaml
+ - type: 'custom:chart-card'
+   title: 'title'
+   chart: 'bar'
+   options:
+     ....
+    entities:
+      ....
+```
+
 | Name           | Type     | Default     | Description |
 | -------------- | -------- | ----------- |------------ |
 | title          | string   |             | card title  |
@@ -67,17 +79,30 @@ I'm still looking for help and would be happy if someone would get in touch to h
 Entities may be listed directly (as per `sensor.peter_eiweis_makronahrstoff` in the example below), or defined using
 properties of the Entity object detailed in the following table (as per `sensor.pressure` in the example below).
 
+```yaml
+    entities:
+      - options:
+          ....
+      - entity: name
+        ....
+      - entity: name
+        ....
+```
+
 | Name | Type | Default | Description |
 |------|:----:|:-------:|-------------|
+| - options | optional |  | Set a custom option (global) for all entites.  see: [Chart.js documentation](https://www.chartjs.org/docs/latest/).|
 | entity ***(required)*** | string |  | Entity id of the sensor.
-| name | string |  | Set a custom display name, defaults to entity's friendly_name.
-| backgroundColor | string |  | Set a custom color, overrides all other color options including thresholds.
-| borderColor | string |  | Set a custom color, overrides all other color options including thresholds.
-| unit | string |  | Set a custom unit of measurement, overrides `unit` set in base config. |
-| yAxisID | string |  | Set secondary axis yAxisID: "right" || yAxisID: "left" |
-| gradient | list |  | Set the colors for the gradient |
-| fill | boolean | false  | How to fill the area under the. line see: [Chart.js documentation](https://www.chartjs.org/docs/latest/).|
-| options | optional |  | Set a custom option  see: [Chart.js documentation](https://www.chartjs.org/docs/latest/).|
+| - name | string |  | Set a custom display name, defaults to entity's friendly_name.
+| - backgroundColor | string |  | Set a custom color, overrides all other color options including thresholds.
+| - borderColor | string |  | Set a custom color, overrides all other color options including thresholds.
+| - unit | string |  | Set a custom unit of measurement, overrides `unit` set in base config. |
+| - yAxisID | string |  | Set secondary axis yAxisID: "right" || yAxisID: "left" |
+| - gradient | list |  | Set the colors for the gradient |
+| - fill | boolean | false  | How to fill the area under the. line see: [Chart.js documentation](https://www.chartjs.org/docs/latest/).|
+| - pointStyle | string |  | Set the pointer `circle`, `triangle`, `rectRounded`, `rect`, `rectRot`, `cross`, `star`, `line`, `dash` style.  |
+| - pointRadius | number |  | The radius of the point shape. If set to 0, the point is not rendered. See [Chart.js documentation](https://www.chartjs.org/docs/latest/configuration/elements.html#point-styles). |
+
 <br>
 
 ### Theme variables
@@ -120,6 +145,7 @@ Another possibility is that the theme settings for a chart are set in the card d
     tooltipsbackground: "#FFFFFF"
     tooltipsfontcolor: "#555555"
     cardbackground: "linear-gradient(to bottom, #009fff, #ec2f4b);"
+  ....    
 ```
 
 
@@ -133,13 +159,10 @@ Another possibility is that the theme settings for a chart are set in the card d
 - type: 'custom:chart-card'
   title: 'Makro Nährstoffe'
   icon: 'mdi:nutrition'
-  height: 240
-  chart: 'pie'
-  units: 'kal'
-  options:
-    title:
-      display: true
-      text: 'Aufteilung Nährstoffe (kal) pro Tag'
+  chart: 'bar'
+  entities:
+    - entity: entity.name
+    - entity: entity.name
 
 ```
 <br>
@@ -152,12 +175,12 @@ Another possibility is that the theme settings for a chart are set in the card d
    height: 240
    chart: 'doughnut'
    units: 'kal'
-   colorschemes: 'brewer.Paired12'
    options:
-     title:
-       display: true
-       text: 'Aufteilung Nährstoffe (kal) pro Tag'
-    entities:
+     plugins:
+       title:
+         display: true
+         text: 'Aufteilung Nährstoffe (kal) pro Tag'
+   entities:
       - entity: sensor.peter_eiweis_makronahrstoff
         name: Eiweis
         unit: 'kal'
@@ -181,8 +204,9 @@ Another possibility is that the theme settings for a chart are set in the card d
     chart: 'bar'
     units: 'kal'
     options:  ## see: https://www.chartjs.org/docs/latest/
-      title:
-        text: 'Aufstellung der Nährstoffe'
+      plugins:
+        title:
+          text: 'Aufstellung der Nährstoffe'
     entities:
       - entity: sensor.peter_eiweis_makronahrstoff
         name: Eiweis
@@ -225,7 +249,7 @@ Another possibility is that the theme settings for a chart are set in the card d
 
 ## Resources
 
-- [Chart.js v3.0.0-beta.6](https://chartjs.org) - Chart.js - Simple yet flexible JavaScript charting for designers & developers
+- [Chart.js v3.0.0-beta.7](https://chartjs.org) - Chart.js - Simple yet flexible JavaScript charting for designers & developers
 - [Chart.js Official Guide](https://chartjs.org/docs) - The user guide and documentation site.
 - [Chart.js Samples](https://www.chartjs.org/samples/latest/) - Simple yet flexible JavaScript charting for designers & developers
 - [Colors with Chart.js & D3's](https://codenebula.io/javascript/frontend/dataviz/2019/04/18/automatically-generate-chart-colors-with-chart-js-d3s-color-scales/) - Automatically Generate Chart Colors with Chart.js & D3's Color Scales...
