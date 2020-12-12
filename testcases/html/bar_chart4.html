@@ -175,11 +175,17 @@
 				},
 				plugins: {
 					legend: {
-						display: false,
+						display: true,
+						labels: {
+							filter: (legendItem, data) => {
+                            	return data.datasets[legendItem.datasetIndex].tooltip!==false;
+                        	}
+						}
 					},
 					title: {
 						display: true,
-						text: 'Consumption of water 2020'
+						text: 'Consumption of water 2020',
+						color: "#2980b9",
 					},
 					tooltip: {
 						callbacks: {
@@ -208,6 +214,7 @@
 			// title settings
 			Chart.defaults.plugins.title.font.size = 20
 			Chart.defaults.plugins.title.font.style = "normal";
+			Chart.defaults.plugins.title.color = "#FFFFFF"
 			// gridlines
 			Chart.defaults.scale.gridLines.display = false
 			Chart.defaults.scale.display = true;

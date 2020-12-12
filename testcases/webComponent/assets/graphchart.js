@@ -61,7 +61,6 @@ class graphChart {
      */
     _setChartDefaults() {
         // global default settings
-        if (this.themeSettings.chartdefault === true) return;
         try {
             if (this.ChartControl && this.ChartControl.defaults) {
                 // global defailt settings
@@ -187,7 +186,6 @@ class graphChart {
                             break;
                     }
                 }
-                this.themeSettings.chartdefault = true;
             }
         } catch (err) {
             console.error("Error Set Chart defaults for", this.chart_type, ": ", err, err.message);
@@ -230,7 +228,7 @@ class graphChart {
                 title: {},
                 tooltip: {},
                 legend: {
-                    display: this.themeSettings.showLegend || false
+                    display: this.themeSettings.showLegend || false,
                 },
                 scales: {}
             },
@@ -263,7 +261,7 @@ class graphChart {
         // this.graphData.config holds the configruation data
         // this.graphData.data.datasets data per series
         // ---------------------------------------------------
-        if (
+        if (this.graphData.config && 
             this.graphData.config.secondaryAxis &&
             this.graphData &&
             this.graphData.data &&
@@ -339,7 +337,7 @@ class graphChart {
         // TODO: better use a plugin for this feature.
         // set bar as stacked, hide the legend for the segmentbar,
         // hide the tooltip item for the segmentbar.
-        if (this.graphData.config.segmentbar === true) {
+        if (this.graphData.config && this.graphData.config.segmentbar === true) {
             _options.scales = {
                 x: {
                     id: "x",
@@ -404,6 +402,7 @@ class graphChart {
             if (this.graphData) {
                 if (JSON.stringify(this.graphDataSets) === JSON.stringify(this.graphData.data.datasets)) {
                     // same data as before, skip redraw...
+                    console.log("No update !!!");
                     return;
                 }
 
@@ -414,8 +413,12 @@ class graphChart {
                     datasets: this.graphData.data.datasets
                 };
 
+                // if (this.chart_type === "pie") {
+                //     console.log("renderGraph", this.chart_type, graphOptions);
+                // }
+
                 // Chart declaration
-                if (this.ctx && graphOptions.data && graphOptions.options) {
+                if (this.ctx  && graphOptions.data && graphOptions.options) {
                     if (doUpdate && this.chart && this.chart.data) {
                         // redraw the chart with the current options
                         // and updated data series
@@ -429,8 +432,10 @@ class graphChart {
                         if (this.chart_ready === false) {
                             // create and draw the new chart with the current settings
                             // and the dataseries. Register all plugins
-                            if (this.graphData.config.gradient && this.themeSettings.gradient === true) {
-                                this.ChartControl.register(gradient);
+                            if(this.themeSettings.gradient === true){
+                                if (this.graphData.config.gradient) {
+                                    this.ChartControl.register(gradient);
+                                }
                             }
                             if (
                                 this.chartconfig &&
@@ -461,10 +466,32 @@ class graphChart {
                                 });
                             }
                         }
+                        // const ct = this.card_config.id
+
+                        // if (this.chart_type === "pie") {
+                            
+                        //     console.log("|0|create|",new Date().toISOString(),ct, '| NONE |');   
+
+                        //     this.ChartControl.register({
+                        //         id: "debug",
+                        //         start(chart) {
+                        //             console.log("|1|start|",new Date().toISOString(),ct, '|',chart.id + '|');
+                        //         },
+                        //         stop(chart) {
+                        //             console.log("|2|stop|",new Date().toISOString() ,ct, '|',chart.id+ '|');
+                        //         },
+                        //         beforeUpdate(chart) {
+                        //             console.log("|3|beforeUpdate|",new Date().toISOString() ,ct, '|',chart.id+ '|');
+                        //         }
+                        //     });
+                        // }
 
                         if (this.chart) {
                             // be shure that no chart exits before create..
-                            this.chart.destroy();
+                            // if (this.chart_type === "pie") {
+                            //     console.log("|4|destroy|",new Date().toISOString(),ct, '|',this.chart.id + '|');   
+                            // }
+                            this.chart.destroy(); 
                             this.chart = null;
                         }
 
@@ -474,6 +501,10 @@ class graphChart {
                         if (this.chart) {
                             this.chart_ready = true;
                         }
+
+                        // if (this.chart_type === "pie") {
+                        //     console.log("graphOptions", this.chart_type, graphOptions);
+                        // }
                     }
                 }
             } else {

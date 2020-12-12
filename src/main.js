@@ -7,12 +7,12 @@
   gradient:   https://github.com/kurkle/chartjs-plugin-gradient#readme
 
 /** -------------------------------------------------------------------*/
+"use strict";
 
 // Chart.js v3.0.0-beta.7 and used plugins, production use min.js
 import "/hacsfiles/chart-card/chart.js?module";
 
-// gradient
-// const gradient = window["chartjs-plugin-gradient"];
+// gradient, see themesettings
 const gradient = window["chartjs-gradient"];
 
 const appinfo = {
@@ -45,21 +45,18 @@ const fireEvent = (node, type, detail, options) => {
  * lovelace card chart graph
  */
 class ChartCard extends HTMLElement {
-    // static get properties() {
-    //     return {
-    //         _config: {},
-    //         _hass: {}
-    //     };
-    // }
-
+    
     /**
      * Chartjs Card constructor
+     * TODO: Why is this called 3-6 times on startup ?
      */
-    constructor() {
-        // TODO: Why is this called 3-6 times on startup ?
-        super();
-        // console.log(new Date().toISOString(), appinfo.name, "Constructor");
 
+    constructor() {
+        // Always call super first in constructor
+        // https://github.com/mdn/web-components-examples/blob/master/life-cycle-callbacks/main.js
+        super();
+
+        // Element functionality written in here
         this._hass = null;
         this._config = null;
 
@@ -150,7 +147,8 @@ class ChartCard extends HTMLElement {
             showGridLines: ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || false,
             secondaryAxis: false,
             gridLineWidth: 0.18,
-            borderDash: [2]
+            borderDash: [2],
+            gradient: true
         };
     }
     /**
@@ -216,7 +214,9 @@ class ChartCard extends HTMLElement {
                     ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || this.showGridLines,
                 secondaryAxis: false,
                 themecolor: this._evaluateCssVariable("--chartjs-theme") || false,
-                charttheme: this.chart_themesettings !== null
+                charttheme: this.chart_themesettings !== null,
+                gradient: this.themeSettings.gradient,
+                chartdefault: false,
             };
             // get the theme from the hass or private theme settings
             if (this.theme === undefined || this.theme.dark === undefined) {
@@ -280,8 +280,10 @@ class ChartCard extends HTMLElement {
      */
     _creatHACard() {
         // card and chart elements
-        this.id = "i" + Math.random().toString(36).substr(2, 3).toLocaleLowerCase();
 
+        if (this.id) return;
+
+        this.id = "TC" + Math.floor(Math.random() * 1000);
         const card = document.createElement("ha-card");
         // the ha-card
         card.id = this.id + "-card";
@@ -410,6 +412,7 @@ class ChartCard extends HTMLElement {
 
         try {
             this.root = this.shadowRoot;
+
             while (this.root.hasChildNodes()) {
                 this.root.removeChild(root.lastChild);
             }
@@ -420,14 +423,14 @@ class ChartCard extends HTMLElement {
             }
 
             // get the config from the lovelace
-            this._config = config;
+            this._config = Object.assign({}, config);
             this.loginfo_enabled = this._config.loginfo || false;
 
             // ha-card settings
             this.card_title = this._config.title || "";
             this.card_icon = this._config.icon || null;
             this.card_height = this._config.height || 240;
-            this.card_timestamp = this._config.cardtimestamp || true;
+            this.card_timestamp = this._config.cardtimestamp || false;
 
             // all settings for the chart
             this.chart_type = this._config.chart || "bar";
@@ -439,6 +442,8 @@ class ChartCard extends HTMLElement {
                     this.chart_showstate = false;
                 }
             }
+            this._config.id = this.chart_type + Math.floor(Math.random() * 1000);
+
             this.chart_showdetails = this._config.showdetails;
             this.chart_themesettings = this._config.theme || null;
             this.loaderart = this._config.loader || "three-dots";
@@ -513,9 +518,11 @@ class ChartCard extends HTMLElement {
             }
 
             // create the card and apply the chartjs config
-            this._creatHACard();
-            this._initialized = true;
+            if (this._initialized === false) {
+                this._creatHACard();
+            }
             this.updating = false;
+
         } catch (err) {
             console.log(err.message, config, err);
         }
@@ -526,11 +533,12 @@ class ChartCard extends HTMLElement {
      *
      */
     set hass(hass) {
+        // check if hass is present
         if (hass === undefined) return;
+        // skip not initialized
         if (!this._initialized) return;
 
         this._hass = hass;
-
         this.selectedTheme = hass.selectedTheme || { theme: "system", dark: false };
         if (this.theme && this.theme.dark !== this.selectedTheme.dark) {
             // theme has changed
@@ -544,13 +552,6 @@ class ChartCard extends HTMLElement {
         }
         this.theme = this.selectedTheme;
 
-        if (!this.graphChart) {
-            // create the graph chart
-            this._getThemeSettings();
-            this.themeSettings.theme = this.theme;
-            this._setChartConfig();
-        }
-
         // An object list containing the states of all entities in Home Assistant.
         // The key is the entity_id, the value is the state object.
         this.hassEntities = this._config.entities
@@ -559,9 +560,14 @@ class ChartCard extends HTMLElement {
 
         // check if we have valid entities and skip if we can'nt find the
         // entities in the hass entities list.
-        if (!this.hassEntities || this.hassEntities.length === 0) return;
+        if (!this.hassEntities || this.hassEntities.length === 0) {
+            console.error(this.chart_type, "No valid entities found, check your settings...");
+            return;
+        }
 
-        this.updateData();
+        // update only if we has a chart
+        if (this.skipRender)
+            this.checkUpdate();
 
         if (this.skipRender) return;
 
@@ -605,8 +611,14 @@ class ChartCard extends HTMLElement {
                 ? hass.states[x.entity]["attributes"]["friendly_name"]
                 : x.entity
         );
-
-        if (this.skipRender == false && this._initialized) {
+        
+        if (this.skipRender == false && this._initialized) {     
+            if (!this.graphChart) {
+                // create the graph chart
+                this._getThemeSettings();
+                this.themeSettings.theme = this.theme;
+                this._setChartConfig();
+            }    
             // get the histroy data and render the graph
             this._getThemeSettings();
             this.themeSettings.theme = this.theme;
@@ -618,11 +630,10 @@ class ChartCard extends HTMLElement {
     }
 
     /**
-     * update data
+     * checks if we need a graph update
      */
-    updateData() {
+    checkUpdate() {
         if (this.updating) return false;
-
         // check if we has changes
         if (this.hassEntities && this.hassEntities.length && this._hass) {
             this.hasChanged = false;
@@ -638,7 +649,7 @@ class ChartCard extends HTMLElement {
                 const h = this.hassEntities.find((x) => x.entity_id === entity.entity);
                 entity.laststate = entity.state;
                 entity.update = false;
-                if (h && entity.last_changed !== h.last_changed) {
+                if (h && entity.last_changed !== h.last_changed && entity.state !== h.state) {
                     // update the data for this entity
                     entity.last_changed = h.last_changed;
                     entity.state = h.state;
@@ -646,13 +657,18 @@ class ChartCard extends HTMLElement {
                     this.hasChanged = true;
                 }
             }
+
             if (this.hasChanged) {
                 // refresh and update the graph
                 this._getThemeSettings();
                 this.graphChart.setThemeSettings(this.themeSettings);
+                this.entityData = this.hassEntities.map((x) => (x === undefined ? 0 : x.state));
+                this.graphChart.entityData = this.entityData;
+                this.chart_update = true;
                 this._getHistory();
                 if (this.card_timestamp) this.timestampLayer.innerHTML = localDatetime(new Date().toISOString());
             }
+
             this.updating = false;
             return this.hasChanged;
         }
@@ -668,12 +684,8 @@ class ChartCard extends HTMLElement {
             if (this.data_hoursToShow && this.data_hoursToShow > 0 && this.entity_ids.length) {
                 // get all data for the selected timeslot and entities...
                 let startTime;
-                if (this.chart_update) {
-                    startTime = this.lastEndTime;
-                } else {
-                    startTime = new Date();
-                    startTime.setHours(startTime.getHours() - this.data_hoursToShow);
-                }
+                startTime = new Date();
+                startTime.setHours(startTime.getHours() - this.data_hoursToShow);
                 let endTime = new Date();
                 this.lastEndTime = endTime;
                 const filter =
@@ -721,7 +733,6 @@ class ChartCard extends HTMLElement {
                     '<p style="font-size:0.85em;text-align:center;margin:0;line-height:2em">' + item.name + "</p>"
                 );
                 _html.push("</div>");
-                //_visible = "margin:0;display:none;line-height:1.2em";
             }
             _html.push("</div>");
             this.currentData.innerHTML = _html.join("");
@@ -835,12 +846,31 @@ class ChartCard extends HTMLElement {
         }
     }
 
+    /**
+     * The connectedCallback() runs when the element is added to the DOM
+     */
     connectedCallback() {
-        // logInfo(true, "connectedCallback")
+        this._initialized = true; // important for loading charts !
     }
 
+    /**
+     * the disconnectedCallback() and adoptedCallback() callbacks log simple messages
+     * to the console to inform us when the element is either removed from the DOM,
+     */
     disconnectedCallback() {
-        // logInfo(true, "connectedCallback")
+       this._initialized = false; // important for loading charts !
+    }
+
+    /**
+     * the disconnectedCallback() and adoptedCallback() callbacks log simple messages
+     * to the console to inform us when the element is either removed from the DOM,
+     */
+    adoptedCallback() {
+       //  logInfo(true, this.id, this.chart_type, "adoptedCallback");
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        //  logInfo(true, this.id, this.chart_type, "attributeChangedCallback");
     }
 
     /**
@@ -848,7 +878,7 @@ class ChartCard extends HTMLElement {
      * distribute all cards over the available columns.
      */
     getCardSize() {
-        return 4;
+        return 1;
     }
 }
 

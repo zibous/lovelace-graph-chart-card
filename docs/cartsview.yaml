@@ -11,41 +11,24 @@ panel: true
 path: testcharts
 
 cards:
-  - type: custom:layout-card
-    layout: horizontal
-    column_num: 1
-    column_width: 1200
-    max_width: 1200
+  - type: 'custom:cards-layout'
+    title: Informationen über Körperwerte
+    icon: 'mdi:tape-measure'
+    description: |
+      Verschiedene Grafiken über die Ernaährung und Körperwerte
+      <ul>
+        <li>Makronährstoffe</>
+        <li>Körperwerte (Messung MI Bodyscale II</>
+        <li>Temperaturmessungen</>
+        <li>Stromverbrauch & Photovoltaikanlage</>
+      </ul>
+    width: 80%
 
     cards:
-      ## ###############################################
-      - type: custom:layout-card
-        max_width: 1020
-        column_num: 1
-        max_columns: 1
-        layout: horizontal
-        cards:
-          - type: horizontal-stack
-            cards:
-              - type: 'custom:button-text-card'
-                title: Informationen über Körperwerte
-                icon: 'mdi:weight-lifter'
-                large: true
-                background_color: 'transparent'
-          - break
-
-      - type: custom:layout-card
-        max_width: 720
-        column_num: 1
-        max_columns: 2
-        layout: horizontal
-        cards:
-          - type: custom:layout-card
-            max_width: 360
-            column_num: 1
-            max_columns: 2
-            layout: horizontal
-            cards:
+      - row:
+          - col:
+            width: 50%
+            entities:
               ## --------------------------------
               ## PIE CHART
               ## --------------------------------
@@ -60,8 +43,7 @@ cards:
                     title:
                       display: true
                       text: 'Aufteilung Nährstoffe (kal) pro Tag'
-                      font:
-                        color: '#ff9500'
+                      color: '#ff9500'
                 entities:
                   - entity: sensor.peter_eiweis_makronahrstoff
                     name: Eiweis
@@ -70,9 +52,9 @@ cards:
                   - entity: sensor.peter_kohlenhydrate_makronahrstoff
                     name: Kohlenhydrate
 
-              ## --------------------------------
-              ## chart: 'bar' simple
-              ## --------------------------------
+                ## --------------------------------
+                ## chart: 'bar' simple
+                ## --------------------------------
               - type: 'custom:chart-card'
                 title: 'Makro Nährstoffe'
                 icon: 'mdi:nutrition'
@@ -90,13 +72,23 @@ cards:
                   - entity: sensor.peter_eiweis_makronahrstoff
                     name: Eiweis
                     backgroundColor: '#f1c40f'
+                    units: 'kal'
                   - entity: sensor.peter_fett_makronahrstoff
                     name: Fett
                     backgroundColor: '#e74c3c'
+                    units: 'kal'
                   - entity: sensor.peter_kohlenhydrate_makronahrstoff
                     name: Kohlenhydrate
                     backgroundColor: '#009688'
+                    units: 'kal'
 
+      - row:
+          - col:
+            width: 50%
+            entities:
+              ## --------------------------------
+              ## chart: 'doughnut'
+              ## --------------------------------
               - type: 'custom:chart-card'
                 title: 'Makro Nährstoffe'
                 icon: 'mdi:nutrition'
@@ -153,7 +145,10 @@ cards:
                     name: Gewicht
                   - entity: sensor.peter_viszerales_fett
                     name: Viszerales Fett
-
+      - row:
+          - col:
+            width: 50%
+            entities:
               ## --------------------------------
               ## chart: 'horizontalBar'
               ## --------------------------------
@@ -226,18 +221,10 @@ cards:
                   - entity: sensor.peter_viszerales_fett
                     name: Viszerales Fett
 
-      - type: custom:layout-card
-        max_width: 720
-        column_num: 1
-        max_columns: 2
-        layout: horizontal
-        cards:
-          - type: custom:layout-card
-            max_width: 720
-            column_num: 1
-            max_columns: 1
-            layout: horizontal
-            cards:
+      - row:
+          - col:
+            width: 50%
+            entities:
               ## --------------------------------
               ## chart: 'bar' stacked
               ## --------------------------------
@@ -321,6 +308,10 @@ cards:
                     unit: 'kg'
                     backgroundColor: 'rgb(255,152,219)'
 
+      - row:
+          - col:
+            width: 50%
+            entities:
               ## --------------------------------
               ## chart: 'scatter'
               ## --------------------------------
@@ -399,20 +390,10 @@ cards:
                         - '#e74c3c'
                         - '#ff5722'
                         - '#ff9500'
-
-      - type: custom:layout-card
-        max_width: 720
-        column_num: 1
-        max_columns: 2
-        layout: horizontal
-        cards:
-          - type: custom:layout-card
-            max_width: 720
-            column_num: 1
-            max_columns: 1
-            layout: horizontal
-            showstate: true
-            cards:
+      - row:
+          - col:
+            width: 100%
+            entities:
               ## --------------------------------
               ## LINE CHART
               ## --------------------------------
@@ -466,18 +447,10 @@ cards:
                     name: Bad
                     fill: true
 
-      - type: custom:layout-card
-        max_width: 720
-        column_num: 1
-        max_columns: 2
-        layout: horizontal
-        cards:
-          - type: custom:layout-card
-            max_width: 720
-            column_num: 1
-            max_columns: 1
-            layout: horizontal
-            cards:
+      - row:
+          - col:
+            width: 100%
+            entities:
               ## --------------------------------
               ## LINE CHART
               ## --------------------------------

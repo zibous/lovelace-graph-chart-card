@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="de" prefix="og: http://ogp.me/ns#">
+<head>
+    <title>Chart Testcases</title>
+    <meta charset="UTF-8">
+    <script src="custom-cards.js"></script>
+    <script src="assets/chart.js"></script>
+    <script src="assets/tools.js"></script>
+    <script src="assets/graphchart.js"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand&display=swap" rel="stylesheet">
+    <style type="text/css" id="#hastyle">
+        html {
+            line-height: 1.15;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        }
+        body {
+            background-color:#4b4453;
+            font-family: 'Quicksand', 'Quicksand-Light', -apple-system, "Helvetica Neue", 'Open Sans', sans-serif;
+            font-size: 15px;
+            letter-spacing: 1.1px;
+            line-height: 1.5;
+            -webkit-text-size-adjust: 100%;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        * {
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        #page {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        h1{
+            font-size: 2.0em;
+            font-weight: 400;
+            line-height: 3em;
+            margin: 2em 0 1em 1em;
+            color:#fff;
+        }
+        .row{
+            width: 100%;
+            margin: 0 auto;
+        }
+        .col{
+            padding: 0.5em;
+            width: 48%;
+            float: left;
+        }
+        .clearfix::before,
+        .clearfix::after {
+            content: " ";
+            display: table;
+        }
+        .clearfix::after {
+            content: ".";
+            visibility: hidden;
+            display: block;
+            height: 0;
+            clear: both;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="page">
+        <h1>:: Chartjs BETA7 - Testpage (Resize Error)</h1>
+        <div class="row">
+            <div class="col clearfix">
+                <chard-graphdata title="PIE CHART Nährstoffe" id="pie862" type="pie" file="data/pie862.json" class="graph-cards" height="280"></chard-graphdata>
+            </div>
+            <div class="col clearfix">
+                <chard-graphdata title="BAR CHART Nährstoffe" id="bar613" type="bar" file="data/bar613.json" class="graph-cards"  height="280"></chard-graphdata>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col clearfix">
+                <chard-graphdata title="Doughnut CHART Nährstoffe" id="doughnut" type="doughnut" file="data/doughnut412.json" class="graph-cards" height="280"></chard-graphdata>
+            </div>
+            <div class="col clearfix">
+                <chard-graphdata title="BAR CHART Nährstoffe" id="bar746" type="bar" file="data/bar746.json" class="graph-cards"  height="280"></chard-graphdata>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col clearfix">
+                <chard-graphdata title="Body Scale BMI" id="bubble851" type="bubble" file="data/bubble851.json" class="graph-cards" height="280"></chard-graphdata>
+            </div>
+            <div class="col clearfix">
+                <chard-graphdata title="SCATTE CHART Scale BMI" id="scatter750" type="scatter" file="data/scatter750.json" class="graph-cards"  height="280"></chard-graphdata>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col clearfix">
+                <chard-graphdata title="LINE CHART Energie" id="line45" type="line" file="data/line45.json" class="graph-cards" height="280"></chard-graphdata>
+            </div>
+            <div class="col clearfix">
+                <chard-graphdata title="MIXED CHART Body Scales" id="line52" type="line" file="data/line52.json" class="graph-cards"  height="280"></chard-graphdata>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col clearfix">
+                <chard-graphdata title="POLAR CHART Body Scales" id="polarArea76" type="polarArea" file="data/polarArea76.json" class="graph-cards" height="280"></chard-graphdata>
+            </div>
+            <div class="col clearfix">
+                <chard-graphdata title="RADAR CHART Body Scales" id="radar296" type="radar" file="data/radar296.json" class="graph-cards"  height="280"></chard-graphdata>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col clearfix">
+                <chard-graphdata title="LINE CHART Temperatur Sensoren" id="line302" type="line" file="data/line302.json" class="graph-cards" height="280"></chard-graphdata>
+            </div>
+            <div class="col clearfix">
+                <chard-graphdata title="VERTICAL BAR CHART Body Scale" id="horizontalBar518" type="bar" file="data/horizontalBar518.json" class="graph-cards"  height="280"></chard-graphdata>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

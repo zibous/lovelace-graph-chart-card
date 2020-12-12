@@ -229,7 +229,6 @@ Another possibility is that the theme settings for a chart are set in the card d
 
 ### TODO - Open Tasks
 
-  - [ ] Wait for Bugfix [Home-Assistant Fronend Bug](https://github.com/home-assistant/frontend/issues/7246)
   - [ ] Optimize the Initalizing / Data update for the custom card
   - [ ] Optimize the data provider Historydata (data mapping, grouping)
   - [ ] Better default colors (simple, gradient) for all charts
