@@ -5125,8 +5125,13 @@ class PluginService {
 		return true;
 	}
 	invalidate() {
-		this._oldCache = this._cache;
-		this._cache = undefined;
+		//this._oldCache = this._cache;
+		//this._cache = undefined;
+		// see; https://github.com/chartjs/Chart.js/issues/8147#issuecomment-743910605
+		if (!isNullOrUndef(this._cache)) {
+			this._oldCache = this._cache;
+			this._cache = undefined;
+		}
 	}
 	_descriptors(chart) {
 		if (this._cache) {
