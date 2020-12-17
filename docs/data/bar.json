@@ -1,0 +1,93 @@
+{
+    "type": "bar",
+    "data": {
+        "labels": ["2020-12-06", "2020-12-07", "2020-12-08", "2020-12-09", "2020-12-10", "2020-12-11"],
+        "datasets": [
+            {
+                "label": "Fett",
+                "unit": "",
+                "minval": -0.11,
+                "maxval": 0.6,
+                "sumval": 0,
+                "avgval": 0,
+                "current": "-0.09",
+                "last_changed": "2020-12-11T06:17:54.084789+00:00",
+                "mode": "history",
+                "entity": "sensor.peter_trend_fett",
+                "name": "Fett",
+                "state": "-0.09",
+                "backgroundColor": "rgba(115,210,22,0.85)",
+                "borderColor": "rgba(115,210,22,0.85)",
+                "data": ["0.00", "-0.11", "0.02", "0.60", "0.00", "-0.09"]
+            },
+            {
+                "label": "Gewicht",
+                "unit": "",
+                "minval": -0.2,
+                "maxval": 1.05,
+                "sumval": 0,
+                "avgval": 0,
+                "current": "0.0",
+                "last_changed": "2020-12-10T09:29:38.145039+00:00",
+                "mode": "history",
+                "entity": "sensor.peter_trend_gewicht",
+                "name": "Gewicht",
+                "state": "0.0",
+                "backgroundColor": "rgba(245,121,0,0.85)",
+                "borderColor": "rgba(245,121,0,0.85)",
+                "data": ["0.00", "-0.20", "0.15", "1.05", "0.00"]
+            },
+            {
+                "label": "Muskeln",
+                "unit": "",
+                "minval": -0.39,
+                "maxval": 0.11,
+                "sumval": 0,
+                "avgval": 0,
+                "current": "0.11",
+                "last_changed": "2020-12-11T06:17:54.085400+00:00",
+                "mode": "history",
+                "entity": "sensor.peter_trend_muskeln",
+                "name": "Muskeln",
+                "state": "0.11",
+                "backgroundColor": "rgba(52,101,164,0.85)",
+                "borderColor": "rgba(52,101,164,0.85)",
+                "data": ["0.00", "0.01", "0.06", "-0.39", "0.00", "0.11"]
+            },
+            {
+                "label": "Wasser",
+                "unit": "",
+                "minval": -0.38,
+                "maxval": 0.12,
+                "sumval": 0,
+                "avgval": 0,
+                "current": "0.11",
+                "last_changed": "2020-12-11T06:17:54.084984+00:00",
+                "mode": "history",
+                "entity": "sensor.peter_trend_wasser",
+                "name": "Wasser",
+                "state": "0.11",
+                "backgroundColor": "rgba(89,161,79,0.85)",
+                "borderColor": "rgba(89,161,79,0.85)",
+                "data": ["0.00", "0.12", "0.00", "-0.38", "0.00", "0.11"]
+            }
+        ]
+    },
+    "options": {
+        "units": "",
+        "layout": { "padding": { "left": 24, "right": 24, "top": 0, "bottom": 24 } },
+        "chartArea": { "backgroundColor": "transparent" },
+        "hover": { "mode": "nearest", "intersect": true },
+        "elements": {},
+        "spanGaps": true,
+        "plugins": {
+            "title": { "text": "Abweichungen zum Vortag" },
+            "tooltip": {},
+            "legend": { "display": false, "position": "top" },
+            "scales": {}
+        },
+        "animation": {},
+        "onResize": null,
+        "scales": { "x": { "stacked": true }, "y": { "stacked": true } }
+    }
+}

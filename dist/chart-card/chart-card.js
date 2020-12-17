@@ -17,86 +17,6 @@
 "use strict";
 
 /**
- * data formatter
- * @param {*} d
- * @param {*} fmt
- */
-function formatDate(d, fmt) {
-    const date = new Date(d);
-    function pad(value) {
-        return value.toString().length < 2 ? "0" + value : value;
-    }
-    if (fmt == "timestamp") {
-        return (
-            date.getUTCFullYear() +
-            "-" +
-            pad(date.getUTCMonth() + 1) +
-            "-" +
-            pad(date.getUTCDate()) +
-            " " +
-            pad(date.getUTCHours()) +
-            ":" +
-            pad(date.getUTCMinutes()) +
-            ":" +
-            pad(date.getUTCSeconds())
-        );
-    }
-    return fmt.replace(/%([a-zA-Z])/g, function (_, fmtCode) {
-        switch (fmtCode) {
-            case "Y":
-                return date.getUTCFullYear();
-            case "M":
-                return pad(date.getUTCMonth() + 1);
-            case "d":
-                return pad(date.getUTCDate());
-            case "H":
-                return pad(date.getUTCHours());
-            case "m":
-                return pad(date.getUTCMinutes());
-            case "s":
-                return pad(date.getUTCSeconds());
-            default:
-                throw new Error("Unsupported format code: " + fmtCode);
-        }
-    });
-}
-
-// console.log(new Intl.DateTimeFormat('default', {
-//     hour: 'numeric',
-//     minute: 'numeric',
-//     second: 'numeric'
-//   }).format(date))
-//   // → '2:00:00 pm'
-
-//   console.log(new Intl.DateTimeFormat('en-US', {
-//     year: 'numeric',
-//     month: 'numeric',
-//     day: 'numeric'
-//   }).format(date))
-//   // → '12/19/2012'
-
-// {
-//     weekday: 'narrow' | 'short' | 'long',
-//     era: 'narrow' | 'short' | 'long',
-//     year: 'numeric' | '2-digit',
-//     month: 'numeric' | '2-digit' | 'narrow' | 'short' | 'long',
-//     day: 'numeric' | '2-digit',
-//     hour: 'numeric' | '2-digit',
-//     minute: 'numeric' | '2-digit',
-//     second: 'numeric' | '2-digit',
-//     timeZoneName: 'short' | 'long',
-
-//     // Time zone to express it in
-//     timeZone: 'Asia/Shanghai',
-//     // Force 12-hour or 24-hour
-//     hour12: true | false,
-
-//     // Rarely-used options
-//     hourCycle: 'h11' | 'h12' | 'h23' | 'h24',
-//     formatMatcher: 'basic' | 'best fit'
-//   }
-
-/**
  * show info
  * @param {*} args
  */
@@ -104,29 +24,40 @@ function logInfo(enabled, ...args) {
     if (enabled) console.info(new Date().toISOString(), ...args);
 }
 
-/**
- * get the date based on the locale
- * @param {*} d
- * @param {*} locale
- */
-function localDate(d, locale) {
-    if (!d) return "";
-    if (!locale) locale = navigator.language || navigator.userLanguage || "en-GB";
-    const date = new Date(d.replace(/-/g, "/")); // bugfix Safari
-    if(isNaN(date)) return d;
-    return new Intl.DateTimeFormat(locale).format(date);
-}
+const cssAttr = function (v) {
+    return typeof v == "number" ? v + "px" : v;
+};
 
 /**
  * get the date based on the locale
  * @param {*} d
  * @param {*} locale
+ * options: {
+        weekday: 'narrow' | 'short' | 'long',
+        era: 'narrow' | 'short' | 'long',
+        year: 'numeric' | '2-digit',
+        month: 'numeric' | '2-digit' | 'narrow' | 'short' | 'long',
+        day: 'numeric' | '2-digit',
+        hour: 'numeric' | '2-digit',
+        minute: 'numeric' | '2-digit',
+        second: 'numeric' | '2-digit',
+        timeZoneName: 'short' | 'long',
+
+        // Time zone to express it in
+        timeZone: 'Asia/Shanghai',
+        // Force 12-hour or 24-hour
+        hour12: true | false,
+
+        // Rarely-used options
+        hourCycle: 'h11' | 'h12' | 'h23' | 'h24',
+        formatMatcher: 'basic' | 'best fit'
+        }
  */
 function localDatetime(d, locale) {
     if (!d) return "";
     if (!locale) locale = navigator.language || navigator.userLanguage || "en-GB";
     const date = new Date(d);
-    if(isNaN(date)) return d;
+    if (isNaN(date)) return d;
     return new Intl.DateTimeFormat(locale, {
         year: "numeric",
         month: "numeric",
@@ -135,40 +66,6 @@ function localDatetime(d, locale) {
         minute: "numeric",
         second: "numeric"
     }).format(date);
-}
-
-function timeStampLabel(d, locale) {
-    if (!d) return "";
-    if (!locale) locale = navigator.language || navigator.userLanguage || "en-GB";
-    const date = new Date(d.replace(/-/g, "/")); // bugfix Safari
-    if(isNaN(date)) return d;
-    const datestr = new Intl.DateTimeFormat(locale, {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "numeric"
-    }).format(date);
-    return datestr.split(",");
-}
-
-/**
- * remove node from object
- * @param {*} obj
- * @param {*} keys
- */
-function reject(obj, keys) {
-    return Object.keys(obj)
-        .filter((k) => !keys.includes(k))
-        .map((k) => Object.assign({}, { [k]: obj[k] }))
-        .reduce((res, o) => Object.assign(res, o), {});
-}
-
-/**
- * number format integer or float
- * @param {*} n
- */
-function num(n) {
-    return n === parseInt(n) ? parseInt(n) : parseFloat(n).toFixed(2);
 }
 
 /**
@@ -286,10 +183,10 @@ class chartData {
         this.entityData = config.entityData;
         this.entityNames = config.entityNames;
         this.stateHistories = config.stateHistories;
-        this.data_dateGroup = config.data_dateGroup || "%Y-%M-%d %H:00:00";
+        this.data_group_by = config.data_group_by || "day";
+        this.data_aggregate = config.aggregate || "last";
         this.settings = config.settings;
         this.chart_locale = config.chart_locale;
-        this.data_aggregate = config.aggregate || "last";
         this.data_pointStyles = [
             "circle",
             "triangle",
@@ -319,18 +216,57 @@ class chartData {
      * @param {*} fmt
      * @param {*} aggr
      */
-    _getGroupHistoryData(array, fmt, aggr) {
+    _getGroupHistoryData(array) {
         try {
             if (!array) return;
             if (array && !array.length) return;
             let groups = {};
+            const _num = (n) => (n === parseInt(n) ? Number(parseInt(n)) : Number(parseFloat(n).toFixed(2)));
+            const _fmd = (d) => {
+                const t = new Date(d);
+                if (isNaN(t)) return d;
+                if (this.data_group_by === "weekday") {
+                    return {
+                        name: date.toLocaleDateString(this.chart_locale, { weekday: "short" }),
+                        label: date.toLocaleDateString(this.chart_locale, { weekday: "long" })
+                    };
+                }
+                const day = ("0" + t.getDate()).slice(-2);
+                const month = ("0" + (t.getMonth() + 1)).slice(-2);
+                const year = t.getFullYear();
+                const hours = ("0" + t.getHours()).slice(-2);
+                const minutes = ("0" + t.getMinutes()).slice(-2);
+                const seconds = ("0" + t.getSeconds()).slice(-2);
+                switch (this.data_group_by) {
+                    case "year":
+                        return { name: year, label: year };
+                    case "month":
+                        return { name: `${year}.${month}`, label: `${year}.${month}` };
+                    case "day":
+                        return { name: `${month}.${day}`, label: `${month}.${day}` };
+                    case "hour":
+                        return { name: `${month}.${day} ${hours}`, label: [`${month}.${day}`, `${hours}.${minutes}`] };
+                    case "minutes":
+                        return {
+                            name: `${month}.${day} ${hours}:${minutes}`,
+                            label: [`${month}.${day}`, `${hours}.${minutes}`]
+                        };
+                    default:
+                        return {
+                            name: `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`,
+                            label: `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`
+                        };
+                }
+            };
+            // first build the groups
             array.forEach(function (o) {
-                let group = formatDate(o.last_changed, fmt);
-                groups[group] = groups[group] || [];
-                o.timestamp = formatDate(o.last_changed, "timestamp");
-                o.last_changed = group;
-                groups[group].push(o);
+                let group = _fmd(o.last_changed);
+                groups[group.name] = groups[group.name] || [];
+                o.timelabel = group.label;
+                groups[group.name].push(o);
             });
+            // create the grouped seriesdata
+            const aggr = this.data_aggregate;
             return Object.keys(groups).map(function (group) {
                 let items = groups[group].filter(
                     (item) => item.state && !isNaN(parseFloat(item.state)) && isFinite(item.state)
@@ -344,15 +280,15 @@ class chartData {
                 if (aggr == "first") {
                     const item = items.shift();
                     return {
-                        y: num(item.state || 0.0),
-                        x: item.last_changed
+                        y: _num(item.state || 0.0),
+                        x: item.timelabel
                     };
                 }
                 if (aggr == "last") {
                     const item = items[items.length - 1];
                     return {
-                        y: num(item.state || 0.0),
-                        x: item.last_changed
+                        y: _num(item.state || 0.0),
+                        x: item.timelabel
                     };
                 }
                 if (aggr == "max") {
@@ -360,41 +296,41 @@ class chartData {
                         a.state > b.state
                             ? {
                                   y: num(a.state || 0.0),
-                                  x: a.last_changed
+                                  x: a.timelabel
                               }
-                            : { y: num(b.state), x: b.last_changed }
+                            : { y: num(b.state), x: b.timelabel }
                     );
                 }
                 if (aggr == "min")
                     return items.reduce((a, b) =>
                         a.state < b.state
                             ? {
-                                  y: num(a.state || 0.0),
-                                  x: a.last_changed
+                                  y: _num(a.state || 0.0),
+                                  x: a.timelabel
                               }
                             : {
-                                  y: num(b.state || 0.0),
-                                  x: b.last_changed
+                                  y: _num(b.state || 0.0),
+                                  x: b.timelabel
                               }
                     );
                 if (aggr == "sum") {
                     const val = items.reduce((sum, entry) => sum + num(entry.state), 0);
                     return {
-                        y: num(val || 0.0),
-                        x: items[0].last_changed
+                        y: _num(val || 0.0),
+                        x: items[0].timelabel
                     };
                 }
                 if (aggr == "avg") {
-                    const val = items.reduce((sum, entry) => sum + num(entry.state), 0) / items.length;
+                    const val = items.reduce((sum, entry) => sum + _num(entry.state), 0) / items.length;
                     return {
-                        y: num(val || 0.0),
-                        x: items[0].last_changed
+                        y: _num(val || 0.0),
+                        x: items[0].timelabel
                     };
                 }
                 return items.map((items) => {
                     return {
-                        y: num(items.state || 0.0),
-                        x: items.timestamp
+                        y: _num(items.state || 0.0),
+                        x: items.timelabel
                     };
                 });
             });
@@ -673,7 +609,7 @@ class chartData {
         for (const list of this.stateHistories) {
             if (list.length === 0) continue;
             if (!list[0].state) continue;
-            const items = this._getGroupHistoryData(list, this.data_dateGroup, this.data_aggregate);
+            const items = this._getGroupHistoryData(list);
             _seriesData.push(items);
         }
         return _seriesData;
@@ -804,7 +740,7 @@ class chartData {
             if (!list[0].state) continue;
 
             // interate throw all entities data
-            const items = this._getGroupHistoryData(list, this.data_dateGroup, this.data_aggregate);
+            const items = this._getGroupHistoryData(list);
 
             const id = list[0].entity_id;
 
@@ -812,7 +748,8 @@ class chartData {
             const _attr = this.entities.find((x) => x.entity === id);
 
             // build the dataseries and check ignore data with zero values
-            let _items = this.data_ignoreZero ? items.map((d) => d.y).filter((x) => x != 0) : items.map((d) => d.y);
+            
+            let _items = this.card_config.ignoreZero ? items.map((d) => d.y).filter((x) => x != 0) : items.map((d) => d.y);
 
             // default Dataset Properties
             let _options = {
@@ -882,10 +819,7 @@ class chartData {
 
             // add the options, labels and data series
             _graphData.data.labels = items.map((l) => l.x);
-            _graphData.config.labelType = this.data_dateGroup === "%Y-%M-%d %H:00:00" ? "timestamp" : "default";
-            if (_graphData.config.labelType === "timestamp") {
-                _graphData.data.labels = items.map((l) => timeStampLabel(l.x, this.chart_locale));
-            }
+
             _graphData.data.datasets.push(_options);
             _graphData.config.series++;
         }
@@ -903,6 +837,8 @@ class chartData {
     getHistoryGraphData() {
         try {
             if (this.stateHistories && this.stateHistories.length) {
+                // merge with current...
+
                 switch (this.chart_type.toLowerCase()) {
                     case "bubble":
                         this.graphData = this.createHistoryBubbleData();
@@ -1009,11 +945,18 @@ class graphChart {
                     this.ChartControl.defaults.plugins.legend.labels.color = this.themeSettings.fontColor;
                 }
 
+                this.ChartControl.defaults.layout.padding = {
+                    top: 24,
+                    left: 0,
+                    right: 0,
+                    bottom: 0
+                };
+
                 // Legend new beta 7 !
                 this.ChartControl.defaults.plugins.legend.position = "top";
                 this.ChartControl.defaults.plugins.legend.labels.usePointStyle = true;
                 this.ChartControl.defaults.plugins.legend.labels.boxWidth = 8;
-                this.ChartControl.defaults.plugins.legend.show = this.themeSettings.showLegend || false;
+                this.ChartControl.defaults.plugins.legend.show = false;
 
                 // Tooltips new beta 7 !
                 this.ChartControl.defaults.plugins.tooltip.enabled = true;
@@ -1043,7 +986,8 @@ class graphChart {
                     this.ChartControl.defaults.elements.arc.borderWidth = 0;
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.line) {
                     this.ChartControl.defaults.elements.line.fill = false;
-                    this.ChartControl.defaults.elements.line.tension = 0;
+                    this.ChartControl.defaults.elements.line.tension = .15;
+                    // this.ChartControl.defaults.elements.line.cubicInterpolationMode = 'monotone';
                 }
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.point) {
                     this.ChartControl.defaults.elements.point.radius = 0.33;
@@ -1134,14 +1078,7 @@ class graphChart {
         // chart default options
         let _options = {
             units: this.data_units || "",
-            layout: {
-                padding: {
-                    left: 24,
-                    right: 24,
-                    top: 0,
-                    bottom: 24
-                }
-            },
+            layout: {},
             chartArea: {
                 backgroundColor: "transparent"
             },
@@ -1276,6 +1213,7 @@ class graphChart {
                 }
             };
             _options.plugins.legend = {
+                display: false,
                 labels: {
                     filter: (legendItem, data) => {
                         return data.datasets[legendItem.datasetIndex].tooltip !== false;
@@ -1291,7 +1229,11 @@ class graphChart {
                 }
             };
         }
-
+        if (this.chart_type.toLowerCase() === "bubble") {
+            _options.plugins.legend = {
+                display: false
+            };
+        }
         // preset cart current config
         let chartCurrentConfig = {
             type: this.chart_type,
@@ -1331,7 +1273,6 @@ class graphChart {
                     // same data as before, skip redraw...
                     return;
                 }
-
                 // append the data for the current chart settings
                 let graphOptions = this._setChartOptions();
                 graphOptions.data = {
@@ -1429,7 +1370,9 @@ const gradient = window["chartjs-gradient"];
 
 const appinfo = {
     name: "✓ custom:chart-card ",
-    version: "1.0.8",
+    app: "chart-card",
+    version: "1.1.0",
+    chartjs: "v3.0.0-beta.7",
     assets: "/hacsfiles/chart-card/assets/"
 };
 console.info(
@@ -1453,11 +1396,139 @@ const fireEvent = (node, type, detail, options) => {
     return event;
 };
 
+// Constructable Stylesheets: seamless reusable styles
+// TODO: find a better way to have seamless reusable styles
+const style = document.createElement("style");
+style.innerHTML = `
+    html {
+        scrollbar-width: none; 
+        -ms-overflow-style: none;
+    }
+
+    html::-webkit-scrollbar {
+        width: 0px;
+    }
+    .card-header{
+        padding-bottom:0 !important;
+        white-space:nowrap;
+    }
+    .card-header-icon{
+        position:relative;
+        top:-2px;
+        padding:0 6px 0 4px;
+    }
+    .card-header-title{
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        display:inline-block;
+        vertical-align:top;
+        width:70%;
+    }
+    .card-content{
+        overflow: auto;
+    }
+    .card-canvas{
+        -moz-user-select: none; 
+        -webkit-user-select: none; 
+        -ms-user-select: none;
+        width:100%;
+        height:auto;
+    }
+    .card-loader{
+        width: 60px;
+        position:absolute;
+        top:42%;
+        left:38%;
+        width:60px;
+        z-index:500;
+        margin: 0 auto
+    }
+    .card-state-view{
+        position:absolute;
+        top:12px;
+        right:20px;
+        background-color:transparent;
+        z-index:100;
+    }
+    .state-view-data{
+        font-weight:400;
+        margin:0;
+        cursor:pointer;
+        height:4.5em;
+        overflow:auto;
+    }
+    .state-view-value{
+        font-size:2.0em;
+        line-height:1.2em;
+        text-align:right;
+        margin:0;
+        color:#fff;
+        border-bottom: 1px dotted
+    }
+    .state-view-value span{
+        padding-left: 4px;
+        font-size:0.4em;
+        vertical-align:top
+    } 
+    .state-view-name{
+        border:none;
+        font-size:0.85em;
+        text-align:center;
+        margin:0;
+        line-height:2em
+    } 
+    .card-detail-view{
+        margin-top: 1.2em;
+        border-top:1px dotted;
+    }
+    .card-detail-view h2{
+        margin-left: 0.5em
+    }
+    .card-detail-table{
+        margin: 0 auto;
+        font-size:0.95em;
+        font-weight:300;
+        width: 100%;
+        border-spacing:10px;
+        border-collapse: separate;
+        table-layout: fixed;
+        text-align:left;
+    }
+    .card-detail-table th{
+        padding: 0 4px;
+        font-weight:400;
+    }
+    .card-detail-table td{
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-weight:300;
+    }
+    .card-timestamp{
+        position:absolute;
+        right:0.8em;
+        bottom:0;
+        font-weight:300;
+        font-size:0.7em;
+        text-align:right;
+        z-index:800
+        color: #000000;
+    }
+    @media (min-width: 320px) and (max-width: 480px){
+    
+    }
+`;
+
+// ONLY for chrome !
+// const sheet = new CSSStyleSheet();
+// this.shadowRoot.adoptedStyleSheets = [sheet];
+// sheet.replaceSync(CSS);
+
 /**
  * lovelace card chart graph
  */
 class ChartCard extends HTMLElement {
-    
     /**
      * Chartjs Card constructor
      * TODO: Why is this called 3-6 times on startup ?
@@ -1472,9 +1543,7 @@ class ChartCard extends HTMLElement {
         this._hass = null;
         this._config = null;
 
-        this.attachShadow({
-            mode: "open"
-        });
+        this.attachShadow({ mode: "open" });
 
         // card settings
         this.card_icon = null;
@@ -1503,32 +1572,25 @@ class ChartCard extends HTMLElement {
         // data service
         this.data_hoursToShow = 0;
         this.data_group_by = "day";
-        this.data_dateGroup = null;
+        this.data_aggregate = "last";
         this.data_ignoreZero = false;
         this.data_units = "";
-        this.startTime = new Date();
-        this.lastEndTime = new Date();
         this.skipRender = false;
         this.lastUpdate = null;
         this.ready = false;
+        this.updating = false;
         this.loginfo_enabled = true;
         this._initialized = false;
-    }
-
-    /**
-     * get the date format patter for the
-     * data series group
-     * @param {*} key
-     */
-    _dateFormatPattern(key) {
-        const df = [];
-        df["timestamp"] = "timestamp";
-        df["day"] = "%Y-%M-%d";
-        df["hour"] = "%Y-%M-%d %H:00:00";
-        df["month"] = "%Y-%M";
-        df["year"] = "%Y";
-        if (key in df) return df[key];
-        else return df["timestamp"];
+        this.initial = true;
+        this.dataInfo = {
+            starttime: new Date(),
+            endtime: new Date(),
+            entities: "",
+            time: new Date().getTime(),
+            loading: false,
+            url: "",
+            param: ""
+        };
     }
 
     /**
@@ -1628,7 +1690,7 @@ class ChartCard extends HTMLElement {
                 themecolor: this._evaluateCssVariable("--chartjs-theme") || false,
                 charttheme: this.chart_themesettings !== null,
                 gradient: this.themeSettings.gradient,
-                chartdefault: false,
+                chartdefault: false
             };
             // get the theme from the hass or private theme settings
             if (this.theme === undefined || this.theme.dark === undefined) {
@@ -1687,17 +1749,16 @@ class ChartCard extends HTMLElement {
 
     /**
      * create the HA card
-     * ha-icon and title and the canavas container
      * for the chartjs graph
      */
     _creatHACard() {
-        // card and chart elements
-
         if (this.id) return;
 
         this.id = "TC" + Math.floor(Math.random() * 1000);
+
+        // the ha-card --------------------------------
         const card = document.createElement("ha-card");
-        // the ha-card
+        card.setAttribute("class", "graph-card");
         card.id = this.id + "-card";
         card.setAttribute("data-graphtype", this.chart_type);
         if (this.chart_themesettings && this.chart_themesettings.cardbackground) {
@@ -1705,94 +1766,88 @@ class ChartCard extends HTMLElement {
             card.style.cssText += `background: ${this.chart_themesettings.cardbackground} !important;`;
         }
 
+        // ha-card content layer ---------------------
         const content = document.createElement("div");
-        const canvas = document.createElement("canvas");
-        this.ctx = canvas.getContext("2d");
-        this.canvasId = this.id + "-chart";
+        content.setAttribute("class", "card-content");
+        content.id = this.id + "-view";
+        content.style.height = cssAttr(this.card_height);
 
-        // create the header and icon (optional)
+        // ha-card icon and title -------------------
         if (this.card_title || this.card_icon) {
             const cardHeader = document.createElement("div");
             cardHeader.setAttribute("class", "card-header header flex");
             cardHeader.id = this.id + "-header";
-            cardHeader.style.cssText = "padding-bottom:0 !important;white-space:nowrap";
             if (this.card_icon) {
                 const iconel = document.createElement("ha-icon");
+                iconel.setAttribute("class", "card-header-icon");
                 iconel.setAttribute("icon", this.card_icon);
-                iconel.style.cssText = "position:relative;top:-2px;padding:0 6px 0 4px;";
                 cardHeader.appendChild(iconel);
             }
             if (this.card_title) {
                 const cardTitle = document.createElement("span");
-                cardTitle.style.cssText =
-                    "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:top;width:70%";
+                cardTitle.setAttribute("class", "card-header-title");
                 cardTitle.innerHTML = this.card_title;
                 cardHeader.appendChild(cardTitle);
             }
             card.append(cardHeader);
         }
 
-        // card content
-        content.id = this.id + "-view";
-        content.style.height = this.card_height + "px";
-        content.style.width = "100%";
-        content.style.overflow = "auto";
-
-        // the canvas element for chartjs (required)
+        // ha-card canavas element --------------------
+        this.canvasId = this.id + "-chart";
+        const canvas = document.createElement("canvas");
+        canvas.setAttribute("class", "card-canvas");
+        this.ctx = canvas.getContext("2d");
         canvas.id = this.canvasId;
-        canvas.height = this.card_height;
-        canvas.style.cssText = "-moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;";
+        canvas.height = this.card_height-10;
+        canvas.style.height = cssAttr(this.card_height-10);
+        canvas.style.maxHeight = cssAttr(this.card_height-10);
 
-        // create the loader
+        // ha-card svg loader element -----------------
         if (this.loaderart) {
             this.loader = document.createElement("img");
+            this.loader.setAttribute("class", "card-loader");
             this.loader.id = this.id + "-loader";
             this.loader.alt = "loading...";
             this.loader.style.width = "60";
             this.loader.src = appinfo.assets + this.loaderart + ".svg";
-            this.loader.style.cssText = "position:absolute;top:42%;left:38%;width:60px;z-index:500;margin: 0 auto";
         }
 
-        // create the show state layer
+        // ha-card state data -----------------
         if (this.chart_showstate) {
             this.currentData = document.createElement("div");
+            this.currentData.setAttribute("class", "card-state-view");
             this.currentData.id = this.id + "state-view";
-            this.currentData.style.cssText =
-                "position:absolute;top:12px;right:24px;background-color:transparent;z-index:100;";
         }
-        // detail view layer
+
+        // ha-card detail data ---------------
         if (this.chart_showdetails) {
             this.detailData = document.createElement("div");
-            this.detailData.style.cssText = "padding:12px 50px;border-top:1px dotted"; // height:" + this.card_height + "px;";
+            this.detailData.setAttribute("class", "card-detail-view");
             this.detailData.id = this.id + "detail-info";
             this.currentData.setAttribute("data-view", this.detailData.id);
+        } else {
+            content.style.maxHeight = cssAttr(this.card_height);
         }
 
+        // add all defined elements to the card --------------------------
         content.appendChild(canvas);
         if (this.loader) content.append(this.loader);
-
         if (this.chart_showdetails && this.detailData) {
             content.append(this.detailData);
         }
-
-        // create the content
         card.appendChild(content);
-
         if (this.chart_showstate && this.currentData) {
             card.appendChild(this.currentData);
         }
-
-        // update info
         if (this.card_timestamp) {
             this.timestampLayer = document.createElement("div");
+            this.timestampLayer.setAttribute("class", "card-timestamp");
             this.timestampLayer.id = this.id + "detail-footertext";
-            this.timestampLayer.style.cssText =
-                "position:absolute;right:0.8em;bottom:0;font-weight:200;font-size:0.7em;text-align:right;z-index:800";
             this.timestampLayer.innerHTML = localDatetime(new Date().toISOString());
             card.appendChild(this.timestampLayer);
         }
 
-        // create the ha-card
+        // create the ha-card ------
         this.root.appendChild(card);
     }
 
@@ -1829,6 +1884,10 @@ class ChartCard extends HTMLElement {
                 this.root.removeChild(root.lastChild);
             }
 
+            // Deep cloning of style node
+            const clonedStyle = style.cloneNode(true);
+            this.root.appendChild(clonedStyle);
+
             if (this._config) {
                 console.log("CHART-CART Config", config.title, " allready loaded");
                 return;
@@ -1838,15 +1897,17 @@ class ChartCard extends HTMLElement {
             this._config = Object.assign({}, config);
             this.loginfo_enabled = this._config.loginfo || false;
 
-            // ha-card settings
+            // ha-card settings -----------------------------------
             this.card_title = this._config.title || "";
             this.card_icon = this._config.icon || null;
             this.card_height = this._config.height || 240;
             this.card_timestamp = this._config.cardtimestamp || false;
 
-            // all settings for the chart
+            // all settings for the chart --------------------------
             this.chart_type = this._config.chart || "bar";
-            // settings: right, left, center
+            this._config.id = this.chart_type + Math.floor(Math.random() * 1000);
+
+            // showstate settings: right, left, center
             this.chart_showstate = this._config.showstate || false;
             this.chart_showstate = this.chart_showstate === true ? "right" : this.chart_showstate;
             if (this.chart_showstate) {
@@ -1854,7 +1915,6 @@ class ChartCard extends HTMLElement {
                     this.chart_showstate = false;
                 }
             }
-            this._config.id = this.chart_type + Math.floor(Math.random() * 1000);
 
             this.chart_showdetails = this._config.showdetails;
             this.chart_themesettings = this._config.theme || null;
@@ -1907,17 +1967,15 @@ class ChartCard extends HTMLElement {
             this._checkLocale();
 
             // setting for data handling
-            this.data_hoursToShow = this._config.hours_to_show || 0;
             this.show = this._config.show || {};
-
+            this.data_hoursToShow = this._config.hours_to_show || 0;
             if (this.chart_type === "line" && this.data_hoursToShow === 0) {
                 this.data_hoursToShow = 24 * 7; // show the last 7 days...
             }
-            this.data_group_by = this._config.group_by || "day";
-            this.data_dateGroup = this._dateFormatPattern(this.data_group_by);
+            this.data_group_by = this._config.group_by || "minutes";
             this.data_aggregate = this._config.aggregate || "last";
-            this.data_ignoreZero = this._config.ignoreZero || false;
 
+            this.data_ignoreZero = this._config.ignoreZero || false;
             this.data_units = this._config.units || "";
 
             // check if we can use showstate
@@ -1933,8 +1991,6 @@ class ChartCard extends HTMLElement {
             if (this._initialized === false) {
                 this._creatHACard();
             }
-            this.updating = false;
-
         } catch (err) {
             console.log(err.message, config, err);
         }
@@ -1947,8 +2003,10 @@ class ChartCard extends HTMLElement {
     set hass(hass) {
         // check if hass is present
         if (hass === undefined) return;
+
         // skip not initialized
-        if (!this._initialized) return;
+        // if (!this._initialized) return;
+        if (this.timeOut) clearTimeout(this.timeOut);
 
         this._hass = hass;
         this.selectedTheme = hass.selectedTheme || { theme: "system", dark: false };
@@ -1959,7 +2017,7 @@ class ChartCard extends HTMLElement {
             if (this.graphChart) {
                 this.themeSettings.theme = this.theme;
                 this.graphChart.setThemeSettings(this.themeSettings);
-                this._getHistory();
+                this.updateGraph(true);
             }
         }
         this.theme = this.selectedTheme;
@@ -1978,10 +2036,10 @@ class ChartCard extends HTMLElement {
         }
 
         // update only if we has a chart
-        if (this.skipRender)
+        if (this.skipRender && this.updating === false) {
             this.checkUpdate();
-
-        if (this.skipRender) return;
+            return;
+        }
 
         // all entity data
         this.entityData = this.hassEntities.map((x) => (x === undefined ? 0 : x.state));
@@ -2023,22 +2081,44 @@ class ChartCard extends HTMLElement {
                 ? hass.states[x.entity]["attributes"]["friendly_name"]
                 : x.entity
         );
-        
-        if (this.skipRender == false && this._initialized) {     
-            if (!this.graphChart) {
-                // create the graph chart
-                this._getThemeSettings();
-                this.themeSettings.theme = this.theme;
-                this._setChartConfig();
-            }    
-            // get the histroy data and render the graph
+
+        // wait for 1 before call updateGraph
+        this.timeOut = setTimeout(
+            () => {
+                this.updateGraph(false);
+            },
+            this.initial ? 0 : 1000
+        );
+
+        this.skipRender = true;
+    }
+
+    /**
+     * update graph
+     */
+    updateGraph(doUpdate) {
+        doUpdate = doUpdate === "undefined" ? !this.initial : doUpdate;
+        if (this.updating === true) return;
+        if (!this.graphChart) {
+            // create the graph chart
             this._getThemeSettings();
             this.themeSettings.theme = this.theme;
-            this.graphChart.setThemeSettings(this.themeSettings);
-            this._getHistory();
-            this.skipRender = true;
-            this.updating = false;
+            this._setChartConfig();
+            doUpdate = false;
         }
+        if (!this.graphChart) return;
+        this.updating = true;
+        // get the histroy data and render the graph
+        this._getThemeSettings();
+        this.themeSettings.theme = this.theme;
+        this.graphChart.setThemeSettings(this.themeSettings);
+        this.entityData = this.hassEntities.map((x) => (x === undefined ? 0 : x.state));
+        this.graphChart.entityData = this.entityData;
+        this.chart_update = doUpdate;
+        this._getHistory();
+        if (this.card_timestamp) this.timestampLayer.innerHTML = localDatetime(new Date().toISOString());
+        this.updating = false;
+        this.initial = false;
     }
 
     /**
@@ -2049,8 +2129,6 @@ class ChartCard extends HTMLElement {
         // check if we has changes
         if (this.hassEntities && this.hassEntities.length && this._hass) {
             this.hasChanged = false;
-            this.updating = true;
-
             // reload the hass entities
             this.hassEntities = this._config.entities
                 .map((x) => this._hass.states[x.entity])
@@ -2069,19 +2147,10 @@ class ChartCard extends HTMLElement {
                     this.hasChanged = true;
                 }
             }
-
             if (this.hasChanged) {
                 // refresh and update the graph
-                this._getThemeSettings();
-                this.graphChart.setThemeSettings(this.themeSettings);
-                this.entityData = this.hassEntities.map((x) => (x === undefined ? 0 : x.state));
-                this.graphChart.entityData = this.entityData;
-                this.chart_update = true;
-                this._getHistory();
-                if (this.card_timestamp) this.timestampLayer.innerHTML = localDatetime(new Date().toISOString());
+                this.updateGraph(true);
             }
-
-            this.updating = false;
             return this.hasChanged;
         }
     }
@@ -2094,29 +2163,38 @@ class ChartCard extends HTMLElement {
     _getHistory() {
         if (this.ready) {
             if (this.data_hoursToShow && this.data_hoursToShow > 0 && this.entity_ids.length) {
-                // get all data for the selected timeslot and entities...
-                let startTime;
-                startTime = new Date();
-                startTime.setHours(startTime.getHours() - this.data_hoursToShow);
-                let endTime = new Date();
-                this.lastEndTime = endTime;
-                const filter =
-                    startTime.toISOString() +
-                    "?end_time=" +
-                    endTime.toISOString() +
-                    "&filter_entity_id=" +
-                    this.entity_ids.join(",");
-                // get all Data for the sensors
-                this.lastUpdate = new Date().toISOString();
-                let url = "history/period/" + filter + "&minimal_response";
-                const prom = this._hass.callApi("GET", url).then(
+                // get histroy data
+                this.dataInfo = {
+                    starttime: new Date(),
+                    endtime: new Date(),
+                    entities: this.entity_ids.join(","),
+                    time: new Date().getTime(),
+                    loading: false,
+                    url: "",
+                    param: ""
+                };
+                this.dataInfo.starttime.setHours(this.dataInfo.starttime.getHours() - this.data_hoursToShow);
+                this.dataInfo.endtime.setHours(this.dataInfo.starttime.getHours() + 2);
+                const _newparam = `${this.dataInfo.endtime}:${this.dataInfo.entities}`;
+                if (this.dataInfo.param == _newparam) {
+                    console.log("Data allready loaded...");
+                    return;
+                }
+                this.dataInfo.param = `${this.dataInfo.endtime}:${this.dataInfo.entities}`;
+                // build the api url
+                this.dataInfo.url = `history/period/${this.dataInfo.starttime.toISOString()}?end_time=${this.dataInfo.endtime.toISOString()}&filter_entity_id=${
+                    this.dataInfo.entities
+                }&minimal_response`;
+                // get the history data
+                const prom = this._hass.callApi("GET", this.dataInfo.url).then(
                     (stateHistory) => this._buildGraphData(stateHistory, 1),
                     () => null
                 );
             } else {
-                this.lastUpdate = new Date().toISOString();
+                // build the current for the sensor(s)
                 this._buildGraphData(null, 2);
             }
+            this.lastUpdate = new Date().toISOString();
         }
     }
 
@@ -2128,22 +2206,20 @@ class ChartCard extends HTMLElement {
         if (this.currentData && this.chart_showstate && data) {
             let _visible = "margin:0;line-height:1.2em";
             let _html = [];
-            _html.push('<div style="font-weight:400;margin:0;cursor:pointer;height:4.5em;overflow:auto">');
+            _html.push('<div class="state-view-data">');
             for (const item of data) {
                 let _style = ' style="' + _visible + ";color:" + item.color + '"';
                 _html.push('<div class="stateitem" id="' + item.name + '"' + _style + '">');
                 _html.push(
-                    '<p style="font-size:2.0em;line-height:1.2em;text-align:right;margin:0;border-bottom: 1px dotted ' +
+                    '<p class="state-view-value" style="color:' +
                         item.color +
                         ';">' +
                         item.current +
-                        '<span style="font-size:0.5em;vertical-align:top">' +
+                        "<span>" +
                         item.unit +
                         "</span></p>"
                 );
-                _html.push(
-                    '<p style="font-size:0.85em;text-align:center;margin:0;line-height:2em">' + item.name + "</p>"
-                );
+                _html.push('<p class="state-view-name">' + item.name + "</p>");
                 _html.push("</div>");
             }
             _html.push("</div>");
@@ -2152,15 +2228,13 @@ class ChartCard extends HTMLElement {
             if (this.detailData) {
                 _html = [];
                 if (this.chart_showdetails.title) _html.push("<h2>" + this.chart_showdetails.title + "</h2>");
-                _html.push(
-                    '<div><table style="margin: 0 auto;font-size:0.95em;font-weight:300;border-spacing:10px;border-collapse: separate;table-layout: fixed;">'
-                );
-                _html.push('<tbody><tr style="text-align:left;font-size:1.0em">');
-                _html.push('<th width="30%"><b>Statistics</b></th>');
-                _html.push('<th style="padding: 0 24px;">Min</th>');
-                _html.push('<th style="padding: 0 24px;">Max</th>');
-                _html.push('<th style="padding: 0 24px;">Current</th>');
-                _html.push('<th style="padding: 0 24px;">Date</th>');
+                _html.push('<div><table class="card-detail-table">');
+                _html.push("<tbody><tr>");
+                _html.push('<th width="20%"><b>Statistics</b></th>');
+                _html.push('<th align="right">Min</th>');
+                _html.push('<th align="right">Max</th>');
+                _html.push('<th align="right">Current</th>');
+                _html.push("<th>Date</th>");
                 _html.push("</tr>");
                 for (const item of data) {
                     _html.push("<tr>");
@@ -2204,7 +2278,7 @@ class ChartCard extends HTMLElement {
             entityData: this.entityData,
             entityNames: this.entityNames,
             stateHistories: stateHistories,
-            data_dateGroup: this.data_dateGroup,
+            data_group_by: this.data_group_by,
             data_aggregate: this.data_aggregate,
             setting: this._config,
             chart_locale: this.chart_locale,
@@ -2256,6 +2330,7 @@ class ChartCard extends HTMLElement {
             if (_data) this.renderStateData(_data);
             return true;
         }
+        this.dataInfo.loading = false;
     }
 
     /**
@@ -2266,23 +2341,10 @@ class ChartCard extends HTMLElement {
     }
 
     /**
-     * the disconnectedCallback() and adoptedCallback() callbacks log simple messages
-     * to the console to inform us when the element is either removed from the DOM,
+     * the disconnectedCallback() runs when  when the element is either removed from the DOM,
      */
     disconnectedCallback() {
-       this._initialized = false; // important for loading charts !
-    }
-
-    /**
-     * the disconnectedCallback() and adoptedCallback() callbacks log simple messages
-     * to the console to inform us when the element is either removed from the DOM,
-     */
-    adoptedCallback() {
-       //  logInfo(true, this.id, this.chart_type, "adoptedCallback");
-    }
-
-    attributeChangedCallback(name, oldValue, newValue) {
-        //  logInfo(true, this.id, this.chart_type, "attributeChangedCallback");
+        this._initialized = false; // important for loading charts !
     }
 
     /**

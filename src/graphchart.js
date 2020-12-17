@@ -84,11 +84,18 @@ class graphChart {
                     this.ChartControl.defaults.plugins.legend.labels.color = this.themeSettings.fontColor;
                 }
 
+                this.ChartControl.defaults.layout.padding = {
+                    top: 24,
+                    left: 0,
+                    right: 0,
+                    bottom: 0
+                };
+
                 // Legend new beta 7 !
                 this.ChartControl.defaults.plugins.legend.position = "top";
                 this.ChartControl.defaults.plugins.legend.labels.usePointStyle = true;
                 this.ChartControl.defaults.plugins.legend.labels.boxWidth = 8;
-                this.ChartControl.defaults.plugins.legend.show = this.themeSettings.showLegend || false;
+                this.ChartControl.defaults.plugins.legend.show = false;
 
                 // Tooltips new beta 7 !
                 this.ChartControl.defaults.plugins.tooltip.enabled = true;
@@ -118,7 +125,8 @@ class graphChart {
                     this.ChartControl.defaults.elements.arc.borderWidth = 0;
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.line) {
                     this.ChartControl.defaults.elements.line.fill = false;
-                    this.ChartControl.defaults.elements.line.tension = 0;
+                    this.ChartControl.defaults.elements.line.tension = .15;
+                    // this.ChartControl.defaults.elements.line.cubicInterpolationMode = 'monotone';
                 }
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.point) {
                     this.ChartControl.defaults.elements.point.radius = 0.33;
@@ -209,14 +217,7 @@ class graphChart {
         // chart default options
         let _options = {
             units: this.data_units || "",
-            layout: {
-                padding: {
-                    left: 24,
-                    right: 24,
-                    top: 0,
-                    bottom: 24
-                }
-            },
+            layout: {},
             chartArea: {
                 backgroundColor: "transparent"
             },
@@ -351,6 +352,7 @@ class graphChart {
                 }
             };
             _options.plugins.legend = {
+                display: false,
                 labels: {
                     filter: (legendItem, data) => {
                         return data.datasets[legendItem.datasetIndex].tooltip !== false;
@@ -366,7 +368,11 @@ class graphChart {
                 }
             };
         }
-
+        if (this.chart_type.toLowerCase() === "bubble") {
+            _options.plugins.legend = {
+                display: false
+            };
+        }
         // preset cart current config
         let chartCurrentConfig = {
             type: this.chart_type,
@@ -406,7 +412,6 @@ class graphChart {
                     // same data as before, skip redraw...
                     return;
                 }
-
                 // append the data for the current chart settings
                 let graphOptions = this._setChartOptions();
                 graphOptions.data = {

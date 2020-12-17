@@ -22,10 +22,10 @@ class chartData {
         this.entityData = config.entityData;
         this.entityNames = config.entityNames;
         this.stateHistories = config.stateHistories;
-        this.data_dateGroup = config.data_dateGroup || "%Y-%M-%d %H:00:00";
+        this.data_group_by = config.data_group_by || "day";
+        this.data_aggregate = config.aggregate || "last";
         this.settings = config.settings;
         this.chart_locale = config.chart_locale;
-        this.data_aggregate = config.aggregate || "last";
         this.data_pointStyles = [
             "circle",
             "triangle",
@@ -55,18 +55,57 @@ class chartData {
      * @param {*} fmt
      * @param {*} aggr
      */
-    _getGroupHistoryData(array, fmt, aggr) {
+    _getGroupHistoryData(array) {
         try {
             if (!array) return;
             if (array && !array.length) return;
             let groups = {};
+            const _num = (n) => (n === parseInt(n) ? Number(parseInt(n)) : Number(parseFloat(n).toFixed(2)));
+            const _fmd = (d) => {
+                const t = new Date(d);
+                if (isNaN(t)) return d;
+                if (this.data_group_by === "weekday") {
+                    return {
+                        name: date.toLocaleDateString(this.chart_locale, { weekday: "short" }),
+                        label: date.toLocaleDateString(this.chart_locale, { weekday: "long" })
+                    };
+                }
+                const day = ("0" + t.getDate()).slice(-2);
+                const month = ("0" + (t.getMonth() + 1)).slice(-2);
+                const year = t.getFullYear();
+                const hours = ("0" + t.getHours()).slice(-2);
+                const minutes = ("0" + t.getMinutes()).slice(-2);
+                const seconds = ("0" + t.getSeconds()).slice(-2);
+                switch (this.data_group_by) {
+                    case "year":
+                        return { name: year, label: year };
+                    case "month":
+                        return { name: `${year}.${month}`, label: `${year}.${month}` };
+                    case "day":
+                        return { name: `${month}.${day}`, label: `${month}.${day}` };
+                    case "hour":
+                        return { name: `${month}.${day} ${hours}`, label: [`${month}.${day}`, `${hours}.${minutes}`] };
+                    case "minutes":
+                        return {
+                            name: `${month}.${day} ${hours}:${minutes}`,
+                            label: [`${month}.${day}`, `${hours}.${minutes}`]
+                        };
+                    default:
+                        return {
+                            name: `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`,
+                            label: `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`
+                        };
+                }
+            };
+            // first build the groups
             array.forEach(function (o) {
-                let group = formatDate(o.last_changed, fmt);
-                groups[group] = groups[group] || [];
-                o.timestamp = formatDate(o.last_changed, "timestamp");
-                o.last_changed = group;
-                groups[group].push(o);
+                let group = _fmd(o.last_changed);
+                groups[group.name] = groups[group.name] || [];
+                o.timelabel = group.label;
+                groups[group.name].push(o);
             });
+            // create the grouped seriesdata
+            const aggr = this.data_aggregate;
             return Object.keys(groups).map(function (group) {
                 let items = groups[group].filter(
                     (item) => item.state && !isNaN(parseFloat(item.state)) && isFinite(item.state)
@@ -80,15 +119,15 @@ class chartData {
                 if (aggr == "first") {
                     const item = items.shift();
                     return {
-                        y: num(item.state || 0.0),
-                        x: item.last_changed
+                        y: _num(item.state || 0.0),
+                        x: item.timelabel
                     };
                 }
                 if (aggr == "last") {
                     const item = items[items.length - 1];
                     return {
-                        y: num(item.state || 0.0),
-                        x: item.last_changed
+                        y: _num(item.state || 0.0),
+                        x: item.timelabel
                     };
                 }
                 if (aggr == "max") {
@@ -96,41 +135,41 @@ class chartData {
                         a.state > b.state
                             ? {
                                   y: num(a.state || 0.0),
-                                  x: a.last_changed
+                                  x: a.timelabel
                               }
-                            : { y: num(b.state), x: b.last_changed }
+                            : { y: num(b.state), x: b.timelabel }
                     );
                 }
                 if (aggr == "min")
                     return items.reduce((a, b) =>
                         a.state < b.state
                             ? {
-                                  y: num(a.state || 0.0),
-                                  x: a.last_changed
+                                  y: _num(a.state || 0.0),
+                                  x: a.timelabel
                               }
                             : {
-                                  y: num(b.state || 0.0),
-                                  x: b.last_changed
+                                  y: _num(b.state || 0.0),
+                                  x: b.timelabel
                               }
                     );
                 if (aggr == "sum") {
                     const val = items.reduce((sum, entry) => sum + num(entry.state), 0);
                     return {
-                        y: num(val || 0.0),
-                        x: items[0].last_changed
+                        y: _num(val || 0.0),
+                        x: items[0].timelabel
                     };
                 }
                 if (aggr == "avg") {
-                    const val = items.reduce((sum, entry) => sum + num(entry.state), 0) / items.length;
+                    const val = items.reduce((sum, entry) => sum + _num(entry.state), 0) / items.length;
                     return {
-                        y: num(val || 0.0),
-                        x: items[0].last_changed
+                        y: _num(val || 0.0),
+                        x: items[0].timelabel
                     };
                 }
                 return items.map((items) => {
                     return {
-                        y: num(items.state || 0.0),
-                        x: items.timestamp
+                        y: _num(items.state || 0.0),
+                        x: items.timelabel
                     };
                 });
             });
@@ -409,7 +448,7 @@ class chartData {
         for (const list of this.stateHistories) {
             if (list.length === 0) continue;
             if (!list[0].state) continue;
-            const items = this._getGroupHistoryData(list, this.data_dateGroup, this.data_aggregate);
+            const items = this._getGroupHistoryData(list);
             _seriesData.push(items);
         }
         return _seriesData;
@@ -540,7 +579,7 @@ class chartData {
             if (!list[0].state) continue;
 
             // interate throw all entities data
-            const items = this._getGroupHistoryData(list, this.data_dateGroup, this.data_aggregate);
+            const items = this._getGroupHistoryData(list);
 
             const id = list[0].entity_id;
 
@@ -548,7 +587,8 @@ class chartData {
             const _attr = this.entities.find((x) => x.entity === id);
 
             // build the dataseries and check ignore data with zero values
-            let _items = this.data_ignoreZero ? items.map((d) => d.y).filter((x) => x != 0) : items.map((d) => d.y);
+            
+            let _items = this.card_config.ignoreZero ? items.map((d) => d.y).filter((x) => x != 0) : items.map((d) => d.y);
 
             // default Dataset Properties
             let _options = {
@@ -618,10 +658,7 @@ class chartData {
 
             // add the options, labels and data series
             _graphData.data.labels = items.map((l) => l.x);
-            _graphData.config.labelType = this.data_dateGroup === "%Y-%M-%d %H:00:00" ? "timestamp" : "default";
-            if (_graphData.config.labelType === "timestamp") {
-                _graphData.data.labels = items.map((l) => timeStampLabel(l.x, this.chart_locale));
-            }
+
             _graphData.data.datasets.push(_options);
             _graphData.config.series++;
         }
@@ -639,6 +676,8 @@ class chartData {
     getHistoryGraphData() {
         try {
             if (this.stateHistories && this.stateHistories.length) {
+                // merge with current...
+
                 switch (this.chart_type.toLowerCase()) {
                     case "bubble":
                         this.graphData = this.createHistoryBubbleData();

@@ -22,6 +22,7 @@ const settings = {
     libsfile: "chart.js",
     lessfiles: "./src/chartjs.less",
     distfolder: "./dist/chart-card",
+    releasefile: "chart-card.zip",
     releasefolder: "./release",
     hassfolder: "/Volumes/zeususdata/home/homeassistant/.homeassistant/www/community/chart-card",
     rb3afolder: "/Volumes/rb3a-data/home/homeassistant/.homeassistant/www/community/chart-card"
@@ -93,7 +94,7 @@ gulp.task("deploy", function () {
 gulp.task("release", function () {
     return gulp
         .src([settings.distfolder + "/**/*"])
-        .pipe(zip("chart-card.zip"))
+        .pipe(zip(settings.releasefile))
         .pipe(gulp.dest(settings.releasefolder))
         .on("error", onError);
 });

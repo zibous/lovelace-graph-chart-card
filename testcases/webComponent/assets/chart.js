@@ -4,7 +4,6 @@
  * (c) 2020 Chart.js Contributors
  * Released under the MIT License
  */
-
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 typeof define === 'function' && define.amd ? define(factory) :
@@ -37,6 +36,8 @@ function throttled(fn, thisArg, updateFn) {
 		}
 	};
 }
+const _toLeftRightCenter = (align) => align === 'start' ? 'left' : align === 'end' ? 'right' : 'center';
+const _alignStartEnd = (align, start, end) => align === 'start' ? start : align === 'end' ? end : (start + end) / 2;
 
 function drawFPS(chart, count, date, lastDate) {
 	const fps = (1000 / (date - lastDate)) | 0;
@@ -5094,6 +5095,491 @@ class Registry {
 }
 var registry = new Registry();
 
+const EPSILON = Number.EPSILON || 1e-14;
+function splineCurve(firstPoint, middlePoint, afterPoint, t) {
+	const previous = firstPoint.skip ? middlePoint : firstPoint;
+	const current = middlePoint;
+	const next = afterPoint.skip ? middlePoint : afterPoint;
+	const d01 = Math.sqrt(Math.pow(current.x - previous.x, 2) + Math.pow(current.y - previous.y, 2));
+	const d12 = Math.sqrt(Math.pow(next.x - current.x, 2) + Math.pow(next.y - current.y, 2));
+	let s01 = d01 / (d01 + d12);
+	let s12 = d12 / (d01 + d12);
+	s01 = isNaN(s01) ? 0 : s01;
+	s12 = isNaN(s12) ? 0 : s12;
+	const fa = t * s01;
+	const fb = t * s12;
+	return {
+		previous: {
+			x: current.x - fa * (next.x - previous.x),
+			y: current.y - fa * (next.y - previous.y)
+		},
+		next: {
+			x: current.x + fb * (next.x - previous.x),
+			y: current.y + fb * (next.y - previous.y)
+		}
+	};
+}
+function splineCurveMonotone(points) {
+	const pointsWithTangents = (points || []).map((point) => ({
+		model: point,
+		deltaK: 0,
+		mK: 0
+	}));
+	const pointsLen = pointsWithTangents.length;
+	let i, pointBefore, pointCurrent, pointAfter;
+	for (i = 0; i < pointsLen; ++i) {
+		pointCurrent = pointsWithTangents[i];
+		if (pointCurrent.model.skip) {
+			continue;
+		}
+		pointBefore = i > 0 ? pointsWithTangents[i - 1] : null;
+		pointAfter = i < pointsLen - 1 ? pointsWithTangents[i + 1] : null;
+		if (pointAfter && !pointAfter.model.skip) {
+			const slopeDeltaX = (pointAfter.model.x - pointCurrent.model.x);
+			pointCurrent.deltaK = slopeDeltaX !== 0 ? (pointAfter.model.y - pointCurrent.model.y) / slopeDeltaX : 0;
+		}
+		if (!pointBefore || pointBefore.model.skip) {
+			pointCurrent.mK = pointCurrent.deltaK;
+		} else if (!pointAfter || pointAfter.model.skip) {
+			pointCurrent.mK = pointBefore.deltaK;
+		} else if (sign(pointBefore.deltaK) !== sign(pointCurrent.deltaK)) {
+			pointCurrent.mK = 0;
+		} else {
+			pointCurrent.mK = (pointBefore.deltaK + pointCurrent.deltaK) / 2;
+		}
+	}
+	let alphaK, betaK, tauK, squaredMagnitude;
+	for (i = 0; i < pointsLen - 1; ++i) {
+		pointCurrent = pointsWithTangents[i];
+		pointAfter = pointsWithTangents[i + 1];
+		if (pointCurrent.model.skip || pointAfter.model.skip) {
+			continue;
+		}
+		if (almostEquals(pointCurrent.deltaK, 0, EPSILON)) {
+			pointCurrent.mK = pointAfter.mK = 0;
+			continue;
+		}
+		alphaK = pointCurrent.mK / pointCurrent.deltaK;
+		betaK = pointAfter.mK / pointCurrent.deltaK;
+		squaredMagnitude = Math.pow(alphaK, 2) + Math.pow(betaK, 2);
+		if (squaredMagnitude <= 9) {
+			continue;
+		}
+		tauK = 3 / Math.sqrt(squaredMagnitude);
+		pointCurrent.mK = alphaK * tauK * pointCurrent.deltaK;
+		pointAfter.mK = betaK * tauK * pointCurrent.deltaK;
+	}
+	let deltaX;
+	for (i = 0; i < pointsLen; ++i) {
+		pointCurrent = pointsWithTangents[i];
+		if (pointCurrent.model.skip) {
+			continue;
+		}
+		pointBefore = i > 0 ? pointsWithTangents[i - 1] : null;
+		pointAfter = i < pointsLen - 1 ? pointsWithTangents[i + 1] : null;
+		if (pointBefore && !pointBefore.model.skip) {
+			deltaX = (pointCurrent.model.x - pointBefore.model.x) / 3;
+			pointCurrent.model.controlPointPreviousX = pointCurrent.model.x - deltaX;
+			pointCurrent.model.controlPointPreviousY = pointCurrent.model.y - deltaX * pointCurrent.mK;
+		}
+		if (pointAfter && !pointAfter.model.skip) {
+			deltaX = (pointAfter.model.x - pointCurrent.model.x) / 3;
+			pointCurrent.model.controlPointNextX = pointCurrent.model.x + deltaX;
+			pointCurrent.model.controlPointNextY = pointCurrent.model.y + deltaX * pointCurrent.mK;
+		}
+	}
+}
+function capControlPoint(pt, min, max) {
+	return Math.max(Math.min(pt, max), min);
+}
+function capBezierPoints(points, area) {
+	let i, ilen, point;
+	for (i = 0, ilen = points.length; i < ilen; ++i) {
+		point = points[i];
+		if (!_isPointInArea(point, area)) {
+			continue;
+		}
+		if (i > 0 && _isPointInArea(points[i - 1], area)) {
+			point.controlPointPreviousX = capControlPoint(point.controlPointPreviousX, area.left, area.right);
+			point.controlPointPreviousY = capControlPoint(point.controlPointPreviousY, area.top, area.bottom);
+		}
+		if (i < points.length - 1 && _isPointInArea(points[i + 1], area)) {
+			point.controlPointNextX = capControlPoint(point.controlPointNextX, area.left, area.right);
+			point.controlPointNextY = capControlPoint(point.controlPointNextY, area.top, area.bottom);
+		}
+	}
+}
+function _updateBezierControlPoints(points, options, area, loop) {
+	let i, ilen, point, controlPoints;
+	if (options.spanGaps) {
+		points = points.filter((pt) => !pt.skip);
+	}
+	if (options.cubicInterpolationMode === 'monotone') {
+		splineCurveMonotone(points);
+	} else {
+		let prev = loop ? points[points.length - 1] : points[0];
+		for (i = 0, ilen = points.length; i < ilen; ++i) {
+			point = points[i];
+			controlPoints = splineCurve(
+				prev,
+				point,
+				points[Math.min(i + 1, ilen - (loop ? 0 : 1)) % ilen],
+				options.tension
+			);
+			point.controlPointPreviousX = controlPoints.previous.x;
+			point.controlPointPreviousY = controlPoints.previous.y;
+			point.controlPointNextX = controlPoints.next.x;
+			point.controlPointNextY = controlPoints.next.y;
+			prev = point;
+		}
+	}
+	if (options.capBezierPoints) {
+		capBezierPoints(points, area);
+	}
+}
+
+function _pointInLine(p1, p2, t, mode) {
+	return {
+		x: p1.x + t * (p2.x - p1.x),
+		y: p1.y + t * (p2.y - p1.y)
+	};
+}
+function _steppedInterpolation(p1, p2, t, mode) {
+	return {
+		x: p1.x + t * (p2.x - p1.x),
+		y: mode === 'middle' ? t < 0.5 ? p1.y : p2.y
+		: mode === 'after' ? t < 1 ? p1.y : p2.y
+		: t > 0 ? p2.y : p1.y
+	};
+}
+function _bezierInterpolation(p1, p2, t, mode) {
+	const cp1 = {x: p1.controlPointNextX, y: p1.controlPointNextY};
+	const cp2 = {x: p2.controlPointPreviousX, y: p2.controlPointPreviousY};
+	const a = _pointInLine(p1, cp1, t);
+	const b = _pointInLine(cp1, cp2, t);
+	const c = _pointInLine(cp2, p2, t);
+	const d = _pointInLine(a, b, t);
+	const e = _pointInLine(b, c, t);
+	return _pointInLine(d, e, t);
+}
+
+const getRightToLeftAdapter = function(rectX, width) {
+	return {
+		x(x) {
+			return rectX + rectX + width - x;
+		},
+		setWidth(w) {
+			width = w;
+		},
+		textAlign(align) {
+			if (align === 'center') {
+				return align;
+			}
+			return align === 'right' ? 'left' : 'right';
+		},
+		xPlus(x, value) {
+			return x - value;
+		},
+		leftForLtr(x, itemWidth) {
+			return x - itemWidth;
+		},
+	};
+};
+const getLeftToRightAdapter = function() {
+	return {
+		x(x) {
+			return x;
+		},
+		setWidth(w) {
+		},
+		textAlign(align) {
+			return align;
+		},
+		xPlus(x, value) {
+			return x + value;
+		},
+		leftForLtr(x, _itemWidth) {
+			return x;
+		},
+	};
+};
+function getRtlAdapter(rtl, rectX, width) {
+	return rtl ? getRightToLeftAdapter(rectX, width) : getLeftToRightAdapter();
+}
+function overrideTextDirection(ctx, direction) {
+	let style, original;
+	if (direction === 'ltr' || direction === 'rtl') {
+		style = ctx.canvas.style;
+		original = [
+			style.getPropertyValue('direction'),
+			style.getPropertyPriority('direction'),
+		];
+		style.setProperty('direction', direction, 'important');
+		ctx.prevTextDirection = original;
+	}
+}
+function restoreTextDirection(ctx, original) {
+	if (original !== undefined) {
+		delete ctx.prevTextDirection;
+		ctx.canvas.style.setProperty('direction', original[0], original[1]);
+	}
+}
+
+function propertyFn(property) {
+	if (property === 'angle') {
+		return {
+			between: _angleBetween,
+			compare: _angleDiff,
+			normalize: _normalizeAngle,
+		};
+	}
+	return {
+		between: (n, s, e) => n >= s && n <= e,
+		compare: (a, b) => a - b,
+		normalize: x => x
+	};
+}
+function makeSubSegment(start, end, loop, count) {
+	return {
+		start: start % count,
+		end: end % count,
+		loop: loop && (end - start + 1) % count === 0
+	};
+}
+function getSegment(segment, points, bounds) {
+	const {property, start: startBound, end: endBound} = bounds;
+	const {between, normalize} = propertyFn(property);
+	const count = points.length;
+	let {start, end, loop} = segment;
+	let i, ilen;
+	if (loop) {
+		start += count;
+		end += count;
+		for (i = 0, ilen = count; i < ilen; ++i) {
+			if (!between(normalize(points[start % count][property]), startBound, endBound)) {
+				break;
+			}
+			start--;
+			end--;
+		}
+		start %= count;
+		end %= count;
+	}
+	if (end < start) {
+		end += count;
+	}
+	return {start, end, loop};
+}
+function _boundSegment(segment, points, bounds) {
+	if (!bounds) {
+		return [segment];
+	}
+	const {property, start: startBound, end: endBound} = bounds;
+	const count = points.length;
+	const {compare, between, normalize} = propertyFn(property);
+	const {start, end, loop} = getSegment(segment, points, bounds);
+	const result = [];
+	let inside = false;
+	let subStart = null;
+	let value, point, prevValue;
+	const startIsBefore = () => between(startBound, prevValue, value) && compare(startBound, prevValue) !== 0;
+	const endIsBefore = () => compare(endBound, value) === 0 || between(endBound, prevValue, value);
+	const shouldStart = () => inside || startIsBefore();
+	const shouldStop = () => !inside || endIsBefore();
+	for (let i = start, prev = start; i <= end; ++i) {
+		point = points[i % count];
+		if (point.skip) {
+			continue;
+		}
+		value = normalize(point[property]);
+		inside = between(value, startBound, endBound);
+		if (subStart === null && shouldStart()) {
+			subStart = compare(value, startBound) === 0 ? i : prev;
+		}
+		if (subStart !== null && shouldStop()) {
+			result.push(makeSubSegment(subStart, i, loop, count));
+			subStart = null;
+		}
+		prev = i;
+		prevValue = value;
+	}
+	if (subStart !== null) {
+		result.push(makeSubSegment(subStart, end, loop, count));
+	}
+	return result;
+}
+function _boundSegments(line, bounds) {
+	const result = [];
+	const segments = line.segments;
+	for (let i = 0; i < segments.length; i++) {
+		const sub = _boundSegment(segments[i], line.points, bounds);
+		if (sub.length) {
+			result.push(...sub);
+		}
+	}
+	return result;
+}
+function findStartAndEnd(points, count, loop, spanGaps) {
+	let start = 0;
+	let end = count - 1;
+	if (loop && !spanGaps) {
+		while (start < count && !points[start].skip) {
+			start++;
+		}
+	}
+	while (start < count && points[start].skip) {
+		start++;
+	}
+	start %= count;
+	if (loop) {
+		end += start;
+	}
+	while (end > start && points[end % count].skip) {
+		end--;
+	}
+	end %= count;
+	return {start, end};
+}
+function solidSegments(points, start, max, loop) {
+	const count = points.length;
+	const result = [];
+	let last = start;
+	let prev = points[start];
+	let end;
+	for (end = start + 1; end <= max; ++end) {
+		const cur = points[end % count];
+		if (cur.skip || cur.stop) {
+			if (!prev.skip) {
+				loop = false;
+				result.push({start: start % count, end: (end - 1) % count, loop});
+				start = last = cur.stop ? end : null;
+			}
+		} else {
+			last = end;
+			if (prev.skip) {
+				start = end;
+			}
+		}
+		prev = cur;
+	}
+	if (last !== null) {
+		result.push({start: start % count, end: last % count, loop});
+	}
+	return result;
+}
+function _computeSegments(line) {
+	const points = line.points;
+	const spanGaps = line.options.spanGaps;
+	const count = points.length;
+	if (!count) {
+		return [];
+	}
+	const loop = !!line._loop;
+	const {start, end} = findStartAndEnd(points, count, loop, spanGaps);
+	if (spanGaps === true) {
+		return [{start, end, loop}];
+	}
+	const max = end < start ? end + count : end;
+	const completeLoop = !!line._fullLoop && start === 0 && end === count - 1;
+	return solidSegments(points, start, max, completeLoop);
+}
+
+var helpers = /*#__PURE__*/Object.freeze({
+__proto__: null,
+easingEffects: effects,
+color: color,
+getHoverColor: getHoverColor,
+requestAnimFrame: requestAnimFrame,
+fontString: fontString,
+noop: noop,
+uid: uid,
+isNullOrUndef: isNullOrUndef,
+isArray: isArray,
+isObject: isObject,
+isFinite: isNumberFinite,
+finiteOrDefault: finiteOrDefault,
+valueOrDefault: valueOrDefault,
+callback: callback,
+each: each,
+_elementsEqual: _elementsEqual,
+clone: clone,
+_merger: _merger,
+merge: merge,
+mergeIf: mergeIf,
+_mergerIf: _mergerIf,
+_deprecated: _deprecated,
+resolveObjectKey: resolveObjectKey,
+_capitalize: _capitalize,
+toFontString: toFontString,
+_measureText: _measureText,
+_longestText: _longestText,
+_alignPixel: _alignPixel,
+clear: clear,
+drawPoint: drawPoint,
+_isPointInArea: _isPointInArea,
+clipArea: clipArea,
+unclipArea: unclipArea,
+_steppedLineTo: _steppedLineTo,
+_bezierCurveTo: _bezierCurveTo,
+_lookup: _lookup,
+_lookupByKey: _lookupByKey,
+_rlookupByKey: _rlookupByKey,
+_filterBetween: _filterBetween,
+listenArrayEvents: listenArrayEvents,
+unlistenArrayEvents: unlistenArrayEvents,
+_arrayUnique: _arrayUnique,
+splineCurve: splineCurve,
+splineCurveMonotone: splineCurveMonotone,
+_updateBezierControlPoints: _updateBezierControlPoints,
+_getParentNode: _getParentNode,
+getStyle: getStyle,
+getRelativePosition: getRelativePosition,
+getMaximumSize: getMaximumSize,
+retinaScale: retinaScale,
+supportsEventListenerOptions: supportsEventListenerOptions,
+readUsedSize: readUsedSize,
+_pointInLine: _pointInLine,
+_steppedInterpolation: _steppedInterpolation,
+_bezierInterpolation: _bezierInterpolation,
+toLineHeight: toLineHeight,
+toTRBL: toTRBL,
+toTRBLCorners: toTRBLCorners,
+toPadding: toPadding,
+toFont: toFont,
+resolve: resolve,
+PI: PI,
+TAU: TAU,
+PITAU: PITAU,
+INFINITY: INFINITY,
+RAD_PER_DEG: RAD_PER_DEG,
+HALF_PI: HALF_PI,
+QUARTER_PI: QUARTER_PI,
+TWO_THIRDS_PI: TWO_THIRDS_PI,
+_factorize: _factorize,
+log10: log10,
+isNumber: isNumber,
+almostEquals: almostEquals,
+almostWhole: almostWhole,
+_setMinAndMaxByKey: _setMinAndMaxByKey,
+sign: sign,
+toRadians: toRadians,
+toDegrees: toDegrees,
+_decimalPlaces: _decimalPlaces,
+getAngleFromPoint: getAngleFromPoint,
+distanceBetweenPoints: distanceBetweenPoints,
+_angleDiff: _angleDiff,
+_normalizeAngle: _normalizeAngle,
+_angleBetween: _angleBetween,
+_limitValue: _limitValue,
+_int16Range: _int16Range,
+getRtlAdapter: getRtlAdapter,
+overrideTextDirection: overrideTextDirection,
+restoreTextDirection: restoreTextDirection,
+_boundSegment: _boundSegment,
+_boundSegments: _boundSegments,
+_computeSegments: _computeSegments
+});
+
 class PluginService {
 	constructor() {
 		this._init = [];
@@ -5125,8 +5611,10 @@ class PluginService {
 		return true;
 	}
 	invalidate() {
-		this._oldCache = this._cache;
-		this._cache = undefined;
+		if (!isNullOrUndef(this._cache)) {
+			this._oldCache = this._cache;
+			this._cache = undefined;
+		}
 	}
 	_descriptors(chart) {
 		if (this._cache) {
@@ -6083,491 +6571,6 @@ Chart.unregister = (...items) => {
 	invalidatePlugins();
 };
 
-const EPSILON = Number.EPSILON || 1e-14;
-function splineCurve(firstPoint, middlePoint, afterPoint, t) {
-	const previous = firstPoint.skip ? middlePoint : firstPoint;
-	const current = middlePoint;
-	const next = afterPoint.skip ? middlePoint : afterPoint;
-	const d01 = Math.sqrt(Math.pow(current.x - previous.x, 2) + Math.pow(current.y - previous.y, 2));
-	const d12 = Math.sqrt(Math.pow(next.x - current.x, 2) + Math.pow(next.y - current.y, 2));
-	let s01 = d01 / (d01 + d12);
-	let s12 = d12 / (d01 + d12);
-	s01 = isNaN(s01) ? 0 : s01;
-	s12 = isNaN(s12) ? 0 : s12;
-	const fa = t * s01;
-	const fb = t * s12;
-	return {
-		previous: {
-			x: current.x - fa * (next.x - previous.x),
-			y: current.y - fa * (next.y - previous.y)
-		},
-		next: {
-			x: current.x + fb * (next.x - previous.x),
-			y: current.y + fb * (next.y - previous.y)
-		}
-	};
-}
-function splineCurveMonotone(points) {
-	const pointsWithTangents = (points || []).map((point) => ({
-		model: point,
-		deltaK: 0,
-		mK: 0
-	}));
-	const pointsLen = pointsWithTangents.length;
-	let i, pointBefore, pointCurrent, pointAfter;
-	for (i = 0; i < pointsLen; ++i) {
-		pointCurrent = pointsWithTangents[i];
-		if (pointCurrent.model.skip) {
-			continue;
-		}
-		pointBefore = i > 0 ? pointsWithTangents[i - 1] : null;
-		pointAfter = i < pointsLen - 1 ? pointsWithTangents[i + 1] : null;
-		if (pointAfter && !pointAfter.model.skip) {
-			const slopeDeltaX = (pointAfter.model.x - pointCurrent.model.x);
-			pointCurrent.deltaK = slopeDeltaX !== 0 ? (pointAfter.model.y - pointCurrent.model.y) / slopeDeltaX : 0;
-		}
-		if (!pointBefore || pointBefore.model.skip) {
-			pointCurrent.mK = pointCurrent.deltaK;
-		} else if (!pointAfter || pointAfter.model.skip) {
-			pointCurrent.mK = pointBefore.deltaK;
-		} else if (sign(pointBefore.deltaK) !== sign(pointCurrent.deltaK)) {
-			pointCurrent.mK = 0;
-		} else {
-			pointCurrent.mK = (pointBefore.deltaK + pointCurrent.deltaK) / 2;
-		}
-	}
-	let alphaK, betaK, tauK, squaredMagnitude;
-	for (i = 0; i < pointsLen - 1; ++i) {
-		pointCurrent = pointsWithTangents[i];
-		pointAfter = pointsWithTangents[i + 1];
-		if (pointCurrent.model.skip || pointAfter.model.skip) {
-			continue;
-		}
-		if (almostEquals(pointCurrent.deltaK, 0, EPSILON)) {
-			pointCurrent.mK = pointAfter.mK = 0;
-			continue;
-		}
-		alphaK = pointCurrent.mK / pointCurrent.deltaK;
-		betaK = pointAfter.mK / pointCurrent.deltaK;
-		squaredMagnitude = Math.pow(alphaK, 2) + Math.pow(betaK, 2);
-		if (squaredMagnitude <= 9) {
-			continue;
-		}
-		tauK = 3 / Math.sqrt(squaredMagnitude);
-		pointCurrent.mK = alphaK * tauK * pointCurrent.deltaK;
-		pointAfter.mK = betaK * tauK * pointCurrent.deltaK;
-	}
-	let deltaX;
-	for (i = 0; i < pointsLen; ++i) {
-		pointCurrent = pointsWithTangents[i];
-		if (pointCurrent.model.skip) {
-			continue;
-		}
-		pointBefore = i > 0 ? pointsWithTangents[i - 1] : null;
-		pointAfter = i < pointsLen - 1 ? pointsWithTangents[i + 1] : null;
-		if (pointBefore && !pointBefore.model.skip) {
-			deltaX = (pointCurrent.model.x - pointBefore.model.x) / 3;
-			pointCurrent.model.controlPointPreviousX = pointCurrent.model.x - deltaX;
-			pointCurrent.model.controlPointPreviousY = pointCurrent.model.y - deltaX * pointCurrent.mK;
-		}
-		if (pointAfter && !pointAfter.model.skip) {
-			deltaX = (pointAfter.model.x - pointCurrent.model.x) / 3;
-			pointCurrent.model.controlPointNextX = pointCurrent.model.x + deltaX;
-			pointCurrent.model.controlPointNextY = pointCurrent.model.y + deltaX * pointCurrent.mK;
-		}
-	}
-}
-function capControlPoint(pt, min, max) {
-	return Math.max(Math.min(pt, max), min);
-}
-function capBezierPoints(points, area) {
-	let i, ilen, point;
-	for (i = 0, ilen = points.length; i < ilen; ++i) {
-		point = points[i];
-		if (!_isPointInArea(point, area)) {
-			continue;
-		}
-		if (i > 0 && _isPointInArea(points[i - 1], area)) {
-			point.controlPointPreviousX = capControlPoint(point.controlPointPreviousX, area.left, area.right);
-			point.controlPointPreviousY = capControlPoint(point.controlPointPreviousY, area.top, area.bottom);
-		}
-		if (i < points.length - 1 && _isPointInArea(points[i + 1], area)) {
-			point.controlPointNextX = capControlPoint(point.controlPointNextX, area.left, area.right);
-			point.controlPointNextY = capControlPoint(point.controlPointNextY, area.top, area.bottom);
-		}
-	}
-}
-function _updateBezierControlPoints(points, options, area, loop) {
-	let i, ilen, point, controlPoints;
-	if (options.spanGaps) {
-		points = points.filter((pt) => !pt.skip);
-	}
-	if (options.cubicInterpolationMode === 'monotone') {
-		splineCurveMonotone(points);
-	} else {
-		let prev = loop ? points[points.length - 1] : points[0];
-		for (i = 0, ilen = points.length; i < ilen; ++i) {
-			point = points[i];
-			controlPoints = splineCurve(
-				prev,
-				point,
-				points[Math.min(i + 1, ilen - (loop ? 0 : 1)) % ilen],
-				options.tension
-			);
-			point.controlPointPreviousX = controlPoints.previous.x;
-			point.controlPointPreviousY = controlPoints.previous.y;
-			point.controlPointNextX = controlPoints.next.x;
-			point.controlPointNextY = controlPoints.next.y;
-			prev = point;
-		}
-	}
-	if (options.capBezierPoints) {
-		capBezierPoints(points, area);
-	}
-}
-
-function _pointInLine(p1, p2, t, mode) {
-	return {
-		x: p1.x + t * (p2.x - p1.x),
-		y: p1.y + t * (p2.y - p1.y)
-	};
-}
-function _steppedInterpolation(p1, p2, t, mode) {
-	return {
-		x: p1.x + t * (p2.x - p1.x),
-		y: mode === 'middle' ? t < 0.5 ? p1.y : p2.y
-		: mode === 'after' ? t < 1 ? p1.y : p2.y
-		: t > 0 ? p2.y : p1.y
-	};
-}
-function _bezierInterpolation(p1, p2, t, mode) {
-	const cp1 = {x: p1.controlPointNextX, y: p1.controlPointNextY};
-	const cp2 = {x: p2.controlPointPreviousX, y: p2.controlPointPreviousY};
-	const a = _pointInLine(p1, cp1, t);
-	const b = _pointInLine(cp1, cp2, t);
-	const c = _pointInLine(cp2, p2, t);
-	const d = _pointInLine(a, b, t);
-	const e = _pointInLine(b, c, t);
-	return _pointInLine(d, e, t);
-}
-
-const getRightToLeftAdapter = function(rectX, width) {
-	return {
-		x(x) {
-			return rectX + rectX + width - x;
-		},
-		setWidth(w) {
-			width = w;
-		},
-		textAlign(align) {
-			if (align === 'center') {
-				return align;
-			}
-			return align === 'right' ? 'left' : 'right';
-		},
-		xPlus(x, value) {
-			return x - value;
-		},
-		leftForLtr(x, itemWidth) {
-			return x - itemWidth;
-		},
-	};
-};
-const getLeftToRightAdapter = function() {
-	return {
-		x(x) {
-			return x;
-		},
-		setWidth(w) {
-		},
-		textAlign(align) {
-			return align;
-		},
-		xPlus(x, value) {
-			return x + value;
-		},
-		leftForLtr(x, _itemWidth) {
-			return x;
-		},
-	};
-};
-function getRtlAdapter(rtl, rectX, width) {
-	return rtl ? getRightToLeftAdapter(rectX, width) : getLeftToRightAdapter();
-}
-function overrideTextDirection(ctx, direction) {
-	let style, original;
-	if (direction === 'ltr' || direction === 'rtl') {
-		style = ctx.canvas.style;
-		original = [
-			style.getPropertyValue('direction'),
-			style.getPropertyPriority('direction'),
-		];
-		style.setProperty('direction', direction, 'important');
-		ctx.prevTextDirection = original;
-	}
-}
-function restoreTextDirection(ctx, original) {
-	if (original !== undefined) {
-		delete ctx.prevTextDirection;
-		ctx.canvas.style.setProperty('direction', original[0], original[1]);
-	}
-}
-
-function propertyFn(property) {
-	if (property === 'angle') {
-		return {
-			between: _angleBetween,
-			compare: _angleDiff,
-			normalize: _normalizeAngle,
-		};
-	}
-	return {
-		between: (n, s, e) => n >= s && n <= e,
-		compare: (a, b) => a - b,
-		normalize: x => x
-	};
-}
-function makeSubSegment(start, end, loop, count) {
-	return {
-		start: start % count,
-		end: end % count,
-		loop: loop && (end - start + 1) % count === 0
-	};
-}
-function getSegment(segment, points, bounds) {
-	const {property, start: startBound, end: endBound} = bounds;
-	const {between, normalize} = propertyFn(property);
-	const count = points.length;
-	let {start, end, loop} = segment;
-	let i, ilen;
-	if (loop) {
-		start += count;
-		end += count;
-		for (i = 0, ilen = count; i < ilen; ++i) {
-			if (!between(normalize(points[start % count][property]), startBound, endBound)) {
-				break;
-			}
-			start--;
-			end--;
-		}
-		start %= count;
-		end %= count;
-	}
-	if (end < start) {
-		end += count;
-	}
-	return {start, end, loop};
-}
-function _boundSegment(segment, points, bounds) {
-	if (!bounds) {
-		return [segment];
-	}
-	const {property, start: startBound, end: endBound} = bounds;
-	const count = points.length;
-	const {compare, between, normalize} = propertyFn(property);
-	const {start, end, loop} = getSegment(segment, points, bounds);
-	const result = [];
-	let inside = false;
-	let subStart = null;
-	let value, point, prevValue;
-	const startIsBefore = () => between(startBound, prevValue, value) && compare(startBound, prevValue) !== 0;
-	const endIsBefore = () => compare(endBound, value) === 0 || between(endBound, prevValue, value);
-	const shouldStart = () => inside || startIsBefore();
-	const shouldStop = () => !inside || endIsBefore();
-	for (let i = start, prev = start; i <= end; ++i) {
-		point = points[i % count];
-		if (point.skip) {
-			continue;
-		}
-		value = normalize(point[property]);
-		inside = between(value, startBound, endBound);
-		if (subStart === null && shouldStart()) {
-			subStart = compare(value, startBound) === 0 ? i : prev;
-		}
-		if (subStart !== null && shouldStop()) {
-			result.push(makeSubSegment(subStart, i, loop, count));
-			subStart = null;
-		}
-		prev = i;
-		prevValue = value;
-	}
-	if (subStart !== null) {
-		result.push(makeSubSegment(subStart, end, loop, count));
-	}
-	return result;
-}
-function _boundSegments(line, bounds) {
-	const result = [];
-	const segments = line.segments;
-	for (let i = 0; i < segments.length; i++) {
-		const sub = _boundSegment(segments[i], line.points, bounds);
-		if (sub.length) {
-			result.push(...sub);
-		}
-	}
-	return result;
-}
-function findStartAndEnd(points, count, loop, spanGaps) {
-	let start = 0;
-	let end = count - 1;
-	if (loop && !spanGaps) {
-		while (start < count && !points[start].skip) {
-			start++;
-		}
-	}
-	while (start < count && points[start].skip) {
-		start++;
-	}
-	start %= count;
-	if (loop) {
-		end += start;
-	}
-	while (end > start && points[end % count].skip) {
-		end--;
-	}
-	end %= count;
-	return {start, end};
-}
-function solidSegments(points, start, max, loop) {
-	const count = points.length;
-	const result = [];
-	let last = start;
-	let prev = points[start];
-	let end;
-	for (end = start + 1; end <= max; ++end) {
-		const cur = points[end % count];
-		if (cur.skip || cur.stop) {
-			if (!prev.skip) {
-				loop = false;
-				result.push({start: start % count, end: (end - 1) % count, loop});
-				start = last = cur.stop ? end : null;
-			}
-		} else {
-			last = end;
-			if (prev.skip) {
-				start = end;
-			}
-		}
-		prev = cur;
-	}
-	if (last !== null) {
-		result.push({start: start % count, end: last % count, loop});
-	}
-	return result;
-}
-function _computeSegments(line) {
-	const points = line.points;
-	const spanGaps = line.options.spanGaps;
-	const count = points.length;
-	if (!count) {
-		return [];
-	}
-	const loop = !!line._loop;
-	const {start, end} = findStartAndEnd(points, count, loop, spanGaps);
-	if (spanGaps === true) {
-		return [{start, end, loop}];
-	}
-	const max = end < start ? end + count : end;
-	const completeLoop = !!line._fullLoop && start === 0 && end === count - 1;
-	return solidSegments(points, start, max, completeLoop);
-}
-
-var helpers = /*#__PURE__*/Object.freeze({
-__proto__: null,
-easingEffects: effects,
-color: color,
-getHoverColor: getHoverColor,
-requestAnimFrame: requestAnimFrame,
-fontString: fontString,
-noop: noop,
-uid: uid,
-isNullOrUndef: isNullOrUndef,
-isArray: isArray,
-isObject: isObject,
-isFinite: isNumberFinite,
-finiteOrDefault: finiteOrDefault,
-valueOrDefault: valueOrDefault,
-callback: callback,
-each: each,
-_elementsEqual: _elementsEqual,
-clone: clone,
-_merger: _merger,
-merge: merge,
-mergeIf: mergeIf,
-_mergerIf: _mergerIf,
-_deprecated: _deprecated,
-resolveObjectKey: resolveObjectKey,
-_capitalize: _capitalize,
-toFontString: toFontString,
-_measureText: _measureText,
-_longestText: _longestText,
-_alignPixel: _alignPixel,
-clear: clear,
-drawPoint: drawPoint,
-_isPointInArea: _isPointInArea,
-clipArea: clipArea,
-unclipArea: unclipArea,
-_steppedLineTo: _steppedLineTo,
-_bezierCurveTo: _bezierCurveTo,
-_lookup: _lookup,
-_lookupByKey: _lookupByKey,
-_rlookupByKey: _rlookupByKey,
-_filterBetween: _filterBetween,
-listenArrayEvents: listenArrayEvents,
-unlistenArrayEvents: unlistenArrayEvents,
-_arrayUnique: _arrayUnique,
-splineCurve: splineCurve,
-splineCurveMonotone: splineCurveMonotone,
-_updateBezierControlPoints: _updateBezierControlPoints,
-_getParentNode: _getParentNode,
-getStyle: getStyle,
-getRelativePosition: getRelativePosition,
-getMaximumSize: getMaximumSize,
-retinaScale: retinaScale,
-supportsEventListenerOptions: supportsEventListenerOptions,
-readUsedSize: readUsedSize,
-_pointInLine: _pointInLine,
-_steppedInterpolation: _steppedInterpolation,
-_bezierInterpolation: _bezierInterpolation,
-toLineHeight: toLineHeight,
-toTRBL: toTRBL,
-toTRBLCorners: toTRBLCorners,
-toPadding: toPadding,
-toFont: toFont,
-resolve: resolve,
-PI: PI,
-TAU: TAU,
-PITAU: PITAU,
-INFINITY: INFINITY,
-RAD_PER_DEG: RAD_PER_DEG,
-HALF_PI: HALF_PI,
-QUARTER_PI: QUARTER_PI,
-TWO_THIRDS_PI: TWO_THIRDS_PI,
-_factorize: _factorize,
-log10: log10,
-isNumber: isNumber,
-almostEquals: almostEquals,
-almostWhole: almostWhole,
-_setMinAndMaxByKey: _setMinAndMaxByKey,
-sign: sign,
-toRadians: toRadians,
-toDegrees: toDegrees,
-_decimalPlaces: _decimalPlaces,
-getAngleFromPoint: getAngleFromPoint,
-distanceBetweenPoints: distanceBetweenPoints,
-_angleDiff: _angleDiff,
-_normalizeAngle: _normalizeAngle,
-_angleBetween: _angleBetween,
-_limitValue: _limitValue,
-_int16Range: _int16Range,
-getRtlAdapter: getRtlAdapter,
-overrideTextDirection: overrideTextDirection,
-restoreTextDirection: restoreTextDirection,
-_boundSegment: _boundSegment,
-_boundSegments: _boundSegments,
-_computeSegments: _computeSegments
-});
-
 function abstract() {
 	throw new Error('This method is not implemented: either no adapter can be found or an incomplete integration was provided.');
 }
@@ -7297,9 +7300,10 @@ class DoughnutController extends DatasetController {
 		const meta = me._cachedMeta;
 		const chart = me.chart;
 		const labels = chart.data.labels || [];
+		const value = new Intl.NumberFormat(chart.options.locale).format(meta._parsed[index]);
 		return {
 			label: labels[index] || '',
-			value: meta._parsed[index],
+			value,
 		};
 	}
 	getMaxBorderWidth(arcs) {
@@ -8074,7 +8078,7 @@ class ArcElement extends Element {
 		const offset = options.offset || 0;
 		me.pixelMargin = (options.borderAlign === 'inner') ? 0.33 : 0;
 		me.fullCircles = Math.floor(me.circumference / TAU);
-		if (me.circumference === 0) {
+		if (me.circumference === 0 || me.innerRadius < 0 || me.outerRadius < 0) {
 			return;
 		}
 		ctx.save();
@@ -9047,22 +9051,22 @@ var plugin_filler = {
 	}
 };
 
-function getBoxWidth(labelOpts, fontSize) {
-	const {boxWidth} = labelOpts;
-	return (labelOpts.usePointStyle && boxWidth > fontSize) || isNullOrUndef(boxWidth) ?
-		fontSize :
-		boxWidth;
-}
-function getBoxHeight(labelOpts, fontSize) {
-	const {boxHeight} = labelOpts;
-	return (labelOpts.usePointStyle && boxHeight > fontSize) || isNullOrUndef(boxHeight) ?
-		fontSize :
-		boxHeight;
-}
+const getBoxSize = (labelOpts, fontSize) => {
+	let {boxHeight = fontSize, boxWidth = fontSize} = labelOpts;
+	if (labelOpts.usePointStyle) {
+		boxHeight = Math.min(boxHeight, fontSize);
+		boxWidth = Math.min(boxWidth, fontSize);
+	}
+	return {
+		boxWidth,
+		boxHeight,
+		itemHeight: Math.max(fontSize, boxHeight)
+	};
+};
 class Legend extends Element {
 	constructor(config) {
 		super();
-		Object.assign(this, config);
+		this._added = false;
 		this.legendHitBoxes = [];
 		this._hoveredItem = null;
 		this.doughnutMode = false;
@@ -9070,10 +9074,8 @@ class Legend extends Element {
 		this.options = config.options;
 		this.ctx = config.ctx;
 		this.legendItems = undefined;
-		this.columnWidths = undefined;
-		this.columnHeights = undefined;
+		this.columnSizes = undefined;
 		this.lineWidths = undefined;
-		this._minSize = undefined;
 		this.maxHeight = undefined;
 		this.maxWidth = undefined;
 		this.top = undefined;
@@ -9083,34 +9085,19 @@ class Legend extends Element {
 		this.height = undefined;
 		this.width = undefined;
 		this._margins = undefined;
-		this.paddingTop = undefined;
-		this.paddingBottom = undefined;
-		this.paddingLeft = undefined;
-		this.paddingRight = undefined;
 		this.position = undefined;
 		this.weight = undefined;
 		this.fullWidth = undefined;
 	}
-	beforeUpdate() {}
 	update(maxWidth, maxHeight, margins) {
 		const me = this;
-		me.beforeUpdate();
 		me.maxWidth = maxWidth;
 		me.maxHeight = maxHeight;
 		me._margins = margins;
-		me.beforeSetDimensions();
 		me.setDimensions();
-		me.afterSetDimensions();
-		me.beforeBuildLabels();
 		me.buildLabels();
-		me.afterBuildLabels();
-		me.beforeFit();
 		me.fit();
-		me.afterFit();
-		me.afterUpdate();
 	}
-	afterUpdate() {}
-	beforeSetDimensions() {}
 	setDimensions() {
 		const me = this;
 		if (me.isHorizontal()) {
@@ -9122,17 +9109,7 @@ class Legend extends Element {
 			me.top = 0;
 			me.bottom = me.height;
 		}
-		me.paddingLeft = 0;
-		me.paddingTop = 0;
-		me.paddingRight = 0;
-		me.paddingBottom = 0;
-		me._minSize = {
-			width: 0,
-			height: 0
-		};
 	}
-	afterSetDimensions() {}
-	beforeBuildLabels() {}
 	buildLabels() {
 		const me = this;
 		const labelOpts = me.options.labels || {};
@@ -9148,122 +9125,101 @@ class Legend extends Element {
 		}
 		me.legendItems = legendItems;
 	}
-	afterBuildLabels() {}
-	beforeFit() {}
 	fit() {
 		const me = this;
-		const opts = me.options;
-		const labelOpts = opts.labels;
-		const display = opts.display;
-		const ctx = me.ctx;
-		const labelFont = toFont(labelOpts.font, me.chart.options.font);
-		const fontSize = labelFont.size;
-		const boxWidth = getBoxWidth(labelOpts, fontSize);
-		const boxHeight = getBoxHeight(labelOpts, fontSize);
-		const itemHeight = Math.max(boxHeight, fontSize);
-		const hitboxes = me.legendHitBoxes = [];
-		const minSize = me._minSize;
-		const isHorizontal = me.isHorizontal();
-		const titleHeight = me._computeTitleHeight();
-		if (isHorizontal) {
-			minSize.width = me.maxWidth;
-			minSize.height = display ? 10 : 0;
-		} else {
-			minSize.width = display ? 10 : 0;
-			minSize.height = me.maxHeight;
-		}
-		if (!display) {
-			me.width = minSize.width = me.height = minSize.height = 0;
+		const {options, ctx} = me;
+		if (!options.display) {
+			me.width = me.height = 0;
 			return;
 		}
+		const labelOpts = options.labels;
+		const labelFont = toFont(labelOpts.font, me.chart.options.font);
+		const fontSize = labelFont.size;
+		const titleHeight = me._computeTitleHeight();
+		const {boxWidth, itemHeight} = getBoxSize(labelOpts, fontSize);
+		let width, height;
 		ctx.font = labelFont.string;
-		if (isHorizontal) {
-			const lineWidths = me.lineWidths = [0];
-			let totalHeight = titleHeight;
-			ctx.textAlign = 'left';
-			ctx.textBaseline = 'middle';
-			me.legendItems.forEach((legendItem, i) => {
-				const width = boxWidth + (fontSize / 2) + ctx.measureText(legendItem.text).width;
-				if (i === 0 || lineWidths[lineWidths.length - 1] + width + 2 * labelOpts.padding > minSize.width) {
-					totalHeight += itemHeight + labelOpts.padding;
-					lineWidths[lineWidths.length - (i > 0 ? 0 : 1)] = 0;
-				}
-				hitboxes[i] = {
-					left: 0,
-					top: 0,
-					width,
-					height: itemHeight
-				};
-				lineWidths[lineWidths.length - 1] += width + labelOpts.padding;
-			});
-			minSize.height += totalHeight;
+		if (me.isHorizontal()) {
+			width = me.maxWidth;
+			height = me._fitRows(titleHeight, fontSize, boxWidth, itemHeight) + 10;
 		} else {
-			const vPadding = labelOpts.padding;
-			const columnWidths = me.columnWidths = [];
-			const columnHeights = me.columnHeights = [];
-			let totalWidth = labelOpts.padding;
-			let currentColWidth = 0;
-			let currentColHeight = 0;
-			const heightLimit = minSize.height - titleHeight;
-			me.legendItems.forEach((legendItem, i) => {
-				const itemWidth = boxWidth + (fontSize / 2) + ctx.measureText(legendItem.text).width;
-				if (i > 0 && currentColHeight + fontSize + 2 * vPadding > heightLimit) {
-					totalWidth += currentColWidth + labelOpts.padding;
-					columnWidths.push(currentColWidth);
-					columnHeights.push(currentColHeight);
-					currentColWidth = 0;
-					currentColHeight = 0;
-				}
-				currentColWidth = Math.max(currentColWidth, itemWidth);
-				currentColHeight += fontSize + vPadding;
-				hitboxes[i] = {
-					left: 0,
-					top: 0,
-					width: itemWidth,
-					height: itemHeight,
-				};
-			});
-			totalWidth += currentColWidth;
-			columnWidths.push(currentColWidth);
-			columnHeights.push(currentColHeight);
-			minSize.width += totalWidth;
+			height = me.maxHeight;
+			width = me._fitCols(titleHeight, fontSize, boxWidth, itemHeight) + 10;
 		}
-		me.width = Math.min(minSize.width, opts.maxWidth || INFINITY);
-		me.height = Math.min(minSize.height, opts.maxHeight || INFINITY);
+		me.width = Math.min(width, options.maxWidth || INFINITY);
+		me.height = Math.min(height, options.maxHeight || INFINITY);
 	}
-	afterFit() {}
+	_fitRows(titleHeight, fontSize, boxWidth, itemHeight) {
+		const me = this;
+		const {ctx, maxWidth} = me;
+		const padding = me.options.labels.padding;
+		const hitboxes = me.legendHitBoxes = [];
+		const lineWidths = me.lineWidths = [0];
+		let totalHeight = titleHeight;
+		ctx.textAlign = 'left';
+		ctx.textBaseline = 'middle';
+		me.legendItems.forEach((legendItem, i) => {
+			const itemWidth = boxWidth + (fontSize / 2) + ctx.measureText(legendItem.text).width;
+			if (i === 0 || lineWidths[lineWidths.length - 1] + itemWidth + 2 * padding > maxWidth) {
+				totalHeight += itemHeight + padding;
+				lineWidths[lineWidths.length - (i > 0 ? 0 : 1)] = 0;
+			}
+			hitboxes[i] = {left: 0,	top: 0,	width: itemWidth, height: itemHeight};
+			lineWidths[lineWidths.length - 1] += itemWidth + padding;
+		});
+		return totalHeight;
+	}
+	_fitCols(titleHeight, fontSize, boxWidth, itemHeight) {
+		const me = this;
+		const {ctx, maxHeight} = me;
+		const padding = me.options.labels.padding;
+		const hitboxes = me.legendHitBoxes = [];
+		const columnSizes = me.columnSizes = [];
+		let totalWidth = padding;
+		let currentColWidth = 0;
+		let currentColHeight = 0;
+		const heightLimit = maxHeight - titleHeight;
+		me.legendItems.forEach((legendItem, i) => {
+			const itemWidth = boxWidth + (fontSize / 2) + ctx.measureText(legendItem.text).width;
+			if (i > 0 && currentColHeight + fontSize + 2 * padding > heightLimit) {
+				totalWidth += currentColWidth + padding;
+				columnSizes.push({width: currentColWidth, height: currentColHeight});
+				currentColWidth = currentColHeight = 0;
+			}
+			currentColWidth = Math.max(currentColWidth, itemWidth);
+			currentColHeight += fontSize + padding;
+			hitboxes[i] = {left: 0,	top: 0,	width: itemWidth, height: itemHeight};
+		});
+		totalWidth += currentColWidth;
+		columnSizes.push({width: currentColWidth, height: currentColHeight});
+		return totalWidth;
+	}
 	isHorizontal() {
 		return this.options.position === 'top' || this.options.position === 'bottom';
 	}
 	draw() {
-		const me = this;
-		const opts = me.options;
-		const labelOpts = opts.labels;
-		const defaultColor = defaults.color;
-		const legendHeight = me.height;
-		const columnHeights = me.columnHeights;
-		const legendWidth = me.width;
-		const lineWidths = me.lineWidths;
-		if (!opts.display) {
-			return;
+		if (this.options.display) {
+			this._draw();
 		}
-		me.drawTitle();
-		const rtlHelper = getRtlAdapter(opts.rtl, me.left, me._minSize.width);
-		const ctx = me.ctx;
+	}
+	_draw() {
+		const me = this;
+		const {options: opts, columnSizes, lineWidths, ctx, legendHitBoxes} = me;
+		const {align, labels: labelOpts} = opts;
+		const defaultColor = defaults.color;
+		const rtlHelper = getRtlAdapter(opts.rtl, me.left, me.width);
 		const labelFont = toFont(labelOpts.font, me.chart.options.font);
-		const fontColor = labelOpts.color;
+		const {color: fontColor, padding} = labelOpts;
 		const fontSize = labelFont.size;
 		let cursor;
+		me.drawTitle();
 		ctx.textAlign = rtlHelper.textAlign('left');
 		ctx.textBaseline = 'middle';
 		ctx.lineWidth = 0.5;
 		ctx.strokeStyle = fontColor;
 		ctx.fillStyle = fontColor;
 		ctx.font = labelFont.string;
-		const boxWidth = getBoxWidth(labelOpts, fontSize);
-		const boxHeight = getBoxHeight(labelOpts, fontSize);
-		const height = Math.max(fontSize, boxHeight);
-		const hitboxes = me.legendHitBoxes;
+		const {boxWidth, boxHeight, itemHeight} = getBoxSize(labelOpts, fontSize);
 		const drawLegendBox = function(x, y, legendItem) {
 			if (isNaN(boxWidth) || boxWidth <= 0 || isNaN(boxHeight) || boxHeight < 0) {
 				return;
@@ -9277,7 +9233,7 @@ class Legend extends Element {
 			ctx.lineWidth = lineWidth;
 			ctx.strokeStyle = valueOrDefault(legendItem.strokeStyle, defaultColor);
 			ctx.setLineDash(valueOrDefault(legendItem.lineDash, []));
-			if (labelOpts && labelOpts.usePointStyle) {
+			if (labelOpts.usePointStyle) {
 				const drawOptions = {
 					radius: boxWidth * Math.SQRT2 / 2,
 					pointStyle: legendItem.pointStyle,
@@ -9299,7 +9255,7 @@ class Legend extends Element {
 		const fillText = function(x, y, legendItem, textWidth) {
 			const halfFontSize = fontSize / 2;
 			const xLeft = rtlHelper.xPlus(x, boxWidth + halfFontSize);
-			const yMiddle = y + (height / 2);
+			const yMiddle = y + (itemHeight / 2);
 			ctx.fillText(legendItem.text, xLeft, yMiddle);
 			if (legendItem.hidden) {
 				ctx.beginPath();
@@ -9309,59 +9265,49 @@ class Legend extends Element {
 				ctx.stroke();
 			}
 		};
-		const alignmentOffset = function(dimension, blockSize) {
-			switch (opts.align) {
-			case 'start':
-				return labelOpts.padding;
-			case 'end':
-				return dimension - blockSize;
-			default:
-				return (dimension - blockSize + labelOpts.padding) / 2;
-			}
-		};
 		const isHorizontal = me.isHorizontal();
 		const titleHeight = this._computeTitleHeight();
 		if (isHorizontal) {
 			cursor = {
-				x: me.left + alignmentOffset(legendWidth, lineWidths[0]),
-				y: me.top + labelOpts.padding + titleHeight,
+				x: _alignStartEnd(align, me.left + padding, me.right - lineWidths[0]),
+				y: me.top + padding + titleHeight,
 				line: 0
 			};
 		} else {
 			cursor = {
-				x: me.left + labelOpts.padding,
-				y: me.top + alignmentOffset(legendHeight, columnHeights[0]) + titleHeight,
+				x: me.left + padding,
+				y: _alignStartEnd(align, me.top + titleHeight + padding, me.bottom - columnSizes[0].height),
 				line: 0
 			};
 		}
 		overrideTextDirection(me.ctx, opts.textDirection);
-		const itemHeight = height + labelOpts.padding;
+		const lineHeight = itemHeight + padding;
 		me.legendItems.forEach((legendItem, i) => {
 			const textWidth = ctx.measureText(legendItem.text).width;
 			const width = boxWidth + (fontSize / 2) + textWidth;
 			let x = cursor.x;
 			let y = cursor.y;
-			rtlHelper.setWidth(me._minSize.width);
+			rtlHelper.setWidth(me.width);
 			if (isHorizontal) {
-				if (i > 0 && x + width + labelOpts.padding > me.left + me._minSize.width) {
-					y = cursor.y += itemHeight;
+				if (i > 0 && x + width + padding > me.right) {
+					y = cursor.y += lineHeight;
 					cursor.line++;
-					x = cursor.x = me.left + alignmentOffset(legendWidth, lineWidths[cursor.line]);
+					x = cursor.x = _alignStartEnd(align, me.left + padding, me.right - lineWidths[cursor.line]);
 				}
-			} else if (i > 0 && y + itemHeight > me.top + me._minSize.height) {
-				x = cursor.x = x + me.columnWidths[cursor.line] + labelOpts.padding;
+			} else if (i > 0 && y + lineHeight > me.bottom) {
+				x = cursor.x = x + columnSizes[cursor.line].width + padding;
 				cursor.line++;
-				y = cursor.y = me.top + alignmentOffset(legendHeight, columnHeights[cursor.line]);
+				y = cursor.y = _alignStartEnd(align, me.top + titleHeight + padding, me.bottom - columnSizes[cursor.line].height);
 			}
 			const realX = rtlHelper.x(x);
 			drawLegendBox(realX, y, legendItem);
-			hitboxes[i].left = rtlHelper.leftForLtr(realX, hitboxes[i].width);
-			hitboxes[i].top = y;
+			legendHitBoxes[i].left = rtlHelper.leftForLtr(realX, legendHitBoxes[i].width);
+			legendHitBoxes[i].top = y;
 			fillText(realX, y, legendItem, textWidth);
 			if (isHorizontal) {
-				cursor.x += width + labelOpts.padding;
+				cursor.x += width + padding;
 			} else {
-				cursor.y += itemHeight;
+				cursor.y += lineHeight;
 			}
 		});
 		restoreTextDirection(me.ctx, opts.textDirection);
@@ -9375,54 +9321,24 @@ class Legend extends Element {
 		if (!titleOpts.display) {
 			return;
 		}
-		const rtlHelper = getRtlAdapter(opts.rtl, me.left, me._minSize.width);
+		const rtlHelper = getRtlAdapter(opts.rtl, me.left, me.width);
 		const ctx = me.ctx;
 		const position = titleOpts.position;
-		let x, textAlign;
 		const halfFontSize = titleFont.size / 2;
-		let y = me.top + titlePadding.top + halfFontSize;
+		const topPaddingPlusHalfFontSize = titlePadding.top + halfFontSize;
+		let y;
 		let left = me.left;
 		let maxWidth = me.width;
 		if (this.isHorizontal()) {
 			maxWidth = Math.max(...me.lineWidths);
-			switch (opts.align) {
-			case 'start':
-				break;
-			case 'end':
-				left = me.right - maxWidth;
-				break;
-			default:
-				left = ((me.left + me.right) / 2) - (maxWidth / 2);
-				break;
-			}
+			y = me.top + topPaddingPlusHalfFontSize;
+			left = _alignStartEnd(opts.align, left, me.right - maxWidth);
 		} else {
-			const maxHeight = Math.max(...me.columnHeights);
-			switch (opts.align) {
-			case 'start':
-				break;
-			case 'end':
-				y += me.height - maxHeight;
-				break;
-			default:
-				y += (me.height - maxHeight) / 2;
-				break;
-			}
+			const maxHeight = me.columnSizes.reduce((acc, size) => Math.max(acc, size.height), 0);
+			y = topPaddingPlusHalfFontSize + _alignStartEnd(opts.align, me.top, me.bottom - maxHeight - opts.labels.padding - me._computeTitleHeight());
 		}
-		switch (position) {
-		case 'start':
-			x = left;
-			textAlign = 'left';
-			break;
-		case 'end':
-			x = left + maxWidth;
-			textAlign = 'right';
-			break;
-		default:
-			x = left + (maxWidth / 2);
-			textAlign = 'center';
-			break;
-		}
-		ctx.textAlign = rtlHelper.textAlign(textAlign);
+		const x = _alignStartEnd(position, left, left + maxWidth);
+		ctx.textAlign = rtlHelper.textAlign(_toLeftRightCenter(position));
 		ctx.textBaseline = 'middle';
 		ctx.strokeStyle = titleOpts.color;
 		ctx.fillStyle = titleOpts.color;
@@ -9452,85 +9368,55 @@ class Legend extends Element {
 	handleEvent(e) {
 		const me = this;
 		const opts = me.options;
-		const type = e.type === 'mouseup' ? 'click' : e.type;
-		if (type === 'mousemove') {
-			if (!opts.onHover && !opts.onLeave) {
-				return;
-			}
-		} else if (type === 'click') {
-			if (!opts.onClick) {
-				return;
-			}
-		} else {
+		if (!isListened(e.type, opts)) {
 			return;
 		}
 		const hoveredItem = me._getLegendItemAt(e.x, e.y);
-		if (type === 'click') {
-			if (hoveredItem) {
-				callback(opts.onClick, [e, hoveredItem, me], me);
+		if (e.type === 'mousemove') {
+			const previous = me._hoveredItem;
+			if (previous && previous !== hoveredItem) {
+				callback(opts.onLeave, [e, previous, me], me);
 			}
-		} else {
-			if (opts.onLeave && hoveredItem !== me._hoveredItem) {
-				if (me._hoveredItem) {
-					callback(opts.onLeave, [e, me._hoveredItem, me], me);
-				}
-				me._hoveredItem = hoveredItem;
-			}
+			me._hoveredItem = hoveredItem;
 			if (hoveredItem) {
 				callback(opts.onHover, [e, hoveredItem, me], me);
 			}
+		} else if (hoveredItem) {
+			callback(opts.onClick, [e, hoveredItem, me], me);
 		}
 	}
 }
-function resolveOptions(options) {
-	return options !== false && merge(Object.create(null), [defaults.plugins.legend, options]);
-}
-function createNewLegendAndAttach(chart, legendOpts) {
-	const legend = new Legend({
-		ctx: chart.ctx,
-		options: legendOpts,
-		chart
-	});
-	layouts.configure(chart, legend, legendOpts);
-	layouts.addBox(chart, legend);
-	chart.legend = legend;
+function isListened(type, opts) {
+	if (type === 'mousemove' && (opts.onHover || opts.onLeave)) {
+		return true;
+	}
+	if (opts.onClick && (type === 'click' || type === 'mouseup')) {
+		return true;
+	}
+	return false;
 }
 var plugin_legend = {
 	id: 'legend',
 	_element: Legend,
-	start(chart) {
-		const legendOpts = resolveOptions(chart.options.plugins.legend);
-		createNewLegendAndAttach(chart, legendOpts);
+	start(chart, _args, options) {
+		const legend = chart.legend = new Legend({ctx: chart.ctx, options, chart});
+		layouts.configure(chart, legend, options);
+		layouts.addBox(chart, legend);
 	},
 	stop(chart) {
 		layouts.removeBox(chart, chart.legend);
 		delete chart.legend;
 	},
-	beforeUpdate(chart) {
-		const legendOpts = resolveOptions(chart.options.plugins.legend);
+	beforeUpdate(chart, _args, options) {
 		const legend = chart.legend;
-		if (legendOpts) {
-			if (legend) {
-				layouts.configure(chart, legend, legendOpts);
-				legend.options = legendOpts;
-			} else {
-				createNewLegendAndAttach(chart, legendOpts);
-			}
-		} else if (legend) {
-			layouts.removeBox(chart, legend);
-			delete chart.legend;
-		}
+		layouts.configure(chart, legend, options);
+		legend.options = options;
 	},
 	afterUpdate(chart) {
-		if (chart.legend) {
-			chart.legend.buildLabels();
-		}
+		chart.legend.buildLabels();
 	},
 	afterEvent(chart, args) {
-		const legend = chart.legend;
-		if (legend) {
-			legend.handleEvent(args.event);
-		}
+		chart.legend.handleEvent(args.event);
 	},
 	defaults: {
 		display: true,
@@ -9585,19 +9471,19 @@ var plugin_legend = {
 			position: 'center',
 			text: '',
 		}
+	},
+	defaultRoutes: {
+		'labels.color': 'color',
+		'title.color': 'color'
 	}
 };
 
-const toLeftRightCenter = (align) => align === 'start' ? 'left' : align === 'end' ? 'right' : 'center';
-const alignStartEnd = (align, start, end) => align === 'start' ? start : align === 'end' ? end : (start + end) / 2;
 class Title extends Element {
 	constructor(config) {
 		super();
-		Object.assign(this, config);
 		this.chart = config.chart;
 		this.options = config.options;
 		this.ctx = config.ctx;
-		this._margins = undefined;
 		this._padding = undefined;
 		this.top = undefined;
 		this.bottom = undefined;
@@ -9605,46 +9491,29 @@ class Title extends Element {
 		this.right = undefined;
 		this.width = undefined;
 		this.height = undefined;
-		this.maxWidth = undefined;
-		this.maxHeight = undefined;
 		this.position = undefined;
 		this.weight = undefined;
 		this.fullWidth = undefined;
 	}
-	update(maxWidth, maxHeight, margins) {
-		const me = this;
-		me.maxWidth = maxWidth;
-		me.maxHeight = maxHeight;
-		me._margins = margins;
-		me.setDimensions();
-		me.fit();
-	}
-	setDimensions() {
-		const me = this;
-		if (me.isHorizontal()) {
-			me.width = me.maxWidth;
-			me.left = 0;
-			me.right = me.width;
-		} else {
-			me.height = me.maxHeight;
-			me.top = 0;
-			me.bottom = me.height;
-		}
-	}
-	fit() {
+	update(maxWidth, maxHeight) {
 		const me = this;
 		const opts = me.options;
-		const minSize = {};
-		const isHorizontal = me.isHorizontal();
+		me.left = 0;
+		me.top = 0;
 		if (!opts.display) {
-			me.width = minSize.width = me.height = minSize.height = 0;
+			me.width = me.height = me.right = me.bottom = 0;
 			return;
 		}
+		me.width = me.right = maxWidth;
+		me.height = me.bottom = maxHeight;
 		const lineCount = isArray(opts.text) ? opts.text.length : 1;
 		me._padding = toPadding(opts.padding);
 		const textSize = lineCount * toFont(opts.font, me.chart.options.font).lineHeight + me._padding.height;
-		me.width = minSize.width = isHorizontal ? me.maxWidth : textSize;
-		me.height = minSize.height = isHorizontal ? textSize : me.maxHeight;
+		if (me.isHorizontal()) {
+			me.height = textSize;
+		} else {
+			me.width = textSize;
+		}
 	}
 	isHorizontal() {
 		const pos = this.options.position;
@@ -9656,17 +9525,17 @@ class Title extends Element {
 		let rotation = 0;
 		let maxWidth, titleX, titleY;
 		if (this.isHorizontal()) {
-			titleX = alignStartEnd(align, left, right);
+			titleX = _alignStartEnd(align, left, right);
 			titleY = top + offset;
 			maxWidth = right - left;
 		} else {
 			if (options.position === 'left') {
 				titleX = left + offset;
-				titleY = alignStartEnd(align, bottom, top);
+				titleY = _alignStartEnd(align, bottom, top);
 				rotation = PI * -0.5;
 			} else {
 				titleX = right - offset;
-				titleY = alignStartEnd(align, top, bottom);
+				titleY = _alignStartEnd(align, top, bottom);
 				rotation = PI * 0.5;
 			}
 			maxWidth = bottom - top;
@@ -9689,7 +9558,7 @@ class Title extends Element {
 		ctx.font = fontOpts.string;
 		ctx.translate(titleX, titleY);
 		ctx.rotate(rotation);
-		ctx.textAlign = toLeftRightCenter(opts.align);
+		ctx.textAlign = _toLeftRightCenter(opts.align);
 		ctx.textBaseline = 'middle';
 		const text = opts.text;
 		if (isArray(text)) {
@@ -9846,7 +9715,7 @@ function createTooltipItem(chart, item) {
 		element
 	};
 }
-function resolveOptions$1(options, fallbackFont) {
+function resolveOptions(options, fallbackFont) {
 	options = merge(Object.create(null), [defaults.plugins.tooltip, options]);
 	options.bodyFont = toFont(options.bodyFont, fallbackFont);
 	options.titleFont = toFont(options.titleFont, fallbackFont);
@@ -10035,7 +9904,7 @@ class Tooltip extends Element {
 	initialize() {
 		const me = this;
 		const chartOpts = me._chart.options;
-		me.options = resolveOptions$1(chartOpts.plugins.tooltip, chartOpts.font);
+		me.options = resolveOptions(chartOpts.plugins.tooltip, chartOpts.font);
 		me._cachedAnimations = undefined;
 	}
 	_resolveAnimations() {
@@ -11967,187 +11836,3 @@ if (typeof window !== 'undefined') {
 return Chart;
 
 })));
-
-/*!
- * chartjs-gradient v0.1.0
- * https://github.com/zibous/lovelace-graph-chart-card
- * (c) 2020 Peter Siebler
- * Released under the MIT License
- */
-(function (global, factory) {
-    typeof exports === "object" && typeof module !== "undefined"
-        ? (module.exports = factory())
-        : typeof define === "function" && define.amd
-        ? define(factory)
-        : ((global = global || self), (global["chartjs-gradient"] = factory()));
-})(this, function () {
-    "use strict";
-
-    /**
-     * checks if the value is a string
-     * @param {*} value
-     */
-    const isString = (value) => typeof value === "string";
-    const helpers = Chart.helpers;
-    let thegradient = null;
-
-    /**
-     * The createLinearGradient() method is specified by four parameters
-     * to build the gradient colors for the chart. Used for charts with
-     * series data like line, bar..
-     * 
-     * based on the https://github.com/kurkle/chartjs-plugin-gradient
-     * 
-     * @param {*} ctx
-     * @param {*} axis
-     * @param {*} area
-     * @param {*} colors
-     */
-    function createGradient(ctx, axis, area, colors) {
-        if (area.bottom && area.top && area.left && area.right) {
-            const _gradient =
-                axis === "y"
-                    ? ctx.createLinearGradient(0, area.bottom, 0, area.top)
-                    : ctx.createLinearGradient(area.left, 0, area.right, 0);
-            if (colors && colors.length == 1) {
-                _gradient.addColorStop(0, helpers.color(color).alpha(0.2).rgbString());
-                _gradient.addColorStop(0.3, helpers.color(color).alpha(0.4).rgbString());
-                _gradient.addColorStop(0.5, helpers.color(color).alpha(0.6).rgbString());
-                _gradient.addColorStop(1, helpers.color(color).alpha(1.0).rgbString());
-            } else {
-                const _step = 1 / (colors.length - 1);
-                Object.entries(colors).forEach(([, value], index) => {
-                    _gradient.addColorStop(_step * index, value);
-                });
-            }
-            return _gradient;
-        }
-    }
-
-    /**
-     * create gradient for simple pie and bar charts
-     * not finish... do not work
-     * @param {*} ctx
-     * @param {*} type
-     * @param {*} area
-     * @param {*} colors
-     */
-    function createSimpleGradient(ctx, type, area, colors) {
-        let _gradients = [];
-        switch (type.toLowerCase()) {
-            case "pie":
-            case "doughnut":
-                if (colors && colors.length && isString(colors[0])) {
-                    const centerX = (area.left + area.right) / 2;
-                    const centerY = (area.top + area.bottom) / 2;
-                    const r = 1; // ??? Math.min((area.right - area.left) / 2, (area.bottom - area.top) / 2);
-                    Object.entries(colors).forEach(([, color], index) => {
-                        let _piegradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, r);
-                        _piegradient.addColorStop(0, helpers.color(color).alpha(0.4).rgbString());
-                        _piegradient.addColorStop(1, helpers.color(color).alpha(1.0).rgbString());
-                        _gradients.push(_piegradient);
-                    });
-                    return _gradients;
-                }
-            case "bar":
-                Object.entries(colors).forEach(([, color], index) => {
-                    if (isString(color)) {
-                        let _bargradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
-                        _bargradient.addColorStop(0, helpers.color(color).alpha(1.0).rgbString());
-                        _bargradient.addColorStop(0.5, helpers.color(color).alpha(0.5).rgbString());
-                        _bargradient.addColorStop(1, helpers.color(color).alpha(1.0).rgbString());
-                        _gradients.push(_bargradient);
-                    } else {
-                        _gradients.push(color);
-                    }
-                });
-                return _gradients;
-
-            case "polarArea":
-            case "radar":
-            case "bubble":
-            case "bubble":
-            default:
-                // HOW TO DO ??
-                break;
-        }
-        return colors;
-    }
-
-    /**
-     * plugin gradient
-     */
-    var plugin_gradient = {
-        id: "gradient",
-        beforeDatasetsUpdate(chart) {
-            const ctx = chart.ctx;
-            const area = chart.chartArea;
-            if (!area) {
-                return null;
-            }
-            if (chart.options.gradientcolor && chart.options.gradientcolor.type !== undefined) {
-                // simple graph pie, bar check o.k, create the gradients
-                const _chartType = chart.data.datasets[0].type || chart.config.type;
-                if (thegradient === null) {
-                    const colors = chart.data.datasets[0].backgroundColor;
-                    thegradient = createSimpleGradient(ctx, _chartType, area, colors);
-                    chart.data.datasets[0].backgroundColor = thegradient;
-                }
-            } else {
-                // series data, create the gradients for bar, line...
-                chart.data.datasets.forEach((dataset, i) => {
-                    const gradient = dataset.gradient;
-                    if (gradient && area) {
-                        Object.keys(gradient).forEach((prop) => {
-                            const { axis, colors } = gradient[prop];
-                            //const meta = chart.getDatasetMeta(i);
-                            if (colors && colors.length) {
-                                thegradient = createGradient(ctx, axis, area, colors);
-                                dataset.backgroundColor = thegradient;
-                            }
-                        });
-                    }
-                });
-            }
-        }
-    };
-    return plugin_gradient;
-});
-
-/*!
- * chartjs-background v0.1.0
- * https://github.com/zibous/lovelace-graph-chart-card
- * (c) 2020 Peter Siebler
- * Released under the MIT License
- */
-(function (global, factory) {
-    typeof exports === "object" && typeof module !== "undefined"
-        ? (module.exports = factory())
-        : typeof define === "function" && define.amd
-        ? define(factory)
-        : ((global = global || self), (global["chartjs-background"] = factory()));
-})(this, function () {
-    "use strict";
-    /**
-     * plugin chart background
-     */
-    var plugin_chartbackground = {
-        id: "chardbackground",
-        beforeDraw: function (chart) {
-            if (chart.config.options.chartArea && chart.config.options.chartArea.backgroundColor) {
-                const chartArea = chart.chartArea;
-                const ctx = chart.ctx;
-                ctx.save();
-                ctx.fillStyle = chart.config.options.chartArea.backgroundColor;
-                ctx.fillRect(
-                    chartArea.left,
-                    chartArea.top,
-                    chartArea.right - chartArea.left,
-                    chartArea.bottom - chartArea.top
-                );
-                ctx.restore();
-            }
-        }
-    };
-    return plugin_chartbackground;
-});
