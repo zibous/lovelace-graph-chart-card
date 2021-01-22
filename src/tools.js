@@ -5,19 +5,29 @@
   	Released under the MIT license
  
  * ----------------------------------------------------------*/
-"use strict";
+"use strict"
 
 /**
  * show info
  * @param {*} args
  */
 function logInfo(enabled, ...args) {
-    if (enabled) console.info(new Date().toISOString(), ...args);
+    if (enabled) console.info(new Date().toISOString(), ...args)
 }
 
 const cssAttr = function (v) {
-    return typeof v == "number" ? v + "px" : v;
-};
+    return typeof v == "number" ? v + "px" : v
+}
+
+const _parseNumber = (n) => (n === parseInt(n) ? Number(parseInt(n)) : Number(parseFloat(n).toFixed(2)))
+const _formatNumber = (locale, num) => new Intl.NumberFormat(locale).format(_parseNumber(num))
+const getMin = (arr, val) => arr.reduce((min, p) => (Number(p[val]) < Number(min[val]) ? p : min), arr[0])
+const getAvg = (arr, val) => arr.reduce((sum, p) => sum + Number(p[val]), 0) / arr.length
+const getMax = (arr, val) => arr.reduce((max, p) => (Number(p[val]) > Number(max[val]) ? p : max), arr[0])
+const arrMin = (arr) => Math.min(...arr)
+const arrMax = (arr) => Math.max(...arr)
+const arrSum = (arr) => arr.reduce((a, b) => a + b, 0)
+const arrAvg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length
 
 /**
  * get the date based on the locale
@@ -45,10 +55,10 @@ const cssAttr = function (v) {
         }
  */
 function localDatetime(d, locale) {
-    if (!d) return "";
-    if (!locale) locale = navigator.language || navigator.userLanguage || "en-GB";
-    const date = new Date(d);
-    if (isNaN(date)) return d;
+    if (!d) return ""
+    if (!locale) locale = navigator.language || navigator.userLanguage || "en-GB"
+    const date = new Date(d)
+    if (isNaN(date)) return d
     return new Intl.DateTimeFormat(locale, {
         year: "numeric",
         month: "numeric",
@@ -56,7 +66,7 @@ function localDatetime(d, locale) {
         hour: "numeric",
         minute: "numeric",
         second: "numeric"
-    }).format(date);
+    }).format(date)
 }
 
 /**
@@ -68,24 +78,24 @@ function localDatetime(d, locale) {
  * @returns combined object
  */
 function deepMerge(...sources) {
-    let acc = {};
+    let acc = {}
     for (const source of sources) {
         if (source instanceof Array) {
             if (!(acc instanceof Array)) {
-                acc = [];
+                acc = []
             }
-            acc = [...acc, ...source];
+            acc = [...acc, ...source]
         } else if (source instanceof Object) {
             for (let [key, value] of Object.entries(source)) {
                 if (value instanceof Object && key in acc) {
-                    value = deepMerge(acc[key], value);
+                    value = deepMerge(acc[key], value)
                 }
                 acc = {
                     ...acc,
                     [key]: value
-                };
+                }
             }
         }
     }
-    return acc;
+    return acc
 }

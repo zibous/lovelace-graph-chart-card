@@ -19,16 +19,28 @@
 	</div>
 
 	<script>
-		var MONTHS = ['Data 1', 'Data 2', 'Data 2'];
 		var color = Chart.helpers.color;
 		var data = {
-			labels: ['Data 1', 'Data 2', 'Data 2'],
+			labels: ['Nährstoffe'],
 			datasets: [{
-				label: 'Dataset 1',
-				backgroundColor: ['#03a9f4', '#00bcd4', '#8bc34a'],
-				borderWidth: 0,
-				data: [100, 200, 150]
-			}]
+					label: 'Eiweis',
+					backgroundColor: ['#03a9f4'],
+					borderWidth: 0,
+					data: [100]
+				},
+				{
+					label: 'Kohlenhydrate',
+					backgroundColor: ['#00bcd4'],
+					borderWidth: 0,
+					data: [200]
+				},
+				{
+					label: 'Fett',
+					backgroundColor: ['#8bc34a'],
+					borderWidth: 0,
+					data: [150]
+				}
+			]
 
 		};
 		var options = {
@@ -38,14 +50,17 @@
 				legend: {
 					display: true,
 				},
-				title: {
-					display: true,
-					text: 'Chart.js Bar Chart'
+				plugins: {
+					title: {
+						display: true,
+						text: 'Chart.js Bar Chart',
+						color: "#fff"
+					},
 				},
 				layout: {
-					padding:{
-					  left: 10,
-					  right:50,
+					padding: {
+						left: 10,
+						right: 50,
 					}
 				},
 			}
@@ -53,7 +68,7 @@
 
 		window.onload = function () {
 			Chart.defaults.responsive = true;
-            Chart.defaults.maintainAspectRatio = false;
+			Chart.defaults.maintainAspectRatio = false;
 			Chart.defaults.animation = false;
 			Chart.defaults.defaultFontColor = "#FFFFFF";
 			var ctx = document.getElementById('canvas').getContext('2d');

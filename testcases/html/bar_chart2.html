@@ -4,7 +4,6 @@
 <head>
 	<title>Bar Chart</title>
 	<script src="assets/chart.js"></script>
-	<script src="assets/utils.js"></script>
 	<script src="assets/chartjs-gradient.js"></script>
 	<link rel="stylesheet" type="text/css" href="assets/style.css" />
 	<script>
@@ -13,7 +12,7 @@
 </head>
 
 <body>
-	
+
 	<div id="container" class="center">
 		<div class="chard-card">
 			<div class="chard-description">
@@ -24,8 +23,6 @@
 	</div>
 
 	<script>
-		var MONTHS = ['Data 1', 'Data 2', 'Data 2'];
-		var color = Chart.helpers.color;
 		var data = {
 			labels: ['Data 1', 'Data 2', 'Data 2'],
 			datasets: [{
@@ -46,22 +43,35 @@
 				legend: {
 					display: false,
 				},
-				title: {
-					display: true,
-					text: 'Chart.js Bar Chart'
+				plugins: {
+					title: {
+						display: true,
+						text: 'Chart.js Bar Chart',
+						color: "#000000",
+					},
 				},
-				// gradientcolor: {
-				// 	type: 'bar',
-				// 	color: true,
-				// },
-				// plugins: {
-				// 	gradient,
-				// },
+				layout: {
+					padding: {
+						left: 10,
+						right: 50,
+					}
+				},
+				gradientcolor: {
+					type: 'bar',
+					color: true,
+				},
+				plugins: {
+					gradient,
+				},
 			}
 		};
-		
+
 		window.onload = function () {
-			//Chart.register(gradient);
+			Chart.defaults.responsive = true;
+			Chart.defaults.maintainAspectRatio = false;
+			Chart.defaults.animation = false;
+			Chart.defaults.defaultFontColor = "#FFFFFF";
+			Chart.register(gradient);
 			var ctx = document.getElementById('canvas').getContext('2d');
 			window.myBar = new Chart(ctx, options);
 		};

@@ -30,21 +30,21 @@ class graphChart {
      *
      */
     constructor(config) {
-        this.chart = null; // current chart
-        this.ctx = config.ctx || null; // the chart canvas element
-        this.canvasId = config.canvasId; // canvas container id
-        this.card_config = config.card_config; // current card settings
-        this.chart_locale = config.locale || "de-DE"; // the locale for number(s) and date(s)
-        this.chart_type = config.chart_type || "bar"; // the chart type
-        this.themeSettings = config.themeSettings || {}; // the theme settings (dark or light)
-        this.chartconfig = config.chartconfig || {}; // the chart config from the template
-        this.loader = config.loader; // the loading animation
-        this.graphData = {}; // the graph data
-        this.graphDataSets = []; // current graph settings
-        this.setting = config.setting;
-        this.chart_ready = false; // boolean chart allready exits
-        this.lastUpdate = null; // timestamp last chart update
-        this.ChartControl = Chart; // chart global settings
+        this.chart = null // current chart
+        this.ctx = config.ctx || null // the chart canvas element
+        this.canvasId = config.canvasId // canvas container id
+        this.card_config = config.card_config // current card settings
+        this.chart_locale = config.locale || "de-DE" // the locale for number(s) and date(s)
+        this.chart_type = config.chart_type || "bar" // the chart type
+        this.themeSettings = config.themeSettings || {} // the theme settings (dark or light)
+        this.chartconfig = config.chartconfig || {} // the chart config from the template
+        this.loader = config.loader // the loading animation
+        this.graphData = {} // the graph data
+        this.graphDataSets = [] // current graph settings
+        this.setting = config.setting
+        this.chart_ready = false // boolean chart allready exits
+        this.lastUpdate = null // timestamp last chart update
+        this.ChartControl = Chart // chart global settings
     }
 
     /**
@@ -52,8 +52,8 @@ class graphChart {
      * @param {*} options
      */
     setThemeSettings(options) {
-        this.themeSettings = options;
-        return true;
+        this.themeSettings = options
+        return true
     }
 
     /**
@@ -61,14 +61,14 @@ class graphChart {
      */
     _setChartDefaults() {
         // global default settings
-        if (this.themeSettings.chartdefault === true) return;
+        if (this.themeSettings.chartdefault === true) return
         try {
             if (this.ChartControl && this.ChartControl.defaults) {
                 // global defailt settings
-                this.ChartControl.defaults.responsive = true;
-                this.ChartControl.defaults.maintainAspectRatio = false;
-                this.ChartControl.defaults.animation = 0;
-                this.ChartControl.defaults.locale = this.chart_locale;
+                this.ChartControl.defaults.responsive = true
+                this.ChartControl.defaults.maintainAspectRatio = false
+                this.ChartControl.defaults.animation = 0
+                this.ChartControl.defaults.locale = this.chart_locale
 
                 // global font settings
                 if (
@@ -76,12 +76,12 @@ class graphChart {
                     this.ChartControl.defaults.font &&
                     this.ChartControl.defaults.font.family
                 ) {
-                    this.ChartControl.defaults.font.family = this.themeSettings.fontFamily;
+                    this.ChartControl.defaults.font.family = this.themeSettings.fontFamily
                 }
                 if (this.ChartControl.defaults && this.ChartControl.defaults.color) {
-                    this.ChartControl.defaults.color = this.themeSettings.fontColor;
+                    this.ChartControl.defaults.color = this.themeSettings.fontColor
                     // new beta 7 !
-                    this.ChartControl.defaults.plugins.legend.labels.color = this.themeSettings.fontColor;
+                    this.ChartControl.defaults.plugins.legend.labels.color = this.themeSettings.fontColor
                 }
 
                 this.ChartControl.defaults.layout.padding = {
@@ -89,24 +89,24 @@ class graphChart {
                     left: 0,
                     right: 0,
                     bottom: 0
-                };
+                }
 
                 // Legend new beta 7 !
-                this.ChartControl.defaults.plugins.legend.position = "top";
-                this.ChartControl.defaults.plugins.legend.labels.usePointStyle = true;
-                this.ChartControl.defaults.plugins.legend.labels.boxWidth = 8;
-                this.ChartControl.defaults.plugins.legend.show = false;
+                this.ChartControl.defaults.plugins.legend.position = "top"
+                this.ChartControl.defaults.plugins.legend.labels.usePointStyle = true
+                this.ChartControl.defaults.plugins.legend.labels.boxWidth = 8
+                this.ChartControl.defaults.plugins.legend.show = false
 
                 // Tooltips new beta 7 !
-                this.ChartControl.defaults.plugins.tooltip.enabled = true;
-                this.ChartControl.defaults.plugins.tooltip.backgroundColor = this.themeSettings.tooltipsBackground;
-                this.ChartControl.defaults.plugins.tooltip.titleColor = this.themeSettings.tooltipsFontColor;
-                this.ChartControl.defaults.plugins.tooltip.bodyColor = this.themeSettings.tooltipsFontColor;
-                this.ChartControl.defaults.plugins.tooltip.footerColor = this.themeSettings.tooltipsFontColor;
+                this.ChartControl.defaults.plugins.tooltip.enabled = true
+                this.ChartControl.defaults.plugins.tooltip.backgroundColor = this.themeSettings.tooltipsBackground
+                this.ChartControl.defaults.plugins.tooltip.titleColor = this.themeSettings.tooltipsFontColor
+                this.ChartControl.defaults.plugins.tooltip.bodyColor = this.themeSettings.tooltipsFontColor
+                this.ChartControl.defaults.plugins.tooltip.footerColor = this.themeSettings.tooltipsFontColor
 
                 // gridlines
                 if (this.themeSettings && this.themeSettings.showGridLines) {
-                    this.ChartControl.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
+                    this.ChartControl.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth
                     if (this.ChartControl.defaults.set) {
                         this.ChartControl.defaults.set("scale", {
                             gridLines: {
@@ -116,23 +116,23 @@ class graphChart {
                                 borderDash: this.themeSettings.borderDash,
                                 zeroLineWidth: 8
                             }
-                        });
+                        })
                     }
                 }
 
                 // element settings
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.arc)
-                    this.ChartControl.defaults.elements.arc.borderWidth = 0;
+                    this.ChartControl.defaults.elements.arc.borderWidth = 0
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.line) {
-                    this.ChartControl.defaults.elements.line.fill = false;
-                    this.ChartControl.defaults.elements.line.tension = .15;
+                    this.ChartControl.defaults.elements.line.fill = false
+                    this.ChartControl.defaults.elements.line.tension = 0
                     // this.ChartControl.defaults.elements.line.cubicInterpolationMode = 'monotone';
                 }
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.point) {
-                    this.ChartControl.defaults.elements.point.radius = 0.33;
-                    this.ChartControl.defaults.elements.point.borderWidth = 0;
-                    this.ChartControl.defaults.elements.point.hoverRadius = 8;
-                    this.ChartControl.defaults.elements.point.hitRadius = 8;
+                    this.ChartControl.defaults.elements.point.radius = 0.33
+                    this.ChartControl.defaults.elements.point.borderWidth = 0
+                    this.ChartControl.defaults.elements.point.hoverRadius = 8
+                    this.ChartControl.defaults.elements.point.hitRadius = 8
                 }
 
                 // chart type based
@@ -151,17 +151,17 @@ class graphChart {
                                 gridLines: {
                                     circular: true
                                 }
-                            });
+                            })
                             this.ChartControl.defaults.set("scale", {
                                 gridLines: {
                                     display: true,
                                     lineWidth: this.themeSettings.gridLineWidth * 2,
                                     borderDash: [0]
                                 }
-                            });
-                            this.ChartControl.defaults.elements.point.hoverRadius = 8;
-                            this.ChartControl.defaults.elements.point.pointRadius = 8;
-                            break;
+                            })
+                            this.ChartControl.defaults.elements.point.hoverRadius = 8
+                            this.ChartControl.defaults.elements.point.pointRadius = 8
+                            break
 
                         case "polararea":
                             this.ChartControl.defaults.set("controllers.polarArea.scales.r", {
@@ -178,13 +178,13 @@ class graphChart {
                                     lineWidth: this.themeSettings.gridLineWidth * 1.6,
                                     borderDash: [0]
                                 }
-                            });
+                            })
                             this.ChartControl.defaults.set("scale", {
                                 gridLines: {
                                     display: true
                                 }
-                            });
-                            break;
+                            })
+                            break
                         case "scatter":
                         case "bubble":
                         case "line":
@@ -192,13 +192,13 @@ class graphChart {
                         case "pie":
                         case "doughnut":
                         default:
-                            break;
+                            break
                     }
                 }
-                this.themeSettings.chartdefault = true;
+                this.themeSettings.chartdefault = true
             }
         } catch (err) {
-            console.error("Error Set Chart defaults for", this.chart_type, ": ", err, err.message);
+            console.error("Error Set Chart defaults for", this.chart_type, ": ", err, err.message)
         }
     }
 
@@ -213,7 +213,7 @@ class graphChart {
      */
     _setChartOptions() {
         // the animated loader
-        const _loader = this.loader;
+        const _loader = this.loader
         // chart default options
         let _options = {
             units: this.data_units || "",
@@ -237,11 +237,11 @@ class graphChart {
             },
             animation: {
                 onComplete: function () {
-                    if (_loader) _loader.style.display = "none";
+                    if (_loader) _loader.style.display = "none"
                 }
             },
             onResize: null
-        };
+        }
 
         if (this.themeSettings.gradient === true) {
             if (this.graphData.config.gradient === true && this.graphData.config.mode === "simple") {
@@ -249,13 +249,13 @@ class graphChart {
                 _options.gradientcolor = {
                     color: true,
                     type: this.chart_type
-                };
+                }
             }
             if (this.graphData.config.gradient) {
                 // enable gradient colors for data series chart
                 _options.plugins = {
                     gradient
-                };
+                }
             }
         }
 
@@ -270,45 +270,45 @@ class graphChart {
             this.graphData.data &&
             this.graphData.data.datasets
         ) {
-            let _scaleOptions = {};
+            let _scaleOptions = {}
             this.graphData.data.datasets.forEach((dataset) => {
                 if (dataset.yAxisID) {
-                    _scaleOptions[dataset.yAxisID] = {};
-                    _scaleOptions[dataset.yAxisID].id = dataset.yAxisID;
-                    _scaleOptions[dataset.yAxisID].type = "linear";
-                    _scaleOptions[dataset.yAxisID].position = dataset.yAxisID;
-                    _scaleOptions[dataset.yAxisID].display = true;
+                    _scaleOptions[dataset.yAxisID] = {}
+                    _scaleOptions[dataset.yAxisID].id = dataset.yAxisID
+                    _scaleOptions[dataset.yAxisID].type = "linear"
+                    _scaleOptions[dataset.yAxisID].position = dataset.yAxisID
+                    _scaleOptions[dataset.yAxisID].display = true
                     if (dataset.yAxisID.toLowerCase() == "right") {
                         _scaleOptions[dataset.yAxisID].gridLines = {
                             borderDash: [2, 5],
                             drawOnChartArea: false
-                        };
+                        }
                     }
                 }
                 if (dataset.xAxisID) {
-                    _scaleOptions[dataset.xAxisID] = {};
-                    _scaleOptions[dataset.xAxisID].id = dataset.xAxisID;
-                    _scaleOptions[dataset.xAxisID].type = "linear";
-                    _scaleOptions[dataset.xAxisID].position = dataset.xAxisID;
-                    _scaleOptions[dataset.xAxisID].display = true;
+                    _scaleOptions[dataset.xAxisID] = {}
+                    _scaleOptions[dataset.xAxisID].id = dataset.xAxisID
+                    _scaleOptions[dataset.xAxisID].type = "linear"
+                    _scaleOptions[dataset.xAxisID].position = dataset.xAxisID
+                    _scaleOptions[dataset.xAxisID].display = true
                     if (dataset.xAxisID.toLowerCase() == "top") {
                         _scaleOptions[dataset.xAxisID].gridLines = {
                             borderDash: [2, 5],
                             drawOnChartArea: false
-                        };
+                        }
                     }
                 }
-            });
+            })
             if (_scaleOptions) {
-                _options.scales = _scaleOptions;
+                _options.scales = _scaleOptions
             }
         }
         // set the axis label based on the data settings
         if (this.chart_type.toLowerCase() === "bubble") {
-            let labelX = this.card_config.entities[0].name;
-            labelX += this.card_config.entities[0].unit ? " (" + this.card_config.entities[0].unit + ")" : "";
-            let labelY = this.card_config.entities[1].name;
-            labelY += this.card_config.entities[1].unit ? " (" + this.card_config.entities[1].unit + ")" : "";
+            let labelX = this.card_config.entities[0].name
+            labelX += this.card_config.entities[0].unit ? " (" + this.card_config.entities[0].unit + ")" : ""
+            let labelY = this.card_config.entities[1].name
+            labelY += this.card_config.entities[1].unit ? " (" + this.card_config.entities[1].unit + ")" : ""
             _options.scales = {
                 x: {
                     id: "x",
@@ -324,7 +324,7 @@ class graphChart {
                         labelString: labelY
                     }
                 }
-            };
+            }
             // scale bubble (optional)
             // _options.elements = {
             //     point: {
@@ -350,28 +350,28 @@ class graphChart {
                     id: "y",
                     stacked: true
                 }
-            };
+            }
             _options.plugins.legend = {
                 display: false,
                 labels: {
                     filter: (legendItem, data) => {
-                        return data.datasets[legendItem.datasetIndex].tooltip !== false;
+                        return data.datasets[legendItem.datasetIndex].tooltip !== false
                     }
                 }
-            };
+            }
             _options.plugins.tooltip.callbacks = {
                 label: (chart) => {
                     if (chart.dataset.tooltip === false || !chart.dataset.label) {
-                        return null;
+                        return null
                     }
-                    return chart.formattedValue + " " + chart.dataset.unit || "";
+                    return chart.formattedValue + " " + chart.dataset.unit || ""
                 }
-            };
+            }
         }
         if (this.chart_type.toLowerCase() === "bubble") {
             _options.plugins.legend = {
                 display: false
-            };
+            }
         }
         // preset cart current config
         let chartCurrentConfig = {
@@ -381,10 +381,10 @@ class graphChart {
                 datasets: []
             },
             options: _options
-        };
+        }
 
         // chart global settings
-        this._setChartDefaults();
+        this._setChartDefaults()
         // ---------------------------------------
         // merge default with chart config options
         // this.chartconfig.options see yaml config
@@ -392,11 +392,43 @@ class graphChart {
         //   - options:
         // ---------------------------------------
         if (this.chartconfig.options) {
-            chartCurrentConfig.options = deepMerge(_options, this.chartconfig.options);
+            chartCurrentConfig.options = deepMerge(_options, this.chartconfig.options)
         } else {
-            chartCurrentConfig.options = _options;
+            chartCurrentConfig.options = _options
         }
-        return chartCurrentConfig;
+        return chartCurrentConfig
+    }
+
+    /**
+     * developer test
+     * send the chart settings to the local server.
+     * @param {*} chartdata
+     */
+    sendJSON(url, chartdata) {
+        // Creating a XHR object
+        let xhr = new XMLHttpRequest()
+        // let url = "http://dev.siebler.at/test/getdata.php?file="+this.card_config.id+'.json';
+
+        // open a connection
+        xhr.open("POST", url, true)
+
+        // Set the request header i.e. which type of content you are sending
+        xhr.setRequestHeader("Content-Type", "application/json")
+
+        // Create a state change callback
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                // Print received data from server
+                console.log("sendJson", this.responseText)
+            }
+        }
+
+        // Converting JSON data to string
+        var data = JSON.stringify(chartdata)
+        console.log(data)
+
+        // Sending data with the request
+        xhr.send(data)
     }
 
     /**
@@ -410,32 +442,32 @@ class graphChart {
             if (this.graphData) {
                 if (JSON.stringify(this.graphDataSets) === JSON.stringify(this.graphData.data.datasets)) {
                     // same data as before, skip redraw...
-                    return;
+                    return
                 }
                 // append the data for the current chart settings
-                let graphOptions = this._setChartOptions();
+                let graphOptions = this._setChartOptions()
                 graphOptions.data = {
                     labels: this.graphData.data.labels,
                     datasets: this.graphData.data.datasets
-                };
+                }
 
                 // Chart declaration
                 if (this.ctx && graphOptions.data && graphOptions.options) {
                     if (doUpdate && this.chart && this.chart.data) {
                         // redraw the chart with the current options
                         // and updated data series
-                        this.chart.data = graphOptions.data;
+                        this.chart.data = graphOptions.data
                         this.chart.update({
                             duration: 0,
                             easing: "linear"
-                        });
+                        })
                     } else {
                         // set the chart options
                         if (this.chart_ready === false) {
                             // create and draw the new chart with the current settings
                             // and the dataseries. Register all plugins
                             if (this.graphData.config.gradient && this.themeSettings.gradient === true) {
-                                this.ChartControl.register(gradient);
+                                this.ChartControl.register(gradient)
                             }
                             if (
                                 this.chartconfig &&
@@ -450,42 +482,45 @@ class graphChart {
                                             chart.config.options.chartArea &&
                                             chart.config.options.chartArea.backgroundColor
                                         ) {
-                                            const chartArea = chart.chartArea;
-                                            const ctx = chart.ctx;
-                                            ctx.save();
-                                            ctx.fillStyle = chart.config.options.chartArea.backgroundColor;
+                                            const chartArea = chart.chartArea
+                                            const ctx = chart.ctx
+                                            ctx.save()
+                                            ctx.fillStyle = chart.config.options.chartArea.backgroundColor
                                             ctx.fillRect(
                                                 chartArea.left,
                                                 chartArea.top,
                                                 chartArea.right - chartArea.left,
                                                 chartArea.bottom - chartArea.top
-                                            );
-                                            ctx.restore();
+                                            )
+                                            ctx.restore()
                                         }
                                     }
-                                });
+                                })
                             }
                         }
 
+                        // just for developer
+                        // if (this.card_config.testcase) this.sendJSON(this.card_config.testcase, graphOptions)
+
                         if (this.chart) {
                             // be shure that no chart exits before create..
-                            this.chart.destroy();
-                            this.chart = null;
+                            this.chart.destroy()
+                            this.chart = null
                         }
 
-                        this.chart = new Chart(this.ctx, graphOptions);
-                        this.graphDataSets = this.graphData.data.datasets;
+                        this.chart = new Chart(this.ctx, graphOptions)
+                        this.graphDataSets = this.graphData.data.datasets
 
                         if (this.chart) {
-                            this.chart_ready = true;
+                            this.chart_ready = true
                         }
                     }
                 }
             } else {
-                console.error("Missing settings or data", graphOptions);
+                console.error("Missing settings or data", graphOptions)
             }
         } catch (err) {
-            console.error("Render Graph Error on ", this.chart_type, ": ", err, err.message);
+            console.error("Render Graph Error on ", this.chart_type, ": ", err, err.message)
         }
     }
 }

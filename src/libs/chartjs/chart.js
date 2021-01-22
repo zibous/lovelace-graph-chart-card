@@ -1,7 +1,7 @@
 /*!
- * Chart.js v3.0.0-beta.7
+ * Chart.js v3.0.0-beta.9
  * https://www.chartjs.org
- * (c) 2020 Chart.js Contributors
+ * (c) 2021 Chart.js Contributors
  * Released under the MIT License
  */
 (function (global, factory) {
@@ -415,12 +415,18 @@ class Defaults {
 		const privateName = '_' + name;
 		Object.defineProperties(scopeObject, {
 			[privateName]: {
+				value: scopeObject[name],
 				writable: true
 			},
 			[name]: {
 				enumerable: true,
 				get() {
-					return valueOrDefault(this[privateName], targetScopeObject[targetName]);
+					const local = this[privateName];
+					const target = targetScopeObject[targetName];
+					if (isObject(local)) {
+						return Object.assign({}, target, local);
+					}
+					return valueOrDefault(local, target);
 				},
 				set(value) {
 					this[privateName] = value;
@@ -611,8 +617,12 @@ function _alignPixel(chart, pixel, width) {
 	const halfWidth = width / 2;
 	return Math.round((pixel - halfWidth) * devicePixelRatio) / devicePixelRatio + halfWidth;
 }
-function clear(chart) {
-	chart.ctx.clearRect(0, 0, chart.width, chart.height);
+function clearCanvas(canvas, ctx) {
+	ctx = ctx || canvas.getContext('2d');
+	ctx.save();
+	ctx.resetTransform();
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.restore();
 }
 function drawPoint(ctx, options, x, y) {
 	let type, xOffset, yOffset, size, cornerRadius;
@@ -756,6 +766,57 @@ function _bezierCurveTo(ctx, previous, target, flip) {
 		flip ? target.controlPointNextY : target.controlPointPreviousY,
 		target.x,
 		target.y);
+}
+function renderText(ctx, text, x, y, font, opts = {}) {
+	const lines = isArray(text) ? text : [text];
+	const stroke = opts.strokeWidth > 0 && opts.strokeColor !== '';
+	let i, line;
+	ctx.save();
+	if (opts.translation) {
+		ctx.translate(opts.translation[0], opts.translation[1]);
+	}
+	if (!isNullOrUndef(opts.rotation)) {
+		ctx.rotate(opts.rotation);
+	}
+	ctx.font = font.string;
+	if (opts.color) {
+		ctx.fillStyle = opts.color;
+	}
+	if (opts.textAlign) {
+		ctx.textAlign = opts.textAlign;
+	}
+	if (opts.textBaseline) {
+		ctx.textBaseline = opts.textBaseline;
+	}
+	for (i = 0; i < lines.length; ++i) {
+		line = lines[i];
+		if (stroke) {
+			if (opts.strokeColor) {
+				ctx.strokeStyle = opts.strokeColor;
+			}
+			if (!isNullOrUndef(opts.strokeWidth)) {
+				ctx.lineWidth = opts.strokeWidth;
+			}
+			ctx.strokeText(line, x, y, opts.maxWidth);
+		}
+		ctx.fillText(line, x, y, opts.maxWidth);
+		if (opts.strikethrough || opts.underline) {
+			const metrics = ctx.measureText(line);
+			const left = x - metrics.actualBoundingBoxLeft;
+			const right = x + metrics.actualBoundingBoxRight;
+			const top = y - metrics.actualBoundingBoxAscent;
+			const bottom = y + metrics.actualBoundingBoxDescent;
+			const yDecoration = opts.strikethrough ? (top + bottom) / 2 : bottom;
+			ctx.strokeStyle = ctx.fillStyle;
+			ctx.beginPath();
+			ctx.lineWidth = opts.decorationWidth || 2;
+			ctx.moveTo(left, yDecoration);
+			ctx.lineTo(right, yDecoration);
+			ctx.stroke();
+		}
+		y += font.lineHeight;
+	}
+	ctx.restore();
 }
 
 function _lookup(table, value, cmp) {
@@ -1182,8 +1243,9 @@ var Interaction = {
 	}
 };
 
+const LINE_HEIGHT = new RegExp(/^(normal|(\d+(?:\.\d+)?)(px|em|%)?)$/);
 function toLineHeight(value, size) {
-	const matches = ('' + value).match(/^(normal|(\d+(?:\.\d+)?)(px|em|%)?)$/);
+	const matches = ('' + value).match(LINE_HEIGHT);
 	if (!matches || matches[1] === 'normal') {
 		return size * 1.2;
 	}
@@ -1353,7 +1415,7 @@ function updateDims(chartArea, params, layout) {
 	if (layout.size) {
 		chartArea[layout.pos] -= layout.size;
 	}
-	layout.size = layout.horizontal ? box.height : box.width;
+	layout.size = layout.horizontal ? Math.min(layout.height, box.height) : Math.min(layout.width, box.width);
 	chartArea[layout.pos] += layout.size;
 	if (box.getPadding) {
 		const boxPadding = box.getPadding();
@@ -1362,8 +1424,8 @@ function updateDims(chartArea, params, layout) {
 		maxPadding.bottom = Math.max(maxPadding.bottom, boxPadding.bottom);
 		maxPadding.right = Math.max(maxPadding.right, boxPadding.right);
 	}
-	const newWidth = params.outerWidth - getCombinedMax(maxPadding, chartArea, 'left', 'right');
-	const newHeight = params.outerHeight - getCombinedMax(maxPadding, chartArea, 'top', 'bottom');
+	const newWidth = Math.max(0, params.outerWidth - getCombinedMax(maxPadding, chartArea, 'left', 'right'));
+	const newHeight = Math.max(0, params.outerHeight - getCombinedMax(maxPadding, chartArea, 'top', 'bottom'));
 	if (newWidth !== chartArea.w || newHeight !== chartArea.h) {
 		chartArea.w = newWidth;
 		chartArea.h = newHeight;
@@ -1501,6 +1563,11 @@ var layouts = {
 		const boxes = buildLayoutBoxes(chart.boxes);
 		const verticalBoxes = boxes.vertical;
 		const horizontalBoxes = boxes.horizontal;
+		each(chart.boxes, box => {
+			if (typeof box.beforeLayout === 'function') {
+				box.beforeLayout();
+			}
+		});
 		const params = Object.freeze({
 			outerWidth: width,
 			outerHeight: height,
@@ -2617,6 +2684,7 @@ class Animation {
 	update(cfg, to, date) {
 		const me = this;
 		if (me._active) {
+			me._notify(false);
 			const currentValue = me._target[me._prop];
 			const elapsed = date - me._start;
 			const remain = me._duration - elapsed;
@@ -2778,6 +2846,7 @@ class Animations {
 		if (newOptions.$shared && !options.$shared) {
 			awaitAll(target.options.$animations, newOptions).then(() => {
 				target.options = newOptions;
+			}, () => {
 			});
 		}
 		return animations;
@@ -3026,6 +3095,9 @@ function createDataContext(parent, index, point, element) {
 function clearStacks(meta, items) {
 	items = items || meta._parsed;
 	items.forEach((parsed) => {
+		if (parsed._stacks[meta.vScale.id] === undefined || parsed._stacks[meta.vScale.id][meta.index] === undefined) {
+			return;
+		}
 		delete parsed._stacks[meta.vScale.id][meta.index];
 	});
 }
@@ -3033,7 +3105,6 @@ const optionKeys = (optionNames) => isArray(optionNames) ? optionNames : Object.
 const optionKey = (key, active) => active ? 'hover' + _capitalize(key) : key;
 const isDirectUpdateMode = (mode) => mode === 'reset' || mode === 'none';
 const cloneIfNotShared = (cached, shared) => shared ? cached : Object.assign({}, cached);
-const freezeIfShared = (values, shared) => shared ? Object.freeze(values) : values;
 class DatasetController {
 	constructor(chart, datasetIndex) {
 		this.chart = chart;
@@ -3174,7 +3245,7 @@ class DatasetController {
 	parse(start, count) {
 		const me = this;
 		const {_cachedMeta: meta, _data: data} = me;
-		const {iScale, vScale, _stacked} = meta;
+		const {iScale, _stacked} = meta;
 		const iAxis = iScale.axis;
 		let sorted = true;
 		let i, parsed, cur, prev;
@@ -3208,8 +3279,6 @@ class DatasetController {
 		if (_stacked) {
 			updateStacks(me, parsed);
 		}
-		iScale.invalidateCaches();
-		vScale.invalidateCaches();
 	}
 	parsePrimitiveData(meta, data, start, count) {
 		const {iScale, vScale} = meta;
@@ -3448,7 +3517,7 @@ class DatasetController {
 		});
 		if (info.cacheable) {
 			values.$shared = sharing;
-			cache[mode] = freezeIfShared(values, sharing);
+			cache[mode] = Object.freeze(Object.assign({}, values));
 		}
 		return values;
 	}
@@ -3503,7 +3572,7 @@ class DatasetController {
 		return this._sharedOptions || (this._sharedOptions = Object.assign({}, options));
 	}
 	includeOptions(mode, sharedOptions) {
-		return !sharedOptions || isDirectUpdateMode(mode);
+		return !sharedOptions || isDirectUpdateMode(mode) || this.chart._animationsDisabled;
 	}
 	updateElement(element, index, properties, mode) {
 		if (isDirectUpdateMode(mode)) {
@@ -3639,7 +3708,7 @@ class Element {
 		}
 		const ret = {};
 		props.forEach(prop => {
-			ret[prop] = anims[prop] && anims[prop].active ? anims[prop]._to : me[prop];
+			ret[prop] = anims[prop] && anims[prop].active() ? anims[prop]._to : me[prop];
 		});
 		return ret;
 	}
@@ -3648,6 +3717,20 @@ Element.defaults = {};
 Element.defaultRoutes = undefined;
 
 const intlCache = new Map();
+function getNumberFormat(locale, options) {
+	options = options || {};
+	const cacheKey = locale + JSON.stringify(options);
+	let formatter = intlCache.get(cacheKey);
+	if (!formatter) {
+		formatter = new Intl.NumberFormat(locale, options);
+		intlCache.set(cacheKey, formatter);
+	}
+	return formatter;
+}
+function formatNumber(num, locale, options) {
+	return getNumberFormat(locale, options).format(num);
+}
+
 const formatters = {
 	values(value) {
 		return isArray(value) ? value : '' + value;
@@ -3670,13 +3753,7 @@ const formatters = {
 		const numDecimal = Math.max(Math.min(-1 * Math.floor(logDelta), 20), 0);
 		const options = {notation, minimumFractionDigits: numDecimal, maximumFractionDigits: numDecimal};
 		Object.assign(options, this.options.ticks.format);
-		const cacheKey = locale + JSON.stringify(options);
-		let formatter = intlCache.get(cacheKey);
-		if (!formatter) {
-			formatter = new Intl.NumberFormat(locale, options);
-			intlCache.set(cacheKey, formatter);
-		}
-		return formatter.format(tickValue);
+		return formatNumber(tickValue, locale, options);
 	}
 };
 formatters.logarithmic = function(tickValue, index, ticks) {
@@ -3703,7 +3780,7 @@ defaults.set('scale', {
 		drawBorder: true,
 		drawOnChartArea: true,
 		drawTicks: true,
-		tickMarkLength: 10,
+		tickLength: 10,
 		offsetGridLines: false,
 		borderDash: [],
 		borderDashOffset: 0.0
@@ -3720,8 +3797,8 @@ defaults.set('scale', {
 		minRotation: 0,
 		maxRotation: 50,
 		mirror: false,
-		lineWidth: 0,
-		strokeStyle: '',
+		textStrokeWidth: 0,
+		textStrokeColor: '',
 		padding: 0,
 		display: true,
 		autoSkip: true,
@@ -3784,7 +3861,7 @@ function garbageCollect(caches, length) {
 	});
 }
 function getTickMarkLength(options) {
-	return options.drawTicks ? options.tickMarkLength : 0;
+	return options.drawTicks ? options.tickLength : 0;
 }
 function getScaleLabelHeight(options, fallback) {
 	if (!options.display) {
@@ -3937,6 +4014,7 @@ class Scale extends Element {
 		this._ticksLength = 0;
 		this._borderValue = 0;
 		this._cache = {};
+		this._dataLimitsCached = false;
 		this.$context = undefined;
 	}
 	init(options) {
@@ -3986,9 +4064,6 @@ class Scale extends Element {
 			max: finiteOrDefault(max, finiteOrDefault(min, max))
 		};
 	}
-	invalidateCaches() {
-		this._cache = {};
-	}
 	getPadding() {
 		const me = this;
 		return {
@@ -4004,6 +4079,10 @@ class Scale extends Element {
 	getLabels() {
 		const data = this.chart.data;
 		return this.options.labels || (this.isHorizontal() ? data.xLabels : data.yLabels) || data.labels || [];
+	}
+	beforeLayout() {
+		this._cache = {};
+		this._dataLimitsCached = false;
 	}
 	beforeUpdate() {
 		callback(this.options.beforeUpdate, [this]);
@@ -4028,9 +4107,12 @@ class Scale extends Element {
 		me.beforeSetDimensions();
 		me.setDimensions();
 		me.afterSetDimensions();
-		me.beforeDataLimits();
-		me.determineDataLimits();
-		me.afterDataLimits();
+		if (!me._dataLimitsCached) {
+			me.beforeDataLimits();
+			me.determineDataLimits();
+			me.afterDataLimits();
+			me._dataLimitsCached = true;
+		}
 		me.beforeBuildTicks();
 		me.ticks = me.buildTicks() || [];
 		me.afterBuildTicks();
@@ -4516,6 +4598,10 @@ class Scale extends Element {
 			const lineColor = resolve([gridLines.color], context, i);
 			const borderDash = gridLines.borderDash || [];
 			const borderDashOffset = resolve([gridLines.borderDashOffset], context, i);
+			const tickWidth = resolve([gridLines.tickWidth, lineWidth], context, i);
+			const tickColor = resolve([gridLines.tickColor, lineColor], context, i);
+			const tickBorderDash = gridLines.tickBorderDash || borderDash;
+			const tickBorderDashOffset = resolve([gridLines.tickBorderDashOffset, borderDashOffset], context, i);
 			lineValue = getPixelForGridLine(me, i, offsetGridLines);
 			if (lineValue === undefined) {
 				continue;
@@ -4539,6 +4625,10 @@ class Scale extends Element {
 				color: lineColor,
 				borderDash,
 				borderDashOffset,
+				tickWidth,
+				tickColor,
+				tickBorderDash,
+				tickBorderDashOffset,
 			});
 		}
 		me._ticksLength = ticksLength;
@@ -4608,6 +4698,9 @@ class Scale extends Element {
 			lineHeight = font.lineHeight;
 			lineCount = isArray(label) ? label.length : 1;
 			const halfCount = lineCount / 2;
+			const color = resolve([optionTicks.color], me.getContext(i), i);
+			const strokeColor = resolve([optionTicks.textStrokeColor], me.getContext(i), i);
+			const strokeWidth = resolve([optionTicks.textStrokeWidth], me.getContext(i), i);
 			if (isHorizontal) {
 				x = pixel;
 				if (position === 'top') {
@@ -4620,7 +4713,7 @@ class Scale extends Element {
 					} else {
 						textOffset = (-1 * labelSizes.highest.height) + (0.5 * lineHeight);
 					}
-				} else if (position === 'bottom') {
+				} else {
 					if (crossAlign === 'near' || rotation !== 0) {
 						textOffset = Math.sin(rotation) * halfCount * lineHeight;
 						textOffset += (rotation === 0 ? 0.5 : Math.cos(rotation) * halfCount) * lineHeight;
@@ -4636,15 +4729,16 @@ class Scale extends Element {
 				textOffset = (1 - lineCount) * lineHeight / 2;
 			}
 			items.push({
-				x,
-				y,
 				rotation,
 				label,
 				font,
-				color: optionTicks.color,
+				color,
+				strokeColor,
+				strokeWidth,
 				textOffset,
 				textAlign,
 				textBaseline,
+				translation: [x, y]
 			});
 		}
 		return items;
@@ -4722,9 +4816,8 @@ class Scale extends Element {
 		if (gridLines.display) {
 			for (i = 0, ilen = items.length; i < ilen; ++i) {
 				const item = items[i];
-				const width = item.width;
-				const color = item.color;
-				if (width && color) {
+				const {color, tickColor, tickWidth, width} = item;
+				if (width && color && gridLines.drawOnChartArea) {
 					ctx.save();
 					ctx.lineWidth = width;
 					ctx.strokeStyle = color;
@@ -4733,14 +4826,22 @@ class Scale extends Element {
 						ctx.lineDashOffset = item.borderDashOffset;
 					}
 					ctx.beginPath();
-					if (gridLines.drawTicks) {
-						ctx.moveTo(item.tx1, item.ty1);
-						ctx.lineTo(item.tx2, item.ty2);
+					ctx.moveTo(item.x1, item.y1);
+					ctx.lineTo(item.x2, item.y2);
+					ctx.stroke();
+					ctx.restore();
+				}
+				if (tickWidth && tickColor && gridLines.drawTicks) {
+					ctx.save();
+					ctx.lineWidth = tickWidth;
+					ctx.strokeStyle = tickColor;
+					if (ctx.setLineDash) {
+						ctx.setLineDash(item.tickBorderDash);
+						ctx.lineDashOffset = item.tickBorderDashOffset;
 					}
-					if (gridLines.drawOnChartArea) {
-						ctx.moveTo(item.x1, item.y1);
-						ctx.lineTo(item.x2, item.y2);
-					}
+					ctx.beginPath();
+					ctx.moveTo(item.tx1, item.ty1);
+					ctx.lineTo(item.tx2, item.ty2);
 					ctx.stroke();
 					ctx.restore();
 				}
@@ -4777,39 +4878,13 @@ class Scale extends Element {
 		}
 		const ctx = me.ctx;
 		const items = me._labelItems || (me._labelItems = me._computeLabelItems(chartArea));
-		let i, j, ilen, jlen;
+		let i, ilen;
 		for (i = 0, ilen = items.length; i < ilen; ++i) {
 			const item = items[i];
 			const tickFont = item.font;
-			const useStroke = optionTicks.textStrokeWidth > 0 && optionTicks.textStrokeColor !== '';
-			ctx.save();
-			ctx.translate(item.x, item.y);
-			ctx.rotate(item.rotation);
-			ctx.font = tickFont.string;
-			ctx.fillStyle = item.color;
-			ctx.textAlign = item.textAlign;
-			ctx.textBaseline = item.textBaseline;
-			if (useStroke) {
-				ctx.strokeStyle = optionTicks.textStrokeColor;
-				ctx.lineWidth = optionTicks.textStrokeWidth;
-			}
 			const label = item.label;
 			let y = item.textOffset;
-			if (isArray(label)) {
-				for (j = 0, jlen = label.length; j < jlen; ++j) {
-					if (useStroke) {
-						ctx.strokeText('' + label[j], 0, y);
-					}
-					ctx.fillText('' + label[j], 0, y);
-					y += tickFont.lineHeight;
-				}
-			} else {
-				if (useStroke) {
-					ctx.strokeText(label, 0, y);
-				}
-				ctx.fillText(label, 0, y);
-			}
-			ctx.restore();
+			renderText(ctx, label, 0, y, tickFont, item);
 		}
 	}
 	drawTitle(chartArea) {
@@ -4866,15 +4941,13 @@ class Scale extends Element {
 			}
 			rotation = isLeft ? -HALF_PI : HALF_PI;
 		}
-		ctx.save();
-		ctx.translate(scaleLabelX, scaleLabelY);
-		ctx.rotate(rotation);
-		ctx.textAlign = textAlign;
-		ctx.textBaseline = 'middle';
-		ctx.fillStyle = scaleLabel.color;
-		ctx.font = scaleLabelFont.string;
-		ctx.fillText(scaleLabel.labelString, 0, 0);
-		ctx.restore();
+		renderText(ctx, scaleLabel.labelString, 0, 0, scaleLabelFont, {
+			color: scaleLabel.color,
+			rotation,
+			textAlign,
+			textBaseline: 'middle',
+			translation: [scaleLabelX, scaleLabelY],
+		});
 	}
 	draw(chartArea) {
 		const me = this;
@@ -5514,13 +5587,14 @@ toFontString: toFontString,
 _measureText: _measureText,
 _longestText: _longestText,
 _alignPixel: _alignPixel,
-clear: clear,
+clearCanvas: clearCanvas,
 drawPoint: drawPoint,
 _isPointInArea: _isPointInArea,
 clipArea: clipArea,
 unclipArea: unclipArea,
 _steppedLineTo: _steppedLineTo,
 _bezierCurveTo: _bezierCurveTo,
+renderText: renderText,
 _lookup: _lookup,
 _lookupByKey: _lookupByKey,
 _rlookupByKey: _rlookupByKey,
@@ -5722,8 +5796,9 @@ function mergeScaleConfig(config, options) {
 		const scaleConf = configScales[id];
 		const axis = determineAxis(id, scaleConf);
 		const defaultId = getDefaultScaleIDFromAxis(axis, chartIndexAxis);
+		const defaultScaleOptions = chartDefaults.scales || {};
 		firstIDs[axis] = firstIDs[axis] || id;
-		scales[id] = mergeIf(Object.create(null), [{axis}, scaleConf, chartDefaults.scales[axis], chartDefaults.scales[defaultId]]);
+		scales[id] = mergeIf(Object.create(null), [{axis}, scaleConf, defaultScaleOptions[axis], defaultScaleOptions[defaultId]]);
 	});
 	if (options.scale) {
 		scales[options.scale.id || 'r'] = mergeIf(Object.create(null), [{axis: 'r'}, options.scale, chartDefaults.scales.r]);
@@ -5804,6 +5879,9 @@ class Config {
 	get type() {
 		return this._config.type;
 	}
+	set type(type) {
+		this._config.type = type;
+	}
 	get data() {
 		return this._config.data;
 	}
@@ -5822,7 +5900,7 @@ class Config {
 	}
 }
 
-var version = "3.0.0-beta.7";
+var version = "3.0.0-beta.9";
 
 const KNOWN_POSITIONS = ['top', 'bottom', 'left', 'right', 'chartArea'];
 function positionIsHorizontal(position, axis) {
@@ -5940,7 +6018,7 @@ class Chart {
 		return new DomPlatform();
 	}
 	clear() {
-		clear(this);
+		clearCanvas(this.canvas, this.ctx);
 		return this;
 	}
 	stop() {
@@ -6142,7 +6220,7 @@ class Chart {
 		});
 		me.config.update(me.options);
 		me.options = me.config.options;
-		me._animationsDisabled = !me.options.animation;
+		const animsDisabled = me._animationsDisabled = !me.options.animation;
 		me.ensureScalesHaveIDs();
 		me.buildOrUpdateScales();
 		me._plugins.invalidate();
@@ -6154,9 +6232,11 @@ class Chart {
 			me.getDatasetMeta(i).controller.buildOrUpdateElements();
 		}
 		me._updateLayout();
-		each(newControllers, (controller) => {
-			controller.reset();
-		});
+		if (!animsDisabled) {
+			each(newControllers, (controller) => {
+				controller.reset();
+			});
+		}
 		me._updateDatasets(mode);
 		me.notifyPlugins('afterUpdate', {mode});
 		me._layers.sort(compare2Level('z', '_idx'));
@@ -6171,8 +6251,13 @@ class Chart {
 			return;
 		}
 		layouts.update(me, me.width, me.height);
+		const area = me.chartArea;
+		const noArea = area.width <= 0 || area.height <= 0;
 		me._layers = [];
 		each(me.boxes, (box) => {
+			if (noArea && box.position === 'chartArea') {
+				return;
+			}
 			if (box.configure) {
 				box.configure();
 			}
@@ -6381,7 +6466,7 @@ class Chart {
 	}
 	destroy() {
 		const me = this;
-		const canvas = me.canvas;
+		const {canvas, ctx} = me;
 		let i, ilen;
 		me.stop();
 		animator.remove(me);
@@ -6390,8 +6475,8 @@ class Chart {
 		}
 		if (canvas) {
 			me.unbindEvents();
-			clear(me);
-			me.platform.releaseContext(me.ctx);
+			clearCanvas(canvas, ctx);
+			me.platform.releaseContext(ctx);
 			me.canvas = null;
 			me.ctx = null;
 		}
@@ -6501,15 +6586,18 @@ class Chart {
 	notifyPlugins(hook, args) {
 		return this._plugins.notify(this, hook, args);
 	}
-	_updateHoverStyles(active, lastActive) {
+	_updateHoverStyles(active, lastActive, replay) {
 		const me = this;
 		const options = me.options || {};
 		const hoverOptions = options.hover;
-		if (lastActive.length) {
-			me.updateHoverStyle(lastActive, hoverOptions.mode, false);
+		const diff = (a, b) => a.filter(x => !b.some(y => x.datasetIndex === y.datasetIndex && x.index === y.index));
+		const deactivated = diff(lastActive, active);
+		const activated = replay ? active : diff(active, lastActive);
+		if (deactivated.length) {
+			me.updateHoverStyle(deactivated, hoverOptions.mode, false);
 		}
-		if (active.length && hoverOptions.mode) {
-			me.updateHoverStyle(active, hoverOptions.mode, true);
+		if (activated.length && hoverOptions.mode) {
+			me.updateHoverStyle(activated, hoverOptions.mode, true);
 		}
 	}
 	_eventHandler(e, replay) {
@@ -6521,7 +6609,7 @@ class Chart {
 		const changed = me._handleEvent(e, replay);
 		args.cancelable = false;
 		me.notifyPlugins('afterEvent', args);
-		if (changed) {
+		if (changed || args.changed) {
 			me.render();
 		}
 		return me;
@@ -6549,7 +6637,7 @@ class Chart {
 		changed = !_elementsEqual(active, lastActive);
 		if (changed || replay) {
 			me._active = active;
-			me._updateHoverStyles(active, lastActive);
+			me._updateHoverStyles(active, lastActive, replay);
 		}
 		return changed;
 	}
@@ -7301,7 +7389,7 @@ class DoughnutController extends DatasetController {
 		const meta = me._cachedMeta;
 		const chart = me.chart;
 		const labels = chart.data.labels || [];
-		const value = new Intl.NumberFormat(chart.options.locale).format(meta._parsed[index]);
+		const value = formatNumber(meta._parsed[index], chart.options.locale);
 		return {
 			label: labels[index] || '',
 			value,
@@ -7448,12 +7536,12 @@ class LineController extends DatasetController {
 			start = 0;
 			count = points.length;
 		}
+		line.points = points;
 		if (mode !== 'resize') {
-			const properties = {
-				points,
+			me.updateElement(line, undefined, {
+				animated: !animationsDisabled,
 				options: me.resolveDatasetElementOptions()
-			};
-			me.updateElement(line, undefined, properties, mode);
+			}, mode);
 		}
 		me.updateElements(points, start, count, mode);
 	}
@@ -7466,22 +7554,22 @@ class LineController extends DatasetController {
 		const includeOptions = me.includeOptions(mode, sharedOptions);
 		const spanGaps = valueOrDefault(me._config.spanGaps, me.chart.options.spanGaps);
 		const maxGapLength = isNumber(spanGaps) ? spanGaps : Number.POSITIVE_INFINITY;
+		const directUpdate = me.chart._animationsDisabled || reset || mode === 'none';
 		let prevParsed = start > 0 && me.getParsed(start - 1);
 		for (let i = start; i < start + count; ++i) {
 			const point = points[i];
 			const parsed = me.getParsed(i);
-			const x = xScale.getPixelForValue(parsed.x, i);
-			const y = reset ? yScale.getBasePixel() : yScale.getPixelForValue(_stacked ? me.applyStack(yScale, parsed) : parsed.y, i);
-			const properties = {
-				x,
-				y,
-				skip: isNaN(x) || isNaN(y),
-				stop: i > 0 && (parsed.x - prevParsed.x) > maxGapLength
-			};
+			const properties = directUpdate ? point : {};
+			const x = properties.x = xScale.getPixelForValue(parsed.x, i);
+			const y = properties.y = reset ? yScale.getBasePixel() : yScale.getPixelForValue(_stacked ? me.applyStack(yScale, parsed) : parsed.y, i);
+			properties.skip = isNaN(x) || isNaN(y);
+			properties.stop = i > 0 && (parsed.x - prevParsed.x) > maxGapLength;
 			if (includeOptions) {
 				properties.options = sharedOptions || me.resolveDataElementOptions(i, mode);
 			}
-			me.updateElement(point, i, properties, mode);
+			if (!directUpdate) {
+				me.updateElement(point, i, properties, mode);
+			}
 			prevParsed = parsed;
 		}
 		me.updateSharedOptions(sharedOptions, mode, firstOpts);
@@ -7805,9 +7893,9 @@ class RadarController extends DatasetController {
 		const line = meta.dataset;
 		const points = meta.data || [];
 		const labels = meta.iScale.getLabels();
+		line.points = points;
 		if (mode !== 'resize') {
 			const properties = {
-				points,
 				_loop: true,
 				_fullLoop: labels.length === points.length,
 				options: me.resolveDatasetElementOptions()
@@ -8224,9 +8312,11 @@ function _getInterpolationMethod(options) {
 class LineElement extends Element {
 	constructor(cfg) {
 		super();
+		this.animated = true;
 		this.options = undefined;
 		this._loop = undefined;
 		this._fullLoop = undefined;
+		this._path = undefined;
 		this._points = undefined;
 		this._segments = undefined;
 		this._pointsUpdated = false;
@@ -8244,8 +8334,11 @@ class LineElement extends Element {
 		}
 	}
 	set points(points) {
-		this._points = points;
-		delete this._segments;
+		const me = this;
+		me._points = points;
+		delete me._segments;
+		delete me._path;
+		me._pointsUpdated = false;
 	}
 	get points() {
 		return this._points;
@@ -8309,20 +8402,27 @@ class LineElement extends Element {
 		return !!loop;
 	}
 	draw(ctx, chartArea, start, count) {
-		const options = this.options || {};
-		const points = this.points || [];
+		const me = this;
+		const options = me.options || {};
+		const points = me.points || [];
 		if (!points.length || !options.borderWidth) {
 			return;
 		}
 		ctx.save();
 		setStyle(ctx, options);
-		ctx.beginPath();
-		if (this.path(ctx, start, count)) {
-			ctx.closePath();
+		let path = me._path;
+		if (!path) {
+			path = me._path = new Path2D();
+			if (me.path(path, start, count)) {
+				path.closePath();
+			}
 		}
-		ctx.stroke();
+		ctx.stroke(path);
 		ctx.restore();
-		this._pointsUpdated = false;
+		if (me.animated) {
+			me._pointsUpdated = false;
+			me._path = undefined;
+		}
 	}
 }
 LineElement.id = 'line';
@@ -8379,7 +8479,7 @@ class PointElement extends Element {
 	draw(ctx) {
 		const me = this;
 		const options = me.options;
-		if (me.skip || options.radius <= 0) {
+		if (me.skip || options.radius < 0.1) {
 			return;
 		}
 		ctx.strokeStyle = options.borderColor;
@@ -9147,8 +9247,8 @@ class Legend extends Element {
 			height = me.maxHeight;
 			width = me._fitCols(titleHeight, fontSize, boxWidth, itemHeight) + 10;
 		}
-		me.width = Math.min(width, options.maxWidth || INFINITY);
-		me.height = Math.min(height, options.maxHeight || INFINITY);
+		me.width = Math.min(width, options.maxWidth || me.maxWidth);
+		me.height = Math.min(height, options.maxHeight || me.maxHeight);
 	}
 	_fitRows(titleHeight, fontSize, boxWidth, itemHeight) {
 		const me = this;
@@ -9199,8 +9299,12 @@ class Legend extends Element {
 		return this.options.position === 'top' || this.options.position === 'bottom';
 	}
 	draw() {
-		if (this.options.display) {
-			this._draw();
+		const me = this;
+		if (me.options.display) {
+			const ctx = me.ctx;
+			clipArea(ctx, me);
+			me._draw();
+			unclipArea(ctx);
 		}
 	}
 	_draw() {
@@ -9253,18 +9357,10 @@ class Legend extends Element {
 			}
 			ctx.restore();
 		};
-		const fillText = function(x, y, legendItem, textWidth) {
+		const fillText = function(x, y, legendItem) {
 			const halfFontSize = fontSize / 2;
 			const xLeft = rtlHelper.xPlus(x, boxWidth + halfFontSize);
-			const yMiddle = y + (itemHeight / 2);
-			ctx.fillText(legendItem.text, xLeft, yMiddle);
-			if (legendItem.hidden) {
-				ctx.beginPath();
-				ctx.lineWidth = 2;
-				ctx.moveTo(xLeft, yMiddle);
-				ctx.lineTo(rtlHelper.xPlus(xLeft, textWidth), yMiddle);
-				ctx.stroke();
-			}
+			renderText(ctx, legendItem.text, xLeft, y + (itemHeight / 2), labelFont, {strikethrough: legendItem.hidden});
 		};
 		const isHorizontal = me.isHorizontal();
 		const titleHeight = this._computeTitleHeight();
@@ -9304,7 +9400,7 @@ class Legend extends Element {
 			drawLegendBox(realX, y, legendItem);
 			legendHitBoxes[i].left = rtlHelper.leftForLtr(realX, legendHitBoxes[i].width);
 			legendHitBoxes[i].top = y;
-			fillText(realX, y, legendItem, textWidth);
+			fillText(realX, y, legendItem);
 			if (isHorizontal) {
 				cursor.x += width + padding;
 			} else {
@@ -9344,7 +9440,7 @@ class Legend extends Element {
 		ctx.strokeStyle = titleOpts.color;
 		ctx.fillStyle = titleOpts.color;
 		ctx.font = titleFont.string;
-		ctx.fillText(titleOpts.text, x, y);
+		renderText(ctx, titleOpts.text, x, y, titleFont);
 	}
 	_computeTitleHeight() {
 		const titleOpts = this.options.title;
@@ -9554,24 +9650,14 @@ class Title extends Element {
 		const lineHeight = fontOpts.lineHeight;
 		const offset = lineHeight / 2 + me._padding.top;
 		const {titleX, titleY, maxWidth, rotation} = me._drawArgs(offset);
-		ctx.save();
-		ctx.fillStyle = opts.color;
-		ctx.font = fontOpts.string;
-		ctx.translate(titleX, titleY);
-		ctx.rotate(rotation);
-		ctx.textAlign = _toLeftRightCenter(opts.align);
-		ctx.textBaseline = 'middle';
-		const text = opts.text;
-		if (isArray(text)) {
-			let y = 0;
-			for (let i = 0; i < text.length; ++i) {
-				ctx.fillText(text[i], 0, y, maxWidth);
-				y += lineHeight;
-			}
-		} else {
-			ctx.fillText(text, 0, 0, maxWidth);
-		}
-		ctx.restore();
+		renderText(ctx, opts.text, 0, 0, fontOpts, {
+			color: opts.color,
+			maxWidth,
+			rotation,
+			textAlign: _toLeftRightCenter(opts.align),
+			textBaseline: 'middle',
+			translation: [titleX, titleY],
+		});
 	}
 }
 function createTitle(chart, titleOpts) {
@@ -9716,15 +9802,6 @@ function createTooltipItem(chart, item) {
 		element
 	};
 }
-function resolveOptions(options, fallbackFont) {
-	options = merge(Object.create(null), [defaults.plugins.tooltip, options]);
-	options.bodyFont = toFont(options.bodyFont, fallbackFont);
-	options.titleFont = toFont(options.titleFont, fallbackFont);
-	options.footerFont = toFont(options.footerFont, fallbackFont);
-	options.boxHeight = valueOrDefault(options.boxHeight, options.bodyFont.size);
-	options.boxWidth = valueOrDefault(options.boxWidth, options.bodyFont.size);
-	return options;
-}
 function getTooltipSize(tooltip) {
 	const ctx = tooltip._chart.ctx;
 	const {body, footer, options, title} = tooltip;
@@ -9757,9 +9834,9 @@ function getTooltipSize(tooltip) {
 		width = Math.max(width, ctx.measureText(line).width + widthPadding);
 	};
 	ctx.save();
-	ctx.font = titleFont.string;
+	ctx.font = toFontString(titleFont);
 	each(tooltip.title, maxLineWidth);
-	ctx.font = bodyFont.string;
+	ctx.font = toFontString(bodyFont);
 	each(tooltip.beforeBody.concat(tooltip.afterBody), maxLineWidth);
 	widthPadding = options.displayColors ? (boxWidth + 2) : 0;
 	each(body, (bodyItem) => {
@@ -9768,7 +9845,7 @@ function getTooltipSize(tooltip) {
 		each(bodyItem.after, maxLineWidth);
 	});
 	widthPadding = 0;
-	ctx.font = footerFont.string;
+	ctx.font = toFontString(footerFont);
 	each(tooltip.footer, maxLineWidth);
 	ctx.restore();
 	width += 2 * options.xPadding;
@@ -9882,7 +9959,7 @@ class Tooltip extends Element {
 		this._size = undefined;
 		this._cachedAnimations = undefined;
 		this.$animations = undefined;
-		this.options = undefined;
+		this.options = config.options;
 		this.dataPoints = undefined;
 		this.title = undefined;
 		this.beforeBody = undefined;
@@ -9900,13 +9977,13 @@ class Tooltip extends Element {
 		this.labelColors = undefined;
 		this.labelPointStyles = undefined;
 		this.labelTextColors = undefined;
-		this.initialize();
 	}
-	initialize() {
-		const me = this;
-		const chartOpts = me._chart.options;
-		me.options = resolveOptions(chartOpts.plugins.tooltip, chartOpts.font);
-		me._cachedAnimations = undefined;
+	initialize(options) {
+		const defaultSize = options.bodyFont.size;
+		options.boxHeight = valueOrDefault(options.boxHeight, defaultSize);
+		options.boxWidth = valueOrDefault(options.boxWidth, defaultSize);
+		this.options = options;
+		this._cachedAnimations = undefined;
 	}
 	_resolveAnimations() {
 		const me = this;
@@ -10104,7 +10181,7 @@ class Tooltip extends Element {
 			titleFont = options.titleFont;
 			titleSpacing = options.titleSpacing;
 			ctx.fillStyle = options.titleColor;
-			ctx.font = titleFont.string;
+			ctx.font = toFontString(titleFont);
 			for (i = 0; i < length; ++i) {
 				ctx.fillText(title[i], rtlHelper.x(pt.x), pt.y + titleFont.size / 2);
 				pt.y += titleFont.size + titleSpacing;
@@ -10165,7 +10242,7 @@ class Tooltip extends Element {
 		let bodyItem, textColor, lines, i, j, ilen, jlen;
 		ctx.textAlign = bodyAlign;
 		ctx.textBaseline = 'middle';
-		ctx.font = bodyFont.string;
+		ctx.font = toFontString(bodyFont);
 		pt.x = getAlignedX(me, bodyAlignForCalculation);
 		ctx.fillStyle = options.bodyColor;
 		each(me.beforeBody, fillLineOfText);
@@ -10207,7 +10284,7 @@ class Tooltip extends Element {
 			ctx.textBaseline = 'middle';
 			footerFont = options.footerFont;
 			ctx.fillStyle = options.footerColor;
-			ctx.font = footerFont.string;
+			ctx.font = toFontString(footerFont);
 			for (i = 0; i < length; ++i) {
 				ctx.fillText(footer[i], rtlHelper.x(pt.x), pt.y + footerFont.size / 2);
 				pt.y += footerFont.size + options.footerSpacing;
@@ -10370,20 +10447,19 @@ var plugin_tooltip = {
 	id: 'tooltip',
 	_element: Tooltip,
 	positioners,
-	afterInit(chart) {
-		const tooltipOpts = chart.options.plugins.tooltip;
-		if (tooltipOpts) {
-			chart.tooltip = new Tooltip({_chart: chart});
+	afterInit(chart, _args, options) {
+		if (options) {
+			chart.tooltip = new Tooltip({_chart: chart, options});
 		}
 	},
-	beforeUpdate(chart) {
+	beforeUpdate(chart, _args, options) {
 		if (chart.tooltip) {
-			chart.tooltip.initialize();
+			chart.tooltip.initialize(options);
 		}
 	},
-	reset(chart) {
+	reset(chart, _args, options) {
 		if (chart.tooltip) {
-			chart.tooltip.initialize();
+			chart.tooltip.initialize(options);
 		}
 	},
 	afterDraw(chart) {
@@ -10402,7 +10478,9 @@ var plugin_tooltip = {
 	afterEvent(chart, args) {
 		if (chart.tooltip) {
 			const useFinalPosition = args.replay;
-			chart.tooltip.handleEvent(args.event, useFinalPosition);
+			if (chart.tooltip.handleEvent(args.event, useFinalPosition)) {
+				args.changed = true;
+			}
 		}
 	},
 	defaults: {
@@ -10510,6 +10588,11 @@ var plugin_tooltip = {
 			afterFooter: noop
 		}
 	},
+	defaultRoutes: {
+		bodyFont: 'font',
+		footerFont: 'font',
+		titleFont: 'font'
+	}
 };
 
 var plugins = /*#__PURE__*/Object.freeze({
@@ -10779,7 +10862,7 @@ class LinearScaleBase extends Scale {
 		me._valueRange = end - start;
 	}
 	getLabelForValue(value) {
-		return new Intl.NumberFormat(this.options.locale).format(value);
+		return formatNumber(value, this.options.locale);
 	}
 }
 
@@ -10916,7 +10999,7 @@ class LogarithmicScale extends Scale {
 		return ticks;
 	}
 	getLabelForValue(value) {
-		return value === undefined ? '0' : new Intl.NumberFormat(this.options.locale).format(value);
+		return value === undefined ? '0' : formatNumber(value, this.options.locale);
 	}
 	configure() {
 		const me = this;
@@ -11035,18 +11118,6 @@ function getTextAlignForAngle(angle) {
 	}
 	return 'right';
 }
-function fillText(ctx, text, position, lineHeight) {
-	let y = position.y + lineHeight / 2;
-	let i, ilen;
-	if (isArray(text)) {
-		for (i = 0, ilen = text.length; i < ilen; ++i) {
-			ctx.fillText(text[i], position.x, y);
-			y += lineHeight;
-		}
-	} else {
-		ctx.fillText(text, position.x, y);
-	}
-}
 function adjustPointPositionForLabelHeight(angle, textSize, position) {
 	if (angle === 90 || angle === 270) {
 		position.y -= (textSize.h / 2);
@@ -11067,12 +11138,19 @@ function drawPointLabels(scale) {
 		const pointLabelPosition = scale.getPointPosition(i, outerDistance + extra + 5);
 		const context = scale.getContext(i);
 		const plFont = toFont(resolve([pointLabelOpts.font], context, i), scale.chart.options.font);
-		ctx.font = plFont.string;
-		ctx.fillStyle = pointLabelOpts.color;
 		const angle = toDegrees(scale.getIndexAngle(i));
-		ctx.textAlign = getTextAlignForAngle(angle);
 		adjustPointPositionForLabelHeight(angle, scale._pointLabelSizes[i], pointLabelPosition);
-		fillText(ctx, scale.pointLabels[i], pointLabelPosition, plFont.lineHeight);
+		renderText(
+			ctx,
+			scale.pointLabels[i],
+			pointLabelPosition.x,
+			pointLabelPosition.y + (plFont.lineHeight / 2),
+			plFont,
+			{
+				color: resolve([pointLabelOpts.color], context, i),
+				textAlign: getTextAlignForAngle(angle),
+			}
+		);
 	}
 	ctx.restore();
 }
@@ -11084,7 +11162,7 @@ function drawRadiusLine(scale, gridLineOpts, radius, index) {
 	const lineColor = resolve([gridLineOpts.color], context, index - 1);
 	const lineWidth = resolve([gridLineOpts.lineWidth], context, index - 1);
 	let pointPosition;
-	if ((!circular && !valueCount) || !lineColor || !lineWidth) {
+	if ((!circular && !valueCount) || !lineColor || !lineWidth || radius < 0) {
 		return;
 	}
 	ctx.save();
@@ -11289,7 +11367,6 @@ class RadialLinearScale extends LinearScaleBase {
 			}
 			const context = me.getContext(index);
 			const tickFont = me._resolveTickFontOptions(index);
-			ctx.font = tickFont.string;
 			offset = me.getDistanceFromCenterForValue(me.ticks[index].value);
 			const showLabelBackdrop = resolve([tickOpts.showLabelBackdrop], context, index);
 			if (showLabelBackdrop) {
@@ -11302,8 +11379,9 @@ class RadialLinearScale extends LinearScaleBase {
 					tickFont.size + tickOpts.backdropPaddingY * 2
 				);
 			}
-			ctx.fillStyle = tickOpts.color;
-			ctx.fillText(tick.label, 0, -offset);
+			renderText(ctx, tick.label, 0, -offset, tickFont, {
+				color: tickOpts.color,
+			});
 		});
 		ctx.restore();
 	}
@@ -11478,7 +11556,8 @@ class TimeScale extends Scale {
 		}
 		return parse(this, raw);
 	}
-	invalidateCaches() {
+	beforeLayout() {
+		super.beforeLayout();
 		this._cache = {
 			data: [],
 			labels: [],
