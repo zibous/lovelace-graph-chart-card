@@ -64,10 +64,12 @@ CHART.JS v3.0.0-beta.7: https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.0-be
 | hours_to_show          | integer   | 0          | Specify how many hours of history the graph should present. If not set (hours_to_show===0) only the current state values are used for the chart.  |
 | aggregate          | string   | day          | Specify aggregate function used to calculate point/bar in the graph. |
 | group_by          | string   | day          | Specify type of grouping of data by date or hour. If not set, all data from the entity will be used for the chart.  |
+| update_interval          | number   | 60          | Specify a custom update interval of the history data (in seconds), instead of on every state change.  |
 | units          | string   |           | Set a custom unit of measurement for all entities.  |
 | ignoreZero   | boolean   |   false       | if true, all date from the series with value 0 will be ignored   |
 | locale          | string   |  de-DE         |  formats the numbers according to the locale and formatting options and set the data string with a language sensitive representation of the date portion of the date|
 | showstate         | string  | left,center,right         | show the current state. Only if hours_to_show > 0  |
+| cardtimestamp  | boolean  | false         | if true  -  shows the timestamp for the last card update |
 | loader         | string  |  `three-dots`        | set the loader animation. you can use `audio`, `ball-triangle`, `bars`, `circles` , `grid`, `hearts`, `oval`, `pfuff`,`rings`,`spinning-circles`,`tail-spin`,`three-dots`  |
 | theme         | list  | none         | overwrite the default theme settings for the current chart  |
 | options        |          |             | just like chart.js documentation - see: [Chart.js documentation](https://www.chartjs.org/docs/latest/). Optional, if used the options will overwrite the default.global settings. |
@@ -228,7 +230,6 @@ Another possibility is that the theme settings for a chart are set in the card d
 
 
 ### TODO - Open Tasks
-
   - [ ] Optimize the Initalizing / Data update for the custom card
   - [ ] Optimize the data provider Historydata (data mapping, grouping)
   - [ ] Better default colors (simple, gradient) for all charts

@@ -44,7 +44,7 @@ class graphChart {
         this.setting = config.setting
         this.chart_ready = false // boolean chart allready exits
         this.lastUpdate = null // timestamp last chart update
-        this.ChartControl = Chart // chart global settings
+        this.ChartControl = window.Chart3 || Chart // chart global settings
     }
 
     /**
@@ -62,6 +62,7 @@ class graphChart {
     _setChartDefaults() {
         // global default settings
         if (this.themeSettings.chartdefault === true) return
+        this.ChartControl = window.Chart3
         try {
             if (this.ChartControl && this.ChartControl.defaults) {
                 // global defailt settings
@@ -83,26 +84,31 @@ class graphChart {
                     // new beta 7 !
                     this.ChartControl.defaults.plugins.legend.labels.color = this.themeSettings.fontColor
                 }
-
-                this.ChartControl.defaults.layout.padding = {
-                    top: 24,
-                    left: 0,
-                    right: 0,
-                    bottom: 0
+                if (this.ChartControl.defaults.layout && this.ChartControl.defaults.layout.padding) {
+                    this.ChartControl.defaults.layout.padding = {
+                        top: 24,
+                        left: 0,
+                        right: 0,
+                        bottom: 0
+                    }
                 }
 
                 // Legend new beta 7 !
-                this.ChartControl.defaults.plugins.legend.position = "top"
-                this.ChartControl.defaults.plugins.legend.labels.usePointStyle = true
-                this.ChartControl.defaults.plugins.legend.labels.boxWidth = 8
-                this.ChartControl.defaults.plugins.legend.show = false
+                if (this.ChartControl.defaults.plugins && this.ChartControl.defaults.plugins.legend) {
+                    this.ChartControl.defaults.plugins.legend.position = "top"
+                    this.ChartControl.defaults.plugins.legend.labels.usePointStyle = true
+                    this.ChartControl.defaults.plugins.legend.labels.boxWidth = 8
+                    this.ChartControl.defaults.plugins.legend.show = false
+                }
 
                 // Tooltips new beta 7 !
-                this.ChartControl.defaults.plugins.tooltip.enabled = true
-                this.ChartControl.defaults.plugins.tooltip.backgroundColor = this.themeSettings.tooltipsBackground
-                this.ChartControl.defaults.plugins.tooltip.titleColor = this.themeSettings.tooltipsFontColor
-                this.ChartControl.defaults.plugins.tooltip.bodyColor = this.themeSettings.tooltipsFontColor
-                this.ChartControl.defaults.plugins.tooltip.footerColor = this.themeSettings.tooltipsFontColor
+                if (this.ChartControl.defaults.plugins && this.ChartControl.defaults.plugins.tooltip) {
+                    this.ChartControl.defaults.plugins.tooltip.enabled = true
+                    this.ChartControl.defaults.plugins.tooltip.backgroundColor = this.themeSettings.tooltipsBackground
+                    this.ChartControl.defaults.plugins.tooltip.titleColor = this.themeSettings.tooltipsFontColor
+                    this.ChartControl.defaults.plugins.tooltip.bodyColor = this.themeSettings.tooltipsFontColor
+                    this.ChartControl.defaults.plugins.tooltip.footerColor = this.themeSettings.tooltipsFontColor
+                }
 
                 // gridlines
                 if (this.themeSettings && this.themeSettings.showGridLines) {
@@ -440,7 +446,11 @@ class graphChart {
     renderGraph(doUpdate) {
         try {
             if (this.graphData) {
-                if (JSON.stringify(this.graphDataSets) === JSON.stringify(this.graphData.data.datasets)) {
+                if (
+                    this.graphDataSets &&
+                    this.graphDataSets.length &&
+                    JSON.stringify(this.graphDataSets) === JSON.stringify(this.graphData.data.datasets)
+                ) {
                     // same data as before, skip redraw...
                     return
                 }
@@ -463,13 +473,14 @@ class graphChart {
                         })
                     } else {
                         // set the chart options
-                        if (this.chart_ready === false) {
+                        if (this.chart_ready === false && this.ChartControl.register) {
                             // create and draw the new chart with the current settings
                             // and the dataseries. Register all plugins
                             if (this.graphData.config.gradient && this.themeSettings.gradient === true) {
                                 this.ChartControl.register(gradient)
                             }
                             if (
+                                this.ChartControl &&
                                 this.chartconfig &&
                                 this.chartconfig.options &&
                                 this.chartconfig.options.chartArea &&
@@ -508,7 +519,7 @@ class graphChart {
                             this.chart = null
                         }
 
-                        this.chart = new Chart(this.ctx, graphOptions)
+                        this.chart = new window.Chart3(this.ctx, graphOptions)
                         this.graphDataSets = this.graphData.data.datasets
 
                         if (this.chart) {

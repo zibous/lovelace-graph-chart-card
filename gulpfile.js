@@ -11,7 +11,7 @@ const zip = require("gulp-zip");
  * all settings for the deploy and release
  */
 const settings = {
-    files: ["./src/tools.js", "./src/colors.js", "./src/chartdata.js", "./src/graphchart.js", "./src/main.js"],
+    files: ["./src/main.js", "./src/tools.js", "./src/colors.js", "./src/chartdata.js", "./src/graphchart.js"],
     libs: [
         "./src/libs/chartjs/chart.js",
         "./src/libs/chartjs/plugins/chartjs-gradient.js",

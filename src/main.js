@@ -9,7 +9,7 @@
 /** -------------------------------------------------------------------*/
 "use strict"
 
-// Chart.js v3.0.0-beta.7 and used plugins, production use min.js
+// Chart.js  and used plugins, production use min.js
 import "/hacsfiles/chart-card/chart.js?module"
 
 // gradient, see themesettings
@@ -18,8 +18,8 @@ const gradient = window["chartjs-gradient"]
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "1.1.2",
-    chartjs: "v3.0.0-beta.9a",
+    version: "1.1.3",
+    chartjs: Chart.version || "v3.0.0-beta.9a",
     assets: "/hacsfiles/chart-card/assets/"
 }
 console.info(
@@ -220,6 +220,8 @@ class ChartCard extends HTMLElement {
         this.data_hoursToShow = 0
         this.data_group_by = "day"
         this.data_aggregate = "last"
+        this.updateTimer = -1
+        this.update_interval = 60 * 1000
         this.data_ignoreZero = false
         this.data_units = ""
         this.skipRender = false
@@ -621,7 +623,7 @@ class ChartCard extends HTMLElement {
             }
             this.data_group_by = this._config.group_by || "minutes"
             this.data_aggregate = this._config.aggregate || "last"
-
+            this.update_interval = this._config.update_interval * 1000 || 1000 * 60
             this.data_ignoreZero = this._config.ignoreZero || false
             this.data_units = this._config.units || ""
 
@@ -652,7 +654,6 @@ class ChartCard extends HTMLElement {
         if (hass === undefined) return
 
         // skip not initialized
-        // if (!this._initialized) return;
         if (this.timeOut) clearTimeout(this.timeOut)
 
         this._hass = hass
@@ -682,8 +683,9 @@ class ChartCard extends HTMLElement {
             return
         }
 
-        // update only if we has a chart
-        if (this.skipRender && this.updating === false) {
+        // update only if we has a chart and update_interval is not set
+        // 
+        if (this.skipRender && this.updating === false && this.update_interval === 0) {
             this.checkUpdate()
             return
         }
@@ -734,7 +736,7 @@ class ChartCard extends HTMLElement {
             () => {
                 this.updateGraph(false)
             },
-            this.initial ? 200 : 1000
+            this.initial ? 200 : this.update_interval
         )
 
         this.skipRender = true
@@ -772,7 +774,7 @@ class ChartCard extends HTMLElement {
      * checks if we need a graph update
      */
     checkUpdate() {
-        if (this.updating===true) return false
+        if (this.updating === true) return false
         // check if we has changes
         if (this.hassEntities && this.hassEntities.length && this._hass) {
             this.hasChanged = false
@@ -787,13 +789,13 @@ class ChartCard extends HTMLElement {
                 entity.laststate = entity.state
                 entity.update = false
                 if (h && entity.last_changed !== h.last_changed && entity.state !== h.state) {
-                    // update the data for this entity
                     entity.last_changed = h.last_changed
                     entity.state = h.state
                     entity.update = true
                     this.hasChanged = true
                 }
             }
+
             if (this.hasChanged) {
                 // refresh and update the graph
                 this.updateGraph(true)
@@ -842,7 +844,6 @@ class ChartCard extends HTMLElement {
                     )
                     this.dataInfo.prev_url = this.dataInfo.url
                 }
-
             } else {
                 // build the current for the sensor(s)
                 this._buildGraphData(null, 2)
@@ -1017,6 +1018,10 @@ class ChartCard extends HTMLElement {
      */
     connectedCallback() {
         this._initialized = true // important for loading charts !
+        if (this.update_interval === 0) return
+        this.updateTimer = setInterval(() => {
+            if (this.updating === false) this.checkUpdate()
+        }, this.update_interval)
     }
 
     /**
@@ -1024,6 +1029,9 @@ class ChartCard extends HTMLElement {
      */
     disconnectedCallback() {
         this._initialized = false // important for loading charts !
+        if (this.updateTimer) {
+            clearInterval(this.updateTimer)
+        }
     }
 
     /**
