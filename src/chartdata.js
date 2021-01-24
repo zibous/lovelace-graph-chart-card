@@ -329,7 +329,7 @@ class chartData {
 
         // entityData    : holds all  current values
         // entityNames   : holds all entities names
-        
+
         // entities      : all entities data and options
         // entityOptions : global entities options
 
@@ -356,6 +356,7 @@ class chartData {
                 ...this.entityOptions
             }
         }
+
         // merge dataset_config
         _graphData.data.labels = this.entityNames.filter((element, index, array) => !emptyIndexes.includes(index))
         _graphData.data.datasets[0] = _defaultDatasetConfig
@@ -366,7 +367,7 @@ class chartData {
         if (this.card_config.chart.toLowerCase() === "horizontalbar") {
             _graphData.data.datasets[0].indexAxis = "y"
         }
-        
+
         // custom colors from the entities
         let entityColors = this.entities
             .map((x) => {
@@ -588,7 +589,7 @@ class chartData {
             // if(this.data_aggregate==='first'){
             //     console.log(this.chart_type, items, this.stateHistories)
             // }
-            
+
             const id = list[0].entity_id
 
             // get all settings from the selected entity

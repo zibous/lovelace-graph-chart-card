@@ -21,6 +21,9 @@
 // Chart.js  and used plugins, production use min.js
 import "/hacsfiles/chart-card/chart.js?module"
 
+// ! importend to fix the collision with ha used chart.js 2.9
+window.Chart3 = Chart;
+
 // gradient, see themesettings
 const gradient = window["chartjs-gradient"]
 
@@ -701,9 +704,9 @@ class ChartCard extends HTMLElement {
 
         // all entity data
         this.entityData = this.hassEntities.map((x) => (x === undefined ? 0 : x.state))
-        this.entityOptions = null
-
+        
         if (this.ready === false && this.entities.length !== this.hassEntities.length) {
+            this.entityOptions = null
             this.entities = []
             // interate throw all _config.entities
             for (let entity of this._config.entities) {
@@ -1547,7 +1550,7 @@ class chartData {
 
         // entityData    : holds all  current values
         // entityNames   : holds all entities names
-        
+
         // entities      : all entities data and options
         // entityOptions : global entities options
 
@@ -1574,6 +1577,7 @@ class chartData {
                 ...this.entityOptions
             }
         }
+
         // merge dataset_config
         _graphData.data.labels = this.entityNames.filter((element, index, array) => !emptyIndexes.includes(index))
         _graphData.data.datasets[0] = _defaultDatasetConfig
@@ -1584,7 +1588,7 @@ class chartData {
         if (this.card_config.chart.toLowerCase() === "horizontalbar") {
             _graphData.data.datasets[0].indexAxis = "y"
         }
-        
+
         // custom colors from the entities
         let entityColors = this.entities
             .map((x) => {
@@ -1806,7 +1810,7 @@ class chartData {
             // if(this.data_aggregate==='first'){
             //     console.log(this.chart_type, items, this.stateHistories)
             // }
-            
+
             const id = list[0].entity_id
 
             // get all settings from the selected entity
@@ -2061,14 +2065,16 @@ class graphChart {
                     }
                 }
 
-                // element settings
+                // arc element settings
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.arc)
                     this.ChartControl.defaults.elements.arc.borderWidth = 0
+                
+                // line element    
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.line) {
                     this.ChartControl.defaults.elements.line.fill = false
-                    this.ChartControl.defaults.elements.line.tension = 0
-                    // this.ChartControl.defaults.elements.line.cubicInterpolationMode = 'monotone';
+                    this.ChartControl.defaults.elements.line.tension = 0.225
                 }
+
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.point) {
                     this.ChartControl.defaults.elements.point.radius = 0.33
                     this.ChartControl.defaults.elements.point.borderWidth = 0

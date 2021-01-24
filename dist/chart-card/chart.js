@@ -11910,7 +11910,7 @@ Chart.Ticks = Ticks;
 Object.assign(Chart, controllers, scales, elements, plugins, platforms);
 Chart.Chart = Chart;
 if (typeof window !== 'undefined') {
-	window.Chart3 = Chart;
+	window.Chart = Chart;
 }
 
 return Chart;

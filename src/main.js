@@ -12,6 +12,9 @@
 // Chart.js  and used plugins, production use min.js
 import "/hacsfiles/chart-card/chart.js?module"
 
+// ! importend to fix the collision with ha used chart.js 2.9
+window.Chart3 = Chart;
+
 // gradient, see themesettings
 const gradient = window["chartjs-gradient"]
 
@@ -692,9 +695,9 @@ class ChartCard extends HTMLElement {
 
         // all entity data
         this.entityData = this.hassEntities.map((x) => (x === undefined ? 0 : x.state))
-        this.entityOptions = null
-
+        
         if (this.ready === false && this.entities.length !== this.hassEntities.length) {
+            this.entityOptions = null
             this.entities = []
             // interate throw all _config.entities
             for (let entity of this._config.entities) {

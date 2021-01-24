@@ -126,14 +126,16 @@ class graphChart {
                     }
                 }
 
-                // element settings
+                // arc element settings
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.arc)
                     this.ChartControl.defaults.elements.arc.borderWidth = 0
+                
+                // line element    
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.line) {
                     this.ChartControl.defaults.elements.line.fill = false
-                    this.ChartControl.defaults.elements.line.tension = 0
-                    // this.ChartControl.defaults.elements.line.cubicInterpolationMode = 'monotone';
+                    this.ChartControl.defaults.elements.line.tension = 0.225
                 }
+
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.point) {
                     this.ChartControl.defaults.elements.point.radius = 0.33
                     this.ChartControl.defaults.elements.point.borderWidth = 0

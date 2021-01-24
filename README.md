@@ -2,9 +2,8 @@
 
 Chart.js card `Version 1.1.0` for Home Assistant -  Visualize your data in 8 different ways; each of them animated and customisable.
 
-> DEVELOPER PREVIEW VERSION, CHART.JS v3.0.0-beta.7 NOT FINAL
+> DEVELOPER PREVIEW VERSION, CHART.JS v3.0.0-beta.xx NOT FINAL
 I'm still looking for help and would be happy if someone would get in touch to help me complete and improve (data processing, display / color selection charts ...) the graph-chartjs-card.
-CHART.JS v3.0.0-beta.7: https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.0-beta.7/chart.min.js
 
 
 ![charts2.png](docs/charts/charts.png)
@@ -249,11 +248,13 @@ Another possibility is that the theme settings for a chart are set in the card d
 
 ## Resources
 
-- [Chart.js v3.0.0-beta.7](https://chartjs.org) - Chart.js - Simple yet flexible JavaScript charting for designers & developers
+- [Chart.js v3.0.0-beta....](https://chartjs.org) - Chart.js - Simple yet flexible JavaScript charting for designers & developers
 - [Chart.js Official Guide](https://chartjs.org/docs) - The user guide and documentation site.
 - [Chart.js Samples](https://www.chartjs.org/samples/latest/) - Simple yet flexible JavaScript charting for designers & developers
 - [Colors with Chart.js & D3's](https://codenebula.io/javascript/frontend/dataviz/2019/04/18/automatically-generate-chart-colors-with-chart-js-d3s-color-scales/) - Automatically Generate Chart Colors with Chart.js & D3's Color Scales...
 - [SVG Loaders](http://samherbert.net/svg-loaders/) - SVG-Loaders...
+- [Colors Wall](https://colorswall.com) - Place to store your color Palettes
+- [UI gradients](https://uigradients.com/) - uiGradients - Beautiful colored gradients
 
 
 ## Plugins Info
