@@ -317,7 +317,9 @@ class chartData {
     }
 
     /**
-     * create chart data
+     * --------------------------------------
+     * create chart data - entity state based
+     * --------------------------------------
      * this is used for pie-, doughnut-, polarArea-,radar-, simple bar chart
      * because we do not need time series - only the current state values.
      *
@@ -337,7 +339,7 @@ class chartData {
         _data = this.entityData.filter((element, index, array) => !emptyIndexes.includes(index))
 
         if (_data.length === 0) {
-            console.error("No Histroydata present !")
+            console.error("No Data present !")
             return null
         }
 
@@ -359,6 +361,7 @@ class chartData {
 
         // merge dataset_config
         _graphData.data.labels = this.entityNames.filter((element, index, array) => !emptyIndexes.includes(index))
+
         _graphData.data.datasets[0] = _defaultDatasetConfig
         _graphData.data.datasets[0].unit = this.card_config.units || ""
         _graphData.data.datasets[0].label = this.card_config.title || ""
@@ -380,7 +383,6 @@ class chartData {
         }
 
         if (entityColors.length === _graphData.data.labels.length) {
-            // list entity colors "backgroundColor": []
             _graphData.data.datasets[0].backgroundColor = entityColors
             _graphData.data.datasets[0].showLine = false
         } else {
@@ -393,7 +395,7 @@ class chartData {
                 _graphData.data.datasets[0].tooltip = true
                 _graphData.config.gradient = false
             } else {
-                // geht backgroundcolor from DEFAULT_COLORS
+                // get backgroundcolor from DEFAULT_COLORS
                 entityColors = DEFAULT_COLORS.slice(1, _data.length + 1)
                 _graphData.data.datasets[0].backgroundColor = entityColors
                 _graphData.data.datasets[0].borderWidth = 0
@@ -415,9 +417,7 @@ class chartData {
                 _graphData.data.datasets[1].showLine = false
                 _graphData.config.segmentbar = newData.data.length !== 0
             }
-            // _graphData.data.datasets[0].label = "DDD"
         }
-
         return _graphData
     }
 
@@ -571,7 +571,11 @@ class chartData {
     }
 
     /**
-     * create the chart history data
+     * ----------------------------------------
+     * create chart data - history state based
+     * ----------------------------------------
+     * Get the series data for all entities from the
+     * history and create the chart history data
      */
     createHistoryChartData() {
         let _graphData = this.getDefaultGraphData()

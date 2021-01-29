@@ -22,18 +22,21 @@
 import "/hacsfiles/chart-card/chart.js?module"
 
 // ! importend to fix the collision with ha used chart.js 2.9
-window.Chart3 = Chart;
+window.Chart3 = Chart
 
 // gradient, see themesettings
 const gradient = window["chartjs-gradient"]
 
+// all about the application
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
     version: "1.1.3",
     chartjs: Chart.version || "v3.0.0-beta.9a",
-    assets: "/hacsfiles/chart-card/assets/"
+    assets: "/hacsfiles/chart-card/assets/",
+    github: "https://github.com/zibous/lovelace-graph-chart-card"
 }
+// render the app-info for this custom card
 console.info(
     "%c " + appinfo.name + "     %c ▪︎▪︎▪︎▪︎ Version: " + appinfo.version + " ▪︎▪︎▪︎▪︎ ",
     "color:#FFFFFF; background:#3498db;display:inline-block;font-size:12px;font-weight:300;padding: 6px 0 6px 0",
@@ -395,6 +398,7 @@ class ChartCard extends HTMLElement {
                 ctx: this.ctx,
                 canvasId: this.canvasId,
                 card_config: this._config,
+                entities: this.entities,
                 chart_locale: this.chart_locale,
                 chart_type: this.chart_type,
                 themeSettings: this.themeSettings,
@@ -526,6 +530,63 @@ class ChartCard extends HTMLElement {
             return navigator.language || navigator.userLanguage
         }
         return locale
+    }
+
+    /**
+     * filter entities from this._hass.states
+     * @call: getEntitiesByfilter(this._hass.states,this.config_filter)
+     *
+     *  filter:
+     *     - sensor.orangenbaum*
+     *     - sensor.energie*
+     * @param {*} list
+     * @param {*} filters
+     */
+    getEntitiesByfilter(list, filters) {
+        function _filterName(stateObj, pattern) {
+            let parts
+            let attr_id
+            let attribute
+            if (typeof pattern === "object") {
+                parts = pattern["key"].split(".")
+                attribute = pattern["key"]
+            } else {
+                parts = pattern.split(".")
+                attribute = pattern
+            }
+            const regEx = new RegExp(`^${attribute.replace(/\*/g, ".*")}$`, "i")
+            return stateObj.search(regEx) === 0
+        }
+        let entities = []
+        filters.forEach((filter) => {
+            const filters = []
+            filters.push((stateObj) => _filterName(stateObj, filter))
+            Object.keys(list)
+                .sort()
+                .forEach((key) => {
+                    Object.keys(list[key]).sort()
+                    if (filters.every((filterFunc) => filterFunc(`${key}`))) {
+                        entities.push(list[key])
+                    }
+                })
+        })
+        return entities
+    }
+    
+    /**
+     * all registrated entities for this chart
+     */
+    getEntities() {
+        if (this._config) return this._config.entities
+    }
+
+    /**
+     * all entity data values
+     */
+    getEntityData() {
+        // all entity data values
+        if (this.hassEntities && this.hassEntities.length)
+            this.entityData = this.hassEntities.map((x) => (x === undefined ? 0 : x.state))
     }
 
     /**
@@ -669,6 +730,8 @@ class ChartCard extends HTMLElement {
         if (this.timeOut) clearTimeout(this.timeOut)
 
         this._hass = hass
+
+        // check the theme or if theme changed
         this.selectedTheme = hass.selectedTheme || { theme: "system", dark: false }
         if (this.theme && this.theme.dark !== this.selectedTheme.dark) {
             // theme has changed
@@ -682,9 +745,16 @@ class ChartCard extends HTMLElement {
         }
         this.theme = this.selectedTheme
 
+        // get the list of all entities
+        const _entities = this.getEntities()
+        if (!_entities) {
+            console.error(this.chart_type, "No valid entities found, check your settings...")
+            return
+        }
+
         // An object list containing the states of all entities in Home Assistant.
         // The key is the entity_id, the value is the state object.
-        this.hassEntities = this._config.entities
+        this.hassEntities = _entities
             .map((x) => hass.states[x.entity])
             .filter((notUndefined) => notUndefined !== undefined)
 
@@ -696,20 +766,18 @@ class ChartCard extends HTMLElement {
         }
 
         // update only if we has a chart and update_interval is not set
-        // 
+        //
         if (this.skipRender && this.updating === false && this.update_interval === 0) {
             this.checkUpdate()
             return
         }
 
-        // all entity data
-        this.entityData = this.hassEntities.map((x) => (x === undefined ? 0 : x.state))
-        
         if (this.ready === false && this.entities.length !== this.hassEntities.length) {
+            // init interate throw all _config.entities
             this.entityOptions = null
             this.entities = []
-            // interate throw all _config.entities
-            for (let entity of this._config.entities) {
+            this.entity_ids = []
+            for (const entity of _entities) {
                 if (entity.options) {
                     // all global entity options
                     this.entityOptions = entity.options
@@ -718,10 +786,11 @@ class ChartCard extends HTMLElement {
                     const h = this.hassEntities.find((x) => x.entity_id === entity.entity)
                     if (h) {
                         let item = Object.assign({}, entity)
-                        if (item.name == undefined && h.attributes) {
-                            item.name = h.attributes.friendly_name || item.name
+                        if (h.attributes) {
+                            if (item.name === undefined) item.name = h.attributes.friendly_name || item.name
                             item.unit = h.attributes.unit_of_measurement || item.unit || ""
                         }
+                        // add this the entities list
                         if (item.name !== undefined) {
                             item.last_changed = h.last_changed || this.startTime
                             item.state = h.state || 0.0
@@ -773,11 +842,14 @@ class ChartCard extends HTMLElement {
         this._getThemeSettings()
         this.themeSettings.theme = this.theme
         this.graphChart.setThemeSettings(this.themeSettings)
-        this.entityData = this.hassEntities.map((x) => (x === undefined ? 0 : x.state))
-        this.graphChart.entityData = this.entityData
-        this.chart_update = doUpdate
-        this._getHistory()
-        if (this.card_timestamp) this.timestampLayer.innerHTML = localDatetime(new Date().toISOString())
+        // get all current entitydata
+        this.getEntityData()
+        if (this.entityData) {
+            this.graphChart.entityData = this.entityData
+            this.chart_update = doUpdate
+            this._getHistory()
+            if (this.card_timestamp) this.timestampLayer.innerHTML = localDatetime(new Date().toISOString())
+        }
         this.updating = false
         this.initial = false
     }
@@ -791,7 +863,7 @@ class ChartCard extends HTMLElement {
         if (this.hassEntities && this.hassEntities.length && this._hass) {
             this.hasChanged = false
             // reload the hass entities
-            this.hassEntities = this._config.entities
+            this.hassEntities = this.entities
                 .map((x) => this._hass.states[x.entity])
                 .filter((notUndefined) => notUndefined !== undefined)
 
@@ -960,6 +1032,10 @@ class ChartCard extends HTMLElement {
         if ((mode === 1 && !stateHistories) || (stateHistories && !stateHistories.length)) {
             return null
         }
+
+        // all entity data values
+        this.getEntityData()
+        if (!this.entityData) return
 
         // start get chart data
         const _chartData = new chartData({
@@ -1538,7 +1614,9 @@ class chartData {
     }
 
     /**
-     * create chart data
+     * --------------------------------------
+     * create chart data - entity state based
+     * --------------------------------------
      * this is used for pie-, doughnut-, polarArea-,radar-, simple bar chart
      * because we do not need time series - only the current state values.
      *
@@ -1558,7 +1636,7 @@ class chartData {
         _data = this.entityData.filter((element, index, array) => !emptyIndexes.includes(index))
 
         if (_data.length === 0) {
-            console.error("No Histroydata present !")
+            console.error("No Data present !")
             return null
         }
 
@@ -1580,6 +1658,7 @@ class chartData {
 
         // merge dataset_config
         _graphData.data.labels = this.entityNames.filter((element, index, array) => !emptyIndexes.includes(index))
+
         _graphData.data.datasets[0] = _defaultDatasetConfig
         _graphData.data.datasets[0].unit = this.card_config.units || ""
         _graphData.data.datasets[0].label = this.card_config.title || ""
@@ -1601,7 +1680,6 @@ class chartData {
         }
 
         if (entityColors.length === _graphData.data.labels.length) {
-            // list entity colors "backgroundColor": []
             _graphData.data.datasets[0].backgroundColor = entityColors
             _graphData.data.datasets[0].showLine = false
         } else {
@@ -1614,7 +1692,7 @@ class chartData {
                 _graphData.data.datasets[0].tooltip = true
                 _graphData.config.gradient = false
             } else {
-                // geht backgroundcolor from DEFAULT_COLORS
+                // get backgroundcolor from DEFAULT_COLORS
                 entityColors = DEFAULT_COLORS.slice(1, _data.length + 1)
                 _graphData.data.datasets[0].backgroundColor = entityColors
                 _graphData.data.datasets[0].borderWidth = 0
@@ -1636,9 +1714,7 @@ class chartData {
                 _graphData.data.datasets[1].showLine = false
                 _graphData.config.segmentbar = newData.data.length !== 0
             }
-            // _graphData.data.datasets[0].label = "DDD"
         }
-
         return _graphData
     }
 
@@ -1792,7 +1868,11 @@ class chartData {
     }
 
     /**
-     * create the chart history data
+     * ----------------------------------------
+     * create chart data - history state based
+     * ----------------------------------------
+     * Get the series data for all entities from the
+     * history and create the chart history data
      */
     createHistoryChartData() {
         let _graphData = this.getDefaultGraphData()
@@ -1973,6 +2053,7 @@ class graphChart {
         this.ctx = config.ctx || null // the chart canvas element
         this.canvasId = config.canvasId // canvas container id
         this.card_config = config.card_config // current card settings
+        this.entities = config.entities // all entities
         this.chart_locale = config.locale || "de-DE" // the locale for number(s) and date(s)
         this.chart_type = config.chart_type || "bar" // the chart type
         this.themeSettings = config.themeSettings || {} // the theme settings (dark or light)
@@ -2252,10 +2333,10 @@ class graphChart {
         }
         // set the axis label based on the data settings
         if (this.chart_type.toLowerCase() === "bubble") {
-            let labelX = this.card_config.entities[0].name
-            labelX += this.card_config.entities[0].unit ? " (" + this.card_config.entities[0].unit + ")" : ""
-            let labelY = this.card_config.entities[1].name
-            labelY += this.card_config.entities[1].unit ? " (" + this.card_config.entities[1].unit + ")" : ""
+            let labelX = this.entities[0].name
+            labelX += this.entities[0].unit ? " (" + this.entities[0].unit + ")" : ""
+            let labelY = this.entities[1].name
+            labelY += this.entities[1].unit ? " (" + this.entities[1].unit + ")" : ""
             _options.scales = {
                 x: {
                     id: "x",

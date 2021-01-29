@@ -34,6 +34,7 @@ class graphChart {
         this.ctx = config.ctx || null // the chart canvas element
         this.canvasId = config.canvasId // canvas container id
         this.card_config = config.card_config // current card settings
+        this.entities = config.entities // all entities
         this.chart_locale = config.locale || "de-DE" // the locale for number(s) and date(s)
         this.chart_type = config.chart_type || "bar" // the chart type
         this.themeSettings = config.themeSettings || {} // the theme settings (dark or light)
@@ -313,10 +314,10 @@ class graphChart {
         }
         // set the axis label based on the data settings
         if (this.chart_type.toLowerCase() === "bubble") {
-            let labelX = this.card_config.entities[0].name
-            labelX += this.card_config.entities[0].unit ? " (" + this.card_config.entities[0].unit + ")" : ""
-            let labelY = this.card_config.entities[1].name
-            labelY += this.card_config.entities[1].unit ? " (" + this.card_config.entities[1].unit + ")" : ""
+            let labelX = this.entities[0].name
+            labelX += this.entities[0].unit ? " (" + this.entities[0].unit + ")" : ""
+            let labelY = this.entities[1].name
+            labelY += this.entities[1].unit ? " (" + this.entities[1].unit + ")" : ""
             _options.scales = {
                 x: {
                     id: "x",

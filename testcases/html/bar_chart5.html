@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+
+<head>
+	<title>Bar Chart</title>
+	<script src="assets/chart.js"></script>
+	<script src="assets/chartjs-gradient.js"></script>
+	<link rel="stylesheet" type="text/css" href="assets/style.css" />
+	
+</head>
+
+<body>
+
+	<div id="container" class="center">
+		<div class="chard-card">
+			<div class="chard-description">
+				<h1>Testcase simple data</h1>
+			</div>
+			<canvas id="canvas"></canvas>
+		</div>
+	</div>
+
+	<script>
+		var data = {
+			labels: ['EG', 'WG', 'OG'],
+
+			datasets: [{
+				label: "Room1",
+				backgroundColor: "#F29220",
+				borderColor: "#F29220",
+				data: [40, 20]
+			}, {
+				label: "Room2",
+				backgroundColor: "#4365B0",
+				borderColor: "#4365B0",
+				data: [60, 80, 70]
+			}, {
+				label: "Room3",
+				backgroundColor: "#D00",
+				borderColor: "#D00",
+				data: [, 5, 10]
+			},
+			{
+				label: "Room4",
+				backgroundColor: "#4365B0",
+				borderColor: "#4365B0",
+				data: [60]
+			}]
+
+		};
+		var options = {
+			type: 'bar',
+			data: data,
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				scales: {
+						x: {
+							display: true,
+							stacked: true,
+						},
+						y: {
+							display: true,
+							stacked: true
+						}
+				},
+				plugins: {
+					legend: {
+					   display: false,
+				   },
+					title: {
+						display: true,
+						text: 'Chart.js Bar Chart',
+						color: "#000000",
+					},
+				},
+				layout: {
+					padding: {
+						left: 10,
+						right: 50,
+					}
+				}
+			}
+		};
+
+		window.onload = function () {
+			Chart.defaults.responsive = true;
+			Chart.defaults.maintainAspectRatio = false;
+			Chart.defaults.animation = false;
+			Chart.defaults.defaultFontColor = "#FFFFFF";
+			var ctx = document.getElementById('canvas').getContext('2d');
+			window.myBar = new Chart(ctx, options);
+		};
+	</script>
+</body>
+
+</html>
