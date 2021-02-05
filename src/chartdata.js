@@ -61,6 +61,10 @@ class chartData {
             if (array && !array.length) return
             let groups = {}
             const _num = (n) => (n === parseInt(n) ? Number(parseInt(n)) : Number(parseFloat(n).toFixed(2)))
+            const _itemvalue = (item) => {
+                if (item.field) return _num(item[item.field] || 0.0)
+                return _num(item.state || 0.0)
+            }
             const _fmd = (d) => {
                 const t = new Date(d)
                 if (isNaN(t)) return d
@@ -76,24 +80,25 @@ class chartData {
                 const hours = ("0" + t.getHours()).slice(-2)
                 const minutes = ("0" + t.getMinutes()).slice(-2)
                 const seconds = ("0" + t.getSeconds()).slice(-2)
+                // sorry not using Intl.DateTimeFormat because this is to slow
                 switch (this.data_group_by) {
                     case "year":
                         return { name: year, label: year }
                     case "month":
-                        return { name: `${year}.${month}`, label: `${year}.${month}` }
+                        return { name: `${year}.${month}`, label: `${month}.${year}` }
                     case "day":
-                        return { name: `${month}.${day}`, label: `${month}.${day}` }
+                        return { name: `${month}.${day}`, label: `${day}.${month}` }
                     case "hour":
-                        return { name: `${month}.${day} ${hours}`, label: [`${month}.${day}`, `${hours}.${minutes}`] }
+                        return { name: `${month}.${day} ${hours}`, label: [`${day}.${month}`, `${hours}.${minutes}`] }
                     case "minutes":
                         return {
                             name: `${month}.${day} ${hours}:${minutes}`,
-                            label: [`${month}.${day}`, `${hours}.${minutes}`]
+                            label: [`${day}.${month}`, `${hours}.${minutes}`]
                         }
                     default:
                         return {
                             name: `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`,
-                            label: `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`
+                            label: `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`
                         }
                 }
             }
@@ -104,6 +109,7 @@ class chartData {
                 o.timelabel = group.label
                 groups[group.name].push(o)
             })
+
             // create the grouped seriesdata
             const aggr = this.data_aggregate
             return Object.keys(groups).map(function (group) {
@@ -119,56 +125,56 @@ class chartData {
                 if (aggr == "first") {
                     const item = items.shift()
                     return {
-                        y: _num(item.state || 0.0),
+                        y: _itemvalue(item),
                         x: item.timelabel
                     }
                 }
                 if (aggr == "last") {
                     const item = items[items.length - 1]
                     return {
-                        y: _num(item.state || 0.0),
+                        y: _itemvalue(item),
                         x: item.timelabel
                     }
                 }
                 if (aggr == "max") {
                     return items.reduce((a, b) =>
-                        a.state > b.state
+                        _itemvalue(a) > _itemvalue(b)
                             ? {
-                                  y: num(a.state || 0.0),
+                                  y: _itemvalue(a),
                                   x: a.timelabel
                               }
-                            : { y: num(b.state), x: b.timelabel }
+                            : { y: _itemvalue(b), x: b.timelabel }
                     )
                 }
                 if (aggr == "min")
                     return items.reduce((a, b) =>
-                        a.state < b.state
+                        _itemvalue(a) < _itemvalue(b)
                             ? {
-                                  y: _num(a.state || 0.0),
+                                  y: _itemvalue(a),
                                   x: a.timelabel
                               }
                             : {
-                                  y: _num(b.state || 0.0),
+                                  y: _itemvalue(b),
                                   x: b.timelabel
                               }
                     )
                 if (aggr == "sum") {
-                    const val = items.reduce((sum, entry) => sum + num(entry.state), 0)
+                    const val = items.reduce((sum, entry) => sum + _itemvalue(entry), 0)
                     return {
-                        y: _num(val || 0.0),
+                        y: val,
                         x: items[0].timelabel
                     }
                 }
                 if (aggr == "avg") {
-                    const val = items.reduce((sum, entry) => sum + _num(entry.state), 0) / items.length
+                    const val = items.reduce((sum, entry) => sum + _itemvalue(entry), 0) / items.length
                     return {
-                        y: _num(val || 0.0),
+                        y: val,
                         x: items[0].timelabel
                     }
                 }
-                return items.map((items) => {
+                return items.map((item) => {
                     return {
-                        y: _num(items.state || 0.0),
+                        y: _itemvalue(item),
                         x: items.timelabel
                     }
                 })

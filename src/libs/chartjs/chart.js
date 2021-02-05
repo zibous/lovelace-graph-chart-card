@@ -1,5 +1,5 @@
 /*!
- * Chart.js v3.0.0-beta.9
+ * Chart.js v3.0.0-beta.10
  * https://www.chartjs.org
  * (c) 2021 Chart.js Contributors
  * Released under the MIT License
@@ -1379,11 +1379,11 @@ function setLayoutDims(layouts, params) {
 	for (i = 0, ilen = layouts.length; i < ilen; ++i) {
 		layout = layouts[i];
 		if (layout.horizontal) {
-			layout.width = layout.box.fullWidth && params.availableWidth;
+			layout.width = layout.box.fullSize && params.availableWidth;
 			layout.height = params.hBoxMaxHeight;
 		} else {
 			layout.width = params.vBoxMaxWidth;
-			layout.height = layout.box.fullWidth && params.availableHeight;
+			layout.height = layout.box.fullSize && params.availableHeight;
 		}
 	}
 }
@@ -1474,7 +1474,7 @@ function fitBoxes(boxes, chartArea, params) {
 				refit = true;
 			}
 		}
-		if (!box.fullWidth) {
+		if (!box.fullSize) {
 			refitBoxes.push(layout);
 		}
 	}
@@ -1489,8 +1489,8 @@ function placeBoxes(boxes, chartArea, params) {
 		layout = boxes[i];
 		box = layout.box;
 		if (layout.horizontal) {
-			box.left = box.fullWidth ? userPadding.left : chartArea.left;
-			box.right = box.fullWidth ? params.outerWidth - userPadding.right : chartArea.left + chartArea.w;
+			box.left = box.fullSize ? userPadding.left : chartArea.left;
+			box.right = box.fullSize ? params.outerWidth - userPadding.right : chartArea.left + chartArea.w;
 			box.top = y;
 			box.bottom = y + box.height;
 			box.width = box.right - box.left;
@@ -1498,8 +1498,8 @@ function placeBoxes(boxes, chartArea, params) {
 		} else {
 			box.left = x;
 			box.right = x + box.width;
-			box.top = box.fullWidth ? userPadding.top : chartArea.top;
-			box.bottom = box.fullWidth ? params.outerHeight - userPadding.right : chartArea.top + chartArea.h;
+			box.top = box.fullSize ? userPadding.top : chartArea.top;
+			box.bottom = box.fullSize ? params.outerHeight - userPadding.right : chartArea.top + chartArea.h;
 			box.height = box.bottom - box.top;
 			x = box.right;
 		}
@@ -1520,7 +1520,7 @@ var layouts = {
 		if (!chart.boxes) {
 			chart.boxes = [];
 		}
-		item.fullWidth = item.fullWidth || false;
+		item.fullSize = item.fullSize || false;
 		item.position = item.position || 'top';
 		item.weight = item.weight || 0;
 		item._layers = item._layers || function() {
@@ -1540,16 +1540,9 @@ var layouts = {
 		}
 	},
 	configure(chart, item, options) {
-		const props = ['fullWidth', 'position', 'weight'];
-		const ilen = props.length;
-		let i = 0;
-		let prop;
-		for (; i < ilen; ++i) {
-			prop = props[i];
-			if (Object.prototype.hasOwnProperty.call(options, prop)) {
-				item[prop] = options[prop];
-			}
-		}
+		item.fullSize = options.fullSize;
+		item.position = options.position;
+		item.weight = options.weight;
 	},
 	update(chart, width, height) {
 		if (!chart) {
@@ -3201,16 +3194,11 @@ class DatasetController {
 		const me = this;
 		const meta = me._cachedMeta;
 		me._dataCheck();
-		const data = me._data;
-		const metaData = meta.data = new Array(data.length);
-		for (let i = 0, ilen = data.length; i < ilen; ++i) {
-			metaData[i] = new me.dataElementType();
-		}
 		if (me.datasetElementType) {
 			meta.dataset = new me.datasetElementType();
 		}
 	}
-	buildOrUpdateElements() {
+	buildOrUpdateElements(resetNewElements) {
 		const me = this;
 		const meta = me._cachedMeta;
 		const dataset = me.getDataset();
@@ -3222,7 +3210,7 @@ class DatasetController {
 			clearStacks(meta);
 			meta.stack = dataset.stack;
 		}
-		me._resyncElements();
+		me._resyncElements(resetNewElements);
 		if (stackChanged) {
 			updateStacks(me, meta._parsed);
 		}
@@ -3235,7 +3223,7 @@ class DatasetController {
 			me.getDataset(),
 		], {
 			merger(key, target, source) {
-				if (key !== 'data') {
+				if (key !== 'data' && key.charAt(0) !== '_') {
 					_merger(key, target, source);
 				}
 			}
@@ -3247,12 +3235,9 @@ class DatasetController {
 		const {_cachedMeta: meta, _data: data} = me;
 		const {iScale, _stacked} = meta;
 		const iAxis = iScale.axis;
-		let sorted = true;
-		let i, parsed, cur, prev;
-		if (start > 0) {
-			sorted = meta._sorted;
-			prev = meta._parsed[start - 1];
-		}
+		let sorted = start === 0 && count === data.length ? true : meta._sorted;
+		let prev = start > 0 && meta._parsed[start - 1];
+		let i, cur, parsed;
 		if (me._parsing === false) {
 			meta._parsed = data;
 			meta._sorted = true;
@@ -3609,18 +3594,18 @@ class DatasetController {
 			this._setStyle(element, undefined, 'active', true);
 		}
 	}
-	_resyncElements() {
+	_resyncElements(resetNewElements) {
 		const me = this;
 		const numMeta = me._cachedMeta.data.length;
 		const numData = me._data.length;
 		if (numData > numMeta) {
-			me._insertElements(numMeta, numData - numMeta);
+			me._insertElements(numMeta, numData - numMeta, resetNewElements);
 		} else if (numData < numMeta) {
 			me._removeElements(numData, numMeta - numData);
 		}
 		me.parse(0, Math.min(numData, numMeta));
 	}
-	_insertElements(start, count) {
+	_insertElements(start, count, resetNewElements = true) {
 		const me = this;
 		const elements = new Array(count);
 		const meta = me._cachedMeta;
@@ -3634,7 +3619,9 @@ class DatasetController {
 			meta._parsed.splice(start, 0, ...new Array(count));
 		}
 		me.parse(start, count);
-		me.updateElements(data, start, count, 'reset');
+		if (resetNewElements) {
+			me.updateElements(data, start, count, 'reset');
+		}
 	}
 	updateElements(element, start, count, mode) {}
 	_removeElements(start, count) {
@@ -4355,8 +4342,8 @@ class Scale extends Element {
 		const {axis, position} = this.options;
 		return position === 'top' || position === 'bottom' || axis === 'x';
 	}
-	isFullWidth() {
-		return this.options.fullWidth;
+	isFullSize() {
+		return this.options.fullSize;
 	}
 	_convertTicksToLabels(ticks) {
 		const me = this;
@@ -4765,6 +4752,7 @@ class Scale extends Element {
 		const labelSizes = me._getLabelSizes();
 		const tickAndPadding = tl + padding;
 		const widest = labelSizes.widest.width;
+		const lineSpace = labelSizes.highest.offset * 0.8;
 		let textAlign;
 		let x;
 		if (position === 'left') {
@@ -4780,7 +4768,7 @@ class Scale extends Element {
 					x -= (widest / 2);
 				} else {
 					textAlign = 'left';
-					x -= widest;
+					x = me.left + lineSpace;
 				}
 			}
 		} else if (position === 'right') {
@@ -4796,13 +4784,24 @@ class Scale extends Element {
 					x += widest / 2;
 				} else {
 					textAlign = 'right';
-					x += widest;
+					x = me.right - lineSpace;
 				}
 			}
 		} else {
 			textAlign = 'right';
 		}
 		return {textAlign, x};
+	}
+	_computeLabelArea() {
+		const me = this;
+		const chart = me.chart;
+		const position = me.options.position;
+		if (position === 'left' || position === 'right') {
+			return {top: 0, left: me.left, bottom: chart.height, right: me.right};
+		} if (position === 'top' || position === 'bottom') {
+			return {top: me.top, left: 0, bottom: me.bottom, right: chart.width};
+		}
+		return null;
 	}
 	drawGrid(chartArea) {
 		const me = this;
@@ -4877,6 +4876,10 @@ class Scale extends Element {
 			return;
 		}
 		const ctx = me.ctx;
+		const area = me._computeLabelArea();
+		if (area) {
+			clipArea(ctx, area);
+		}
 		const items = me._labelItems || (me._labelItems = me._computeLabelItems(chartArea));
 		let i, ilen;
 		for (i = 0, ilen = items.length; i < ilen; ++i) {
@@ -4885,6 +4888,9 @@ class Scale extends Element {
 			const label = item.label;
 			let y = item.textOffset;
 			renderText(ctx, label, 0, y, tickFont, item);
+		}
+		if (area) {
+			unclipArea(ctx);
 		}
 	}
 	drawTitle(chartArea) {
@@ -5900,7 +5906,7 @@ class Config {
 	}
 }
 
-var version = "3.0.0-beta.9";
+var version = "3.0.0-beta.10";
 
 const KNOWN_POSITIONS = ['top', 'bottom', 'left', 'right', 'chartArea'];
 function positionIsHorizontal(position, axis) {
@@ -6126,9 +6132,7 @@ class Chart {
 		});
 		me.scales = scales;
 		each(scales, (scale) => {
-			scale.fullWidth = scale.options.fullWidth;
-			scale.position = scale.options.position;
-			scale.weight = scale.options.weight;
+			layouts.configure(me, scale, scale.options);
 			layouts.addBox(me, scale);
 		});
 	}
@@ -6228,8 +6232,11 @@ class Chart {
 			return;
 		}
 		const newControllers = me.buildOrUpdateControllers();
+		me.notifyPlugins('beforeElementsUpdate');
 		for (i = 0, ilen = me.data.datasets.length; i < ilen; i++) {
-			me.getDatasetMeta(i).controller.buildOrUpdateElements();
+			const {controller} = me.getDatasetMeta(i);
+			const reset = !animsDisabled && newControllers.indexOf(controller) === -1;
+			controller.buildOrUpdateElements(reset);
 		}
 		me._updateLayout();
 		if (!animsDisabled) {
@@ -7053,6 +7060,7 @@ BarController.defaults = {
 		'categoryPercentage',
 		'maxBarThickness',
 		'minBarLength',
+		'pointStyle'
 	],
 	interaction: {
 		mode: 'index'
@@ -8000,6 +8008,9 @@ ScatterController.defaults = {
 		showLine: false,
 		fill: false
 	},
+	interaction: {
+		mode: 'point'
+	},
 	plugins: {
 		tooltip: {
 			callbacks: {
@@ -8701,6 +8712,108 @@ PointElement: PointElement,
 BarElement: BarElement
 });
 
+function minMaxDecimation(data, availableWidth) {
+	let i, point, x, y, prevX, minIndex, maxIndex, minY, maxY;
+	const decimated = [];
+	const xMin = data[0].x;
+	const xMax = data[data.length - 1].x;
+	const dx = xMax - xMin;
+	for (i = 0; i < data.length; ++i) {
+		point = data[i];
+		x = (point.x - xMin) / dx * availableWidth;
+		y = point.y;
+		const truncX = x | 0;
+		if (truncX === prevX) {
+			if (y < minY) {
+				minY = y;
+				minIndex = i;
+			} else if (y > maxY) {
+				maxY = y;
+				maxIndex = i;
+			}
+		} else {
+			if (minIndex && maxIndex) {
+				decimated.push(data[minIndex], data[maxIndex]);
+			}
+			if (i > 0) {
+				decimated.push(data[i - 1]);
+			}
+			decimated.push(point);
+			prevX = truncX;
+			minY = maxY = y;
+			minIndex = maxIndex = i;
+		}
+	}
+	return decimated;
+}
+var plugin_decimation = {
+	id: 'decimation',
+	defaults: {
+		algorithm: 'min-max',
+		enabled: false,
+	},
+	beforeElementsUpdate: (chart, args, options) => {
+		if (!options.enabled) {
+			return;
+		}
+		const availableWidth = chart.width;
+		chart.data.datasets.forEach((dataset, datasetIndex) => {
+			const {_data, indexAxis} = dataset;
+			const meta = chart.getDatasetMeta(datasetIndex);
+			const data = _data || dataset.data;
+			if (resolve([indexAxis, chart.options.indexAxis]) === 'y') {
+				return;
+			}
+			if (meta.type !== 'line') {
+				return;
+			}
+			const xAxis = chart.scales[meta.xAxisID];
+			if (xAxis.type !== 'linear' && xAxis.type !== 'time') {
+				return;
+			}
+			if (chart.options.parsing) {
+				return;
+			}
+			if (data.length <= 4 * availableWidth) {
+				return;
+			}
+			if (isNullOrUndef(_data)) {
+				dataset._data = data;
+				delete dataset.data;
+				Object.defineProperty(dataset, 'data', {
+					configurable: true,
+					enumerable: true,
+					get: function() {
+						return this._decimated;
+					},
+					set: function(d) {
+						this._data = d;
+					}
+				});
+			}
+			let decimated;
+			switch (options.algorithm) {
+			case 'min-max':
+				decimated = minMaxDecimation(data, availableWidth);
+				break;
+			default:
+				throw new Error(`Unsupported decimation algorithm '${options.algorithm}'`);
+			}
+			dataset._decimated = decimated;
+		});
+	},
+	destroy(chart) {
+		chart.data.datasets.forEach((dataset) => {
+			if (dataset._decimated) {
+				const data = dataset._data;
+				delete dataset._decimated;
+				delete dataset._data;
+				Object.defineProperty(dataset, 'data', {value: data});
+			}
+		});
+	}
+};
+
 function getLineByIndex(chart, index) {
 	const meta = chart.getDatasetMeta(index);
 	const visible = meta && chart.isDatasetVisible(index);
@@ -9188,7 +9301,7 @@ class Legend extends Element {
 		this._margins = undefined;
 		this.position = undefined;
 		this.weight = undefined;
-		this.fullWidth = undefined;
+		this.fullSize = undefined;
 	}
 	update(maxWidth, maxHeight, margins) {
 		const me = this;
@@ -9519,7 +9632,7 @@ var plugin_legend = {
 		display: true,
 		position: 'top',
 		align: 'center',
-		fullWidth: true,
+		fullSize: true,
 		reverse: false,
 		weight: 1000,
 		onClick(e, legendItem, legend) {
@@ -9590,7 +9703,7 @@ class Title extends Element {
 		this.height = undefined;
 		this.position = undefined;
 		this.weight = undefined;
-		this.fullWidth = undefined;
+		this.fullSize = undefined;
 	}
 	update(maxWidth, maxHeight) {
 		const me = this;
@@ -9710,7 +9823,7 @@ var plugin_title = {
 		font: {
 			style: 'bold',
 		},
-		fullWidth: true,
+		fullSize: true,
 		padding: 10,
 		position: 'top',
 		text: '',
@@ -10597,6 +10710,7 @@ var plugin_tooltip = {
 
 var plugins = /*#__PURE__*/Object.freeze({
 __proto__: null,
+Decimation: plugin_decimation,
 Filler: plugin_filler,
 Legend: plugin_legend,
 Title: plugin_title,

@@ -22,7 +22,7 @@ const gradient = window["chartjs-gradient"]
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "1.1.3",
+    version: "1.1.5",
     chartjs: Chart.version || "v3.0.0-beta.9a",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
@@ -524,51 +524,23 @@ class ChartCard extends HTMLElement {
     }
 
     /**
-     * filter entities from this._hass.states
-     * @call: getEntitiesByfilter(this._hass.states,this.config_filter)
-     *
-     *  filter:
-     *     - sensor.orangenbaum*
-     *     - sensor.energie*
-     * @param {*} list
-     * @param {*} filters
-     */
-    getEntitiesByfilter(list, filters) {
-        function _filterName(stateObj, pattern) {
-            let parts
-            let attr_id
-            let attribute
-            if (typeof pattern === "object") {
-                parts = pattern["key"].split(".")
-                attribute = pattern["key"]
-            } else {
-                parts = pattern.split(".")
-                attribute = pattern
-            }
-            const regEx = new RegExp(`^${attribute.replace(/\*/g, ".*")}$`, "i")
-            return stateObj.search(regEx) === 0
-        }
-        let entities = []
-        filters.forEach((filter) => {
-            const filters = []
-            filters.push((stateObj) => _filterName(stateObj, filter))
-            Object.keys(list)
-                .sort()
-                .forEach((key) => {
-                    Object.keys(list[key]).sort()
-                    if (filters.every((filterFunc) => filterFunc(`${key}`))) {
-                        entities.push(list[key])
-                    }
-                })
-        })
-        return entities
-    }
-    
-    /**
      * all registrated entities for this chart
      */
     getEntities() {
-        if (this._config) return this._config.entities
+        const _entities = this._config.entities || []
+        if(!_entities || _entities.length===0) return
+        const _filterlist   = this._config.entities.filter((x) => x.entity_filter!=undefined)
+        const _entitylist = this._config.entities.filter((x) => x.entity!=undefined)
+        if (this._hass && this._hass.states && _filterlist && _filterlist.length) {
+            const _hass_states = this._hass.states
+            const _filterEntities = filter(_hass_states, _filterlist)
+            // if (this._config.filter.filteroptions) {
+            //     // addional filters...
+            //     // _filterEntities = _filterEntities.slice(0, 5) //
+            // }
+            return [..._entitylist, ..._filterEntities]
+        }
+        return _entities
     }
 
     /**

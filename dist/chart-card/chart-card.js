@@ -31,7 +31,7 @@ const gradient = window["chartjs-gradient"]
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "1.1.3",
+    version: "1.1.5",
     chartjs: Chart.version || "v3.0.0-beta.9a",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
@@ -533,51 +533,23 @@ class ChartCard extends HTMLElement {
     }
 
     /**
-     * filter entities from this._hass.states
-     * @call: getEntitiesByfilter(this._hass.states,this.config_filter)
-     *
-     *  filter:
-     *     - sensor.orangenbaum*
-     *     - sensor.energie*
-     * @param {*} list
-     * @param {*} filters
-     */
-    getEntitiesByfilter(list, filters) {
-        function _filterName(stateObj, pattern) {
-            let parts
-            let attr_id
-            let attribute
-            if (typeof pattern === "object") {
-                parts = pattern["key"].split(".")
-                attribute = pattern["key"]
-            } else {
-                parts = pattern.split(".")
-                attribute = pattern
-            }
-            const regEx = new RegExp(`^${attribute.replace(/\*/g, ".*")}$`, "i")
-            return stateObj.search(regEx) === 0
-        }
-        let entities = []
-        filters.forEach((filter) => {
-            const filters = []
-            filters.push((stateObj) => _filterName(stateObj, filter))
-            Object.keys(list)
-                .sort()
-                .forEach((key) => {
-                    Object.keys(list[key]).sort()
-                    if (filters.every((filterFunc) => filterFunc(`${key}`))) {
-                        entities.push(list[key])
-                    }
-                })
-        })
-        return entities
-    }
-    
-    /**
      * all registrated entities for this chart
      */
     getEntities() {
-        if (this._config) return this._config.entities
+        const _entities = this._config.entities || []
+        if(!_entities || _entities.length===0) return
+        const _filterlist   = this._config.entities.filter((x) => x.entity_filter!=undefined)
+        const _entitylist = this._config.entities.filter((x) => x.entity!=undefined)
+        if (this._hass && this._hass.states && _filterlist && _filterlist.length) {
+            const _hass_states = this._hass.states
+            const _filterEntities = filter(_hass_states, _filterlist)
+            // if (this._config.filter.filteroptions) {
+            //     // addional filters...
+            //     // _filterEntities = _filterEntities.slice(0, 5) //
+            // }
+            return [..._entitylist, ..._filterEntities]
+        }
+        return _entities
     }
 
     /**
@@ -1234,6 +1206,131 @@ function deepMerge(...sources) {
     }
     return acc
 }
+/**
+ * resultlist.sort(compareValues('state'));
+ *
+ * @param {*} key
+ * @param {*} order
+ */
+function compareValues(key, order = "asc") {
+    return function innerSort(a, b) {
+        if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
+            // property doesn't exist on either object
+            return 0
+        }
+        const varA = typeof a[key] === "string" ? a[key].toUpperCase() : a[key]
+        const varB = typeof b[key] === "string" ? b[key].toUpperCase() : b[key]
+        let comparison = 0
+        if (varA > varB) {
+            comparison = 1
+        } else if (varA < varB) {
+            comparison = -1
+        }
+        return order === "desc" ? comparison * -1 : comparison
+    }
+}
+
+/**
+ * capitalize string
+ * @param {*} s
+ */
+const capitalize = (s) => {
+    if (typeof s !== "string") return ""
+    return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+/**
+ * filter entities from this._hass.states
+ * @call: filter(this._hass.states,this.config_filter)
+ *
+ *  filter:
+ *     - sensor.orangenbaum*
+ *     - sensor.energie*
+ *
+ * @param {*} list
+ * @param {*} filters
+ */
+function filter(list, filters) {
+    /**
+     * filter object
+     * @param {*} stateObj
+     * @param {*} pattern
+     */
+    function _filterName(stateObj, pattern) {
+        let parts
+        let attribute
+        //console.log("STATEOBJECT:",stateObj,pattern)
+        if (typeof pattern === "object") {
+            parts = pattern["key"].split(".")
+            attribute = pattern["key"]
+        } else {
+            parts = pattern.split(".")
+            attribute = pattern
+        }
+        const regEx = new RegExp(`^${attribute.replace(/\*/g, ".*")}$`, "i")
+        return stateObj.search(regEx) === 0
+    }
+    let entities = []
+
+    filters.forEach((item) => {
+        const _filters = []
+        _filters.push((stateObj) => _filterName(stateObj, item.entity_filter))
+        if (_filters && _filters.length) {
+            Object.keys(list)
+                .sort()
+                .forEach((key) => {
+                    Object.keys(list[key]).sort()
+                    if (_filters.every((filterFunc) => filterFunc(`${key}`))) {
+                        let newItem
+                        if (item.attribute) {
+                            // check if we can use the attribute for this entity
+                            if (list[key].attributes[item.attribute]) {
+                                let _name = list[key].attributes.friendly_name
+                                    ? list[key].attributes.friendly_name
+                                    : key
+                                _name += item.name ? " " + item.name : " " + capitalize(item.attribute)
+                                newItem = {
+                                    entity: key,
+                                    name: _name,
+                                    unit: item.unit || '',
+                                    state: list[key].attributes[item.attribute.toLowerCase()],
+                                    attributes: list[key].attributes,
+                                    last_changed: list[key].last_changed,
+                                    field: item.attribute.toLowerCase()
+                                }
+                                newItem.attributes.friendly_name = newItem.name
+                            }
+                        } else {
+                            // simple entity...
+                            newItem = {
+                                entity: key,
+                                name: list[key].attributes.friendly_name ? list[key].attributes.friendly_name : key,
+                                state: list[key].state,
+                                attributes: list[key].attributes,
+                                last_changed: list[key].last_changed
+                            }
+                        }
+                        if (newItem) {
+                            if (item.options) {
+                                newItem.options = item.options
+                            }
+                            if (newItem.state && (item.state_min_value || item.state_max_value)) {
+                                const _min = item.state_min_value || Number.MIN_VALUE
+                                const _max = item.state_max || Number.MAX_VALUE
+                                newItem.state = parseFloat(newItem.state)
+                                if ((newItem.state - _min) * (newItem.state - _max) <= 0) {
+                                    entities.push(newItem)
+                                }
+                            } else {
+                                entities.push(newItem)
+                            }
+                        }
+                    }
+                })
+        }
+    })
+    return entities
+}
 
 /** ----------------------------------------------------------
  
@@ -1358,6 +1455,10 @@ class chartData {
             if (array && !array.length) return
             let groups = {}
             const _num = (n) => (n === parseInt(n) ? Number(parseInt(n)) : Number(parseFloat(n).toFixed(2)))
+            const _itemvalue = (item) => {
+                if (item.field) return _num(item[item.field] || 0.0)
+                return _num(item.state || 0.0)
+            }
             const _fmd = (d) => {
                 const t = new Date(d)
                 if (isNaN(t)) return d
@@ -1377,20 +1478,20 @@ class chartData {
                     case "year":
                         return { name: year, label: year }
                     case "month":
-                        return { name: `${year}.${month}`, label: `${year}.${month}` }
+                        return { name: `${year}.${month}`, label: `${month}.${year}` }
                     case "day":
-                        return { name: `${month}.${day}`, label: `${month}.${day}` }
+                        return { name: `${month}.${day}`, label: `${day}.${month}` }
                     case "hour":
-                        return { name: `${month}.${day} ${hours}`, label: [`${month}.${day}`, `${hours}.${minutes}`] }
+                        return { name: `${month}.${day} ${hours}`, label: [`${day}.${month}`, `${hours}.${minutes}`] }
                     case "minutes":
                         return {
                             name: `${month}.${day} ${hours}:${minutes}`,
-                            label: [`${month}.${day}`, `${hours}.${minutes}`]
+                            label: [`${day}.${month}`, `${hours}.${minutes}`]
                         }
                     default:
                         return {
                             name: `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`,
-                            label: `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`
+                            label: `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`
                         }
                 }
             }
@@ -1401,6 +1502,7 @@ class chartData {
                 o.timelabel = group.label
                 groups[group.name].push(o)
             })
+
             // create the grouped seriesdata
             const aggr = this.data_aggregate
             return Object.keys(groups).map(function (group) {
@@ -1416,56 +1518,56 @@ class chartData {
                 if (aggr == "first") {
                     const item = items.shift()
                     return {
-                        y: _num(item.state || 0.0),
+                        y: _itemvalue(item),
                         x: item.timelabel
                     }
                 }
                 if (aggr == "last") {
                     const item = items[items.length - 1]
                     return {
-                        y: _num(item.state || 0.0),
+                        y: _itemvalue(item),
                         x: item.timelabel
                     }
                 }
                 if (aggr == "max") {
                     return items.reduce((a, b) =>
-                        a.state > b.state
+                        _itemvalue(a) > _itemvalue(b)
                             ? {
-                                  y: num(a.state || 0.0),
+                                  y: _itemvalue(a),
                                   x: a.timelabel
                               }
-                            : { y: num(b.state), x: b.timelabel }
+                            : { y: _itemvalue(b), x: b.timelabel }
                     )
                 }
                 if (aggr == "min")
                     return items.reduce((a, b) =>
-                        a.state < b.state
+                        _itemvalue(a) < _itemvalue(b)
                             ? {
-                                  y: _num(a.state || 0.0),
+                                  y: _itemvalue(a),
                                   x: a.timelabel
                               }
                             : {
-                                  y: _num(b.state || 0.0),
+                                  y: _itemvalue(b),
                                   x: b.timelabel
                               }
                     )
                 if (aggr == "sum") {
-                    const val = items.reduce((sum, entry) => sum + num(entry.state), 0)
+                    const val = items.reduce((sum, entry) => sum + _itemvalue(entry), 0)
                     return {
-                        y: _num(val || 0.0),
+                        y: val,
                         x: items[0].timelabel
                     }
                 }
                 if (aggr == "avg") {
-                    const val = items.reduce((sum, entry) => sum + _num(entry.state), 0) / items.length
+                    const val = items.reduce((sum, entry) => sum + _itemvalue(entry), 0) / items.length
                     return {
-                        y: _num(val || 0.0),
+                        y: val,
                         x: items[0].timelabel
                     }
                 }
-                return items.map((items) => {
+                return items.map((item) => {
                     return {
-                        y: _num(items.state || 0.0),
+                        y: _itemvalue(item),
                         x: items.timelabel
                     }
                 })

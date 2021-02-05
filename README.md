@@ -1,6 +1,6 @@
 # Lovelace - graph-chartjs-card
 
-Chart.js card `Version 1.1.0` for Home Assistant -  Visualize your data in 8 different ways; each of them animated and customisable.
+Chart.js card `Version 1.1.5` for Home Assistant -  Visualize your data in 8 different ways; each of them animated and customisable.
 
 > DEVELOPER PREVIEW VERSION, CHART.JS v3.0.0-beta.xx NOT FINAL
 I'm still looking for help and would be happy if someone would get in touch to help me complete and improve (data processing, display / color selection charts ...) the graph-chartjs-card.
@@ -20,7 +20,7 @@ I'm still looking for help and would be happy if someone would get in touch to h
   - Firefox 82.0 (64-Bit)
   - Vivaldi 3.4.2066.76 (Stable channel) (x86_64)
   - Android Browser (Chrome, Firefox, Vivaldi)
-- Lovelace chart-card (Chart.js v3.0.0-beta.5)
+- Lovelace chart-card (Chart.js v3.0.0-beta.10)
 
 <br>
 
