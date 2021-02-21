@@ -31,8 +31,8 @@ const gradient = window["chartjs-gradient"]
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "1.1.5",
-    chartjs: Chart.version || "v3.0.0-beta.9a",
+    version: "1.1.6/3.0.0-11",
+    chartjs: Chart.version || "v3.0.0-beta.11",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
 }
@@ -888,6 +888,8 @@ class ChartCard extends HTMLElement {
                 }
                 this.dataInfo.param = `${this.dataInfo.endtime}:${this.dataInfo.entities}`
                 // build the api url
+                // &skip_initial_state
+                // &significant_changes_only=0
                 this.dataInfo.url = `history/period/${this.dataInfo.starttime.toISOString()}?end_time=${this.dataInfo.endtime.toISOString()}&filter_entity_id=${
                     this.dataInfo.entities
                 }&minimal_response`
@@ -1474,6 +1476,7 @@ class chartData {
                 const hours = ("0" + t.getHours()).slice(-2)
                 const minutes = ("0" + t.getMinutes()).slice(-2)
                 const seconds = ("0" + t.getSeconds()).slice(-2)
+                // sorry not using Intl.DateTimeFormat because this is to slow
                 switch (this.data_group_by) {
                     case "year":
                         return { name: year, label: year }
@@ -1620,6 +1623,7 @@ class chartData {
                     unit: _attr.unit || "",
                     hoverRadius: 20,
                     radius: 15,
+                    pointRadius: 15,
                     hitRadius: 20,
                     backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[20 + i],
                     borderColor: _attr.borderColor || COLOR_BUBBLECHAT
@@ -1935,22 +1939,16 @@ class chartData {
                         })
                     }
                 })
+                // default options
                 let _options = {
                     label: _attr.name || "",
                     unit: _attr.unit || "",
-                    hoverRadius: 20,
-                    radius: 15,
-                    hitRadius: 20,
+                    hoverRadius: 18,
+                    pointRadius: 16,
+                    hitRadius: 22,
                     backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[10 + r],
                     borderColor: _attr.borderColor || DEFAULT_COLORS[10 + r]
                     // TODO: min, max, avg values ???
-                }
-                if (_attr && _attr.pointStyle) {
-                    _options.pointStyle = _attr.pointStyle
-                    _options.pointRadius = 6
-                }
-                if (_attr && _attr.pointRadius) {
-                    _options.pointRadius = _attr.pointRadius
                 }
                 if (this.entityOptions) {
                     // simple merge the default with the global options
@@ -2012,6 +2010,7 @@ class chartData {
                 maxval: 0.0,
                 sumval: 0.0,
                 avgval: 0.0,
+                pointRadius: 0,
                 current: _attr.state || 0.0,
                 last_changed: items[0].last_changed || new Date(),
                 mode: "history"
@@ -2028,9 +2027,15 @@ class chartData {
                 _options.indexAxis = "y"
             }
 
+            if (this.card_config.chart.toLowerCase() === "radar") {
+                _options.pointRadius = 12
+                _options.hoverRadius = 18
+                _options.hitRadius = 22
+            }
+
             if (_attr && _attr.pointStyle) {
                 _options.pointStyle = _attr.pointStyle
-                _options.pointRadius = 6
+                //_options.pointRadius = 6
             }
             if (_attr && _attr.pointRadius) {
                 _options.pointRadius = _attr.pointRadius
@@ -2259,7 +2264,6 @@ class graphChart {
                 }
 
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.point) {
-                    this.ChartControl.defaults.elements.point.radius = 0.33
                     this.ChartControl.defaults.elements.point.borderWidth = 0
                     this.ChartControl.defaults.elements.point.hoverRadius = 8
                     this.ChartControl.defaults.elements.point.hitRadius = 8
@@ -2289,11 +2293,11 @@ class graphChart {
                                     borderDash: [0]
                                 }
                             })
-                            this.ChartControl.defaults.elements.point.hoverRadius = 8
-                            this.ChartControl.defaults.elements.point.pointRadius = 8
                             break
 
                         case "polararea":
+                            // this.ChartControl.defaults.elements.point.pointRadius = 6
+                            // this.ChartControl.defaults.elements.point.hoverRadius = 8
                             this.ChartControl.defaults.set("controllers.polarArea.scales.r", {
                                 ticks: {
                                     backdropColor: "transparent"
@@ -2317,7 +2321,9 @@ class graphChart {
                             break
                         case "scatter":
                         case "bubble":
+                            break;
                         case "line":
+                            break;
                         case "bar":
                         case "pie":
                         case "doughnut":
@@ -2642,7 +2648,6 @@ class graphChart {
                             this.chart.destroy()
                             this.chart = null
                         }
-
                         this.chart = new window.Chart3(this.ctx, graphOptions)
                         this.graphDataSets = this.graphData.data.datasets
 

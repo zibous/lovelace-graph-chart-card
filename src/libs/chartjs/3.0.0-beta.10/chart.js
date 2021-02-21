@@ -1,5 +1,5 @@
 /*!
- * Chart.js v3.0.0-beta.11
+ * Chart.js v3.0.0-beta.10
  * https://www.chartjs.org
  * (c) 2021 Chart.js Contributors
  * Released under the MIT License
@@ -2699,7 +2699,7 @@ class Animation {
     const from = resolve([cfg.from, currentValue, to]);
     this._active = true;
     this._fn = cfg.fn || interpolators[cfg.type || typeof from];
-    this._easing = effects[cfg.easing] || effects.linear;
+    this._easing = effects[cfg.easing || 'linear'];
     this._start = Math.floor(Date.now() + (cfg.delay || 0));
     this._duration = Math.floor(cfg.duration);
     this._loop = !!cfg.loop;
@@ -2774,24 +2774,13 @@ class Animation {
 }
 
 const numbers = ['x', 'y', 'borderWidth', 'radius', 'tension'];
-const colors = ['color', 'borderColor', 'backgroundColor'];
+const colors = ['borderColor', 'backgroundColor'];
+const animationOptions = ['delay', 'duration', 'easing', 'fn', 'from', 'loop', 'to', 'type'];
 defaults.set('animation', {
-  delay: undefined,
   duration: 1000,
   easing: 'easeOutQuart',
-  fn: undefined,
-  from: undefined,
-  loop: undefined,
-  to: undefined,
-  type: undefined,
-});
-const animationOptions = Object.keys(defaults.animation);
-defaults.describe('animation', {
-  _fallback: false,
-  _indexable: false,
-  _scriptable: (name) => name !== 'onProgress' && name !== 'onComplete' && name !== 'fn',
-});
-defaults.set('animations', {
+  onProgress: undefined,
+  onComplete: undefined,
   colors: {
     type: 'color',
     properties: colors
@@ -2800,57 +2789,53 @@ defaults.set('animations', {
     type: 'number',
     properties: numbers
   },
-});
-defaults.describe('animations', {
-  _fallback: 'animation',
-});
-defaults.set('transitions', {
   active: {
-    animation: {
-      duration: 400
-    }
+    duration: 400
   },
   resize: {
-    animation: {
-      duration: 0
-    }
+    duration: 0
   },
   show: {
-    animations: {
-      colors: {
-        from: 'transparent'
-      },
-      visible: {
-        type: 'boolean',
-        duration: 0
-      },
-    }
+    colors: {
+      type: 'color',
+      properties: colors,
+      from: 'transparent'
+    },
+    visible: {
+      type: 'boolean',
+      duration: 0
+    },
   },
   hide: {
-    animations: {
-      colors: {
-        to: 'transparent'
-      },
-      visible: {
-        type: 'boolean',
-        fn: v => v < 1 ? 0 : 1
-      },
-    }
+    colors: {
+      type: 'color',
+      properties: colors,
+      to: 'transparent'
+    },
+    visible: {
+      type: 'boolean',
+      fn: v => v < 1 ? 0 : 1
+    },
   }
 });
+defaults.describe('animation', {
+  _scriptable: (name) => name !== 'onProgress' && name !== 'onComplete' && name !== 'fn',
+  _indexable: false,
+  _fallback: 'animation',
+});
 class Animations {
-  constructor(chart, config) {
+  constructor(chart, animations) {
     this._chart = chart;
     this._properties = new Map();
-    this.configure(config);
+    this.configure(animations);
   }
-  configure(config) {
-    if (!isObject(config)) {
+  configure(animations) {
+    if (!isObject(animations)) {
       return;
     }
     const animatedProps = this._properties;
-    Object.getOwnPropertyNames(config).forEach(key => {
-      const cfg = config[key];
+    Object.getOwnPropertyNames(animations).forEach(key => {
+      const cfg = animations[key];
       if (!isObject(cfg)) {
         return;
       }
@@ -2858,7 +2843,7 @@ class Animations {
       for (const option of animationOptions) {
         resolved[option] = cfg[option];
       }
-      (isArray(cfg.properties) && cfg.properties || [key]).forEach((prop) => {
+      (cfg.properties || [key]).forEach((prop) => {
         if (prop === key || !animatedProps.has(prop)) {
           animatedProps.set(prop, resolved);
         }
@@ -3488,11 +3473,11 @@ class DatasetController {
     }
     return values;
   }
-  _resolveAnimations(index, transition, active) {
+  _resolveAnimations(index, mode, active) {
     const me = this;
     const chart = me.chart;
     const cache = me._cachedDataOpts;
-    const cacheKey = `animation-${transition}`;
+    const cacheKey = 'animation-' + mode;
     const cached = cache[cacheKey];
     if (cached) {
       return cached;
@@ -3500,11 +3485,11 @@ class DatasetController {
     let options;
     if (chart.options.animation !== false) {
       const config = me.chart.config;
-      const scopeKeys = config.datasetAnimationScopeKeys(me._type, transition);
-      const scopes = config.getOptionScopes(me.getDataset(), scopeKeys);
-      options = config.createResolver(scopes, me.getContext(index, active, transition));
+      const scopeKeys = config.datasetAnimationScopeKeys(me._type);
+      const scopes = config.getOptionScopes(me.getDataset().animation, scopeKeys);
+      options = config.createResolver(scopes, me.getContext(index, active, mode));
     }
-    const animations = new Animations(chart, options && options.animations);
+    const animations = new Animations(chart, options && options[mode] || options);
     if (options && options._cacheable) {
       cache[cacheKey] = Object.freeze(animations);
     }
@@ -3761,13 +3746,10 @@ defaults.set('scale', {
 defaults.route('scale.ticks', 'color', '', 'color');
 defaults.route('scale.gridLines', 'color', '', 'borderColor');
 defaults.route('scale.scaleLabel', 'color', '', 'color');
-defaults.describe('scale', {
-  _fallback: false,
-  _scriptable: (name) => !name.startsWith('before') && !name.startsWith('after') && name !== 'callback' && name !== 'parser',
-  _indexable: (name) => name !== 'borderDash' && name !== 'tickBorderDash',
-});
 defaults.describe('scales', {
   _fallback: 'scale',
+  _scriptable: (name) => !name.startsWith('before') && !name.startsWith('after') && name !== 'callback' && name !== 'parser',
+  _indexable: (name) => name !== 'borderDash' && name !== 'tickBorderDash',
 });
 function sample(arr, numItems) {
   const result = [];
@@ -5237,22 +5219,17 @@ function pluginOpts(config, plugin, opts, context) {
   return config.createResolver(scopes, context);
 }
 
-function _createResolver(scopes, prefixes = [''], rootScopes = scopes, fallback) {
-  if (!defined(fallback)) {
-    fallback = _resolve('_fallback', scopes);
-  }
+function _createResolver(scopes, prefixes = ['']) {
   const cache = {
     [Symbol.toStringTag]: 'Object',
     _cacheable: true,
     _scopes: scopes,
-    _rootScopes: rootScopes,
-    _fallback: fallback,
-    override: (scope) => _createResolver([scope, ...scopes], prefixes, rootScopes, fallback),
+    override: (scope) => _createResolver([scope, ...scopes], prefixes),
   };
   return new Proxy(cache, {
     get(target, prop) {
       return _cached(target, prop,
-        () => _resolveWithPrefixes(prop, prefixes, scopes, target));
+        () => _resolveWithPrefixes(prop, prefixes, scopes));
     },
     getOwnPropertyDescriptor(target, prop) {
       return Reflect.getOwnPropertyDescriptor(target._scopes[0], prop);
@@ -5349,7 +5326,7 @@ function _resolveScriptable(prop, value, target, receiver) {
   value = value(_context, _subProxy || receiver);
   _stack.delete(prop);
   if (isObject(value)) {
-    value = createSubResolver(_proxy._scopes, _proxy, prop, value);
+    value = createSubResolver(_proxy._scopes, prop, value);
   }
   return value;
 }
@@ -5362,59 +5339,55 @@ function _resolveArray(prop, value, target, isIndexable) {
     const scopes = _proxy._scopes.filter(s => s !== arr);
     value = [];
     for (const item of arr) {
-      const resolver = createSubResolver(scopes, _proxy, prop, item);
+      const resolver = createSubResolver(scopes, prop, item);
       value.push(_attachContext(resolver, _context, _subProxy && _subProxy[prop]));
     }
   }
   return value;
 }
-function resolveFallback(fallback, prop, value) {
-  return isFunction(fallback) ? fallback(prop, value) : fallback;
-}
-const getScope$1 = (key, parent) => key === true ? parent : resolveObjectKey(parent, key);
-function addScopes(set, parentScopes, key, parentFallback) {
-  for (const parent of parentScopes) {
-    const scope = getScope$1(key, parent);
-    if (scope) {
-      set.add(scope);
-      const fallback = scope._fallback;
-      if (defined(fallback) && fallback !== key && fallback !== parentFallback) {
-        return fallback;
-      }
-    } else if (scope === false && key !== 'fill') {
-      return null;
-    }
-  }
-  return false;
-}
-function createSubResolver(parentScopes, resolver, prop, value) {
-  const rootScopes = resolver._rootScopes;
-  const fallback = resolveFallback(resolver._fallback, prop, value);
-  const allScopes = [...parentScopes, ...rootScopes];
+function createSubResolver(parentScopes, prop, value) {
   const set = new Set([value]);
-  let key = prop;
-  while (key !== false) {
-    key = addScopes(set, allScopes, key, fallback);
-    if (key === null) {
-      return false;
+  const lookupScopes = [value, ...parentScopes];
+  const {keys, includeParents} = _resolveSubKeys(lookupScopes, prop, value);
+  while (keys.length) {
+    const key = keys.shift();
+    for (const item of lookupScopes) {
+      const scope = resolveObjectKey(item, key);
+      if (scope) {
+        set.add(scope);
+        const fallback = scope._fallback;
+        if (defined(fallback)) {
+          keys.push(...resolveFallback(fallback, key, scope).filter(k => k !== key));
+        }
+      } else if (key !== prop && scope === false) {
+        return false;
+      }
     }
   }
-  if (defined(fallback) && fallback !== prop) {
-    const fallbackScopes = allScopes;
-    key = fallback;
-    while (key !== false) {
-      key = addScopes(set, fallbackScopes, key, fallback);
-    }
+  if (includeParents) {
+    parentScopes.forEach(set.add, set);
   }
-  return _createResolver([...set], [''], rootScopes, fallback);
+  return _createResolver([...set]);
 }
-function _resolveWithPrefixes(prop, prefixes, scopes, proxy) {
+function resolveFallback(fallback, prop, value) {
+  const resolved = isFunction(fallback) ? fallback(prop, value) : fallback;
+  return isArray(resolved) ? resolved : typeof resolved === 'string' ? [resolved] : [];
+}
+function _resolveSubKeys(parentScopes, prop, value) {
+  const fallback = valueOrDefault(_resolve('_fallback', parentScopes.map(scope => scope[prop] || scope)), true);
+  const keys = [prop];
+  if (defined(fallback)) {
+    keys.push(...resolveFallback(fallback, prop, value));
+  }
+  return {keys: keys.filter(v => v), includeParents: fallback !== false && fallback !== prop};
+}
+function _resolveWithPrefixes(prop, prefixes, scopes) {
   let value;
   for (const prefix of prefixes) {
     value = _resolve(readKey(prefix, prop), scopes);
     if (defined(value)) {
-      return needsSubResolver(prop, value)
-        ? createSubResolver(scopes, proxy, prop, value)
+      return (needsSubResolver(prop, value))
+        ? createSubResolver(scopes, prop, value)
         : value;
     }
   }
@@ -5585,17 +5558,13 @@ class Config {
         ''
       ]);
   }
-  datasetAnimationScopeKeys(datasetType, transition) {
-    return cachedKeys(`${datasetType}.transition.${transition}`,
+  datasetAnimationScopeKeys(datasetType) {
+    return cachedKeys(`${datasetType}.animation`,
       () => [
-        `datasets.${datasetType}.transitions.${transition}`,
-        `controllers.${datasetType}.transitions.${transition}`,
-        `controllers.${datasetType}.datasets.transitions.${transition}`,
-        `transitions.${transition}`,
-        `datasets.${datasetType}`,
-        `controllers.${datasetType}`,
-        `controllers.${datasetType}.datasets`,
-        ''
+        `datasets.${datasetType}.animation`,
+        `controllers.${datasetType}.animation`,
+        `controllers.${datasetType}.datasets.animation`,
+        'animation'
       ]);
   }
   datasetElementScopeKeys(datasetType, elementType) {
@@ -5695,14 +5664,14 @@ function needContext(proxy, names) {
   const {isScriptable, isIndexable} = _descriptors(proxy);
   for (const prop of names) {
     if ((isScriptable(prop) && isFunction(proxy[prop]))
-      || (isIndexable(prop) && isArray(proxy[prop]))) {
+			|| (isIndexable(prop) && isArray(proxy[prop]))) {
       return true;
     }
   }
   return false;
 }
 
-var version = "3.0.0-beta.11";
+var version = "3.0.0-beta.10";
 
 const KNOWN_POSITIONS = ['top', 'bottom', 'left', 'right', 'chartArea'];
 function positionIsHorizontal(position, axis) {
@@ -7354,7 +7323,7 @@ BarController.defaults = {
   datasets: {
     categoryPercentage: 0.8,
     barPercentage: 0.9,
-    animations: {
+    animation: {
       numbers: {
         type: 'number',
         properties: ['x', 'y', 'base', 'width', 'height']
@@ -7469,9 +7438,8 @@ BubbleController.id = 'bubble';
 BubbleController.defaults = {
   datasetElementType: false,
   dataElementType: 'point',
-  animations: {
+  animation: {
     numbers: {
-      type: 'number',
       properties: ['x', 'y', 'borderWidth', 'radius']
     }
   },
@@ -7732,14 +7700,12 @@ DoughnutController.defaults = {
   datasetElementType: false,
   dataElementType: 'arc',
   animation: {
-    animateRotate: true,
-    animateScale: false
-  },
-  animations: {
     numbers: {
       type: 'number',
       properties: ['circumference', 'endAngle', 'innerRadius', 'outerRadius', 'startAngle', 'x', 'y', 'offset', 'borderWidth']
     },
+    animateRotate: true,
+    animateScale: false
   },
   aspectRatio: 1,
   datasets: {
@@ -7804,7 +7770,7 @@ class LineController extends DatasetController {
   update(mode) {
     const me = this;
     const meta = me._cachedMeta;
-    const {dataset: line, data: points = [], _dataset} = meta;
+    const {dataset: line, data: points = []} = meta;
     const animationsDisabled = me.chart._animationsDisabled;
     let {start, count} = getStartAndCountOfVisiblePoints(meta, points, animationsDisabled);
     me._drawStart = start;
@@ -7813,7 +7779,6 @@ class LineController extends DatasetController {
       start = 0;
       count = points.length;
     }
-    line._decimated = !!_dataset._decimated;
     line.points = points;
     if (mode !== 'resize') {
       const options = me.resolveDatasetElementOptions(mode);
@@ -8029,14 +7994,12 @@ PolarAreaController.id = 'polarArea';
 PolarAreaController.defaults = {
   dataElementType: 'arc',
   animation: {
-    animateRotate: true,
-    animateScale: true
-  },
-  animations: {
     numbers: {
       type: 'number',
       properties: ['x', 'y', 'startAngle', 'endAngle', 'innerRadius', 'outerRadius']
     },
+    animateRotate: true,
+    animateScale: true
   },
   aspectRatio: 1,
   indexAxis: 'r',
@@ -8498,7 +8461,7 @@ function fastPathSegment(ctx, line, segment, params) {
 function _getSegmentMethod(line) {
   const opts = line.options;
   const borderDash = opts.borderDash && opts.borderDash.length;
-  const useFastPath = !line._decimated && !line._loop && !opts.tension && !opts.stepped && !borderDash;
+  const useFastPath = !line._loop && !opts.tension && !opts.stepped && !borderDash;
   return useFastPath ? fastPathSegment : pathSegment;
 }
 function _getInterpolationMethod(options) {
@@ -8510,25 +8473,6 @@ function _getInterpolationMethod(options) {
   }
   return _pointInLine;
 }
-function strokePathWithCache(ctx, line, start, count) {
-  let path = line._path;
-  if (!path) {
-    path = line._path = new Path2D();
-    if (line.path(path, start, count)) {
-      path.closePath();
-    }
-  }
-  ctx.stroke(path);
-}
-function strokePathDirect(ctx, line, start, count) {
-  ctx.beginPath();
-  if (line.path(ctx, start, count)) {
-    ctx.closePath();
-  }
-  ctx.stroke();
-}
-const usePath2D = typeof Path2D === 'function';
-const strokePath = usePath2D ? strokePathWithCache : strokePathDirect;
 class LineElement extends Element {
   constructor(cfg) {
     super();
@@ -8539,7 +8483,6 @@ class LineElement extends Element {
     this._path = undefined;
     this._points = undefined;
     this._segments = undefined;
-    this._decimated = false;
     this._pointsUpdated = false;
     if (cfg) {
       Object.assign(this, cfg);
@@ -8631,7 +8574,14 @@ class LineElement extends Element {
     }
     ctx.save();
     setStyle(ctx, options);
-    strokePath(ctx, me, start, count);
+    let path = me._path;
+    if (!path) {
+      path = me._path = new Path2D();
+      if (me.path(path, start, count)) {
+        path.closePath();
+      }
+    }
+    ctx.stroke(path);
     ctx.restore();
     if (me.animated) {
       me._pointsUpdated = false;
@@ -8925,9 +8875,7 @@ BarElement: BarElement
 });
 
 function minMaxDecimation(data, availableWidth) {
-  let avgX = 0;
-  let countX = 0;
-  let i, point, x, y, prevX, minIndex, maxIndex, startIndex, minY, maxY;
+  let i, point, x, y, prevX, minIndex, maxIndex, minY, maxY;
   const decimated = [];
   const xMin = data[0].x;
   const xMax = data[data.length - 1].x;
@@ -8945,33 +8893,17 @@ function minMaxDecimation(data, availableWidth) {
         maxY = y;
         maxIndex = i;
       }
-      avgX = (countX * avgX + point.x) / ++countX;
     } else {
-      const lastIndex = i - 1;
-      if (!isNullOrUndef(minIndex) && !isNullOrUndef(maxIndex)) {
-        const intermediateIndex1 = Math.min(minIndex, maxIndex);
-        const intermediateIndex2 = Math.max(minIndex, maxIndex);
-        if (intermediateIndex1 !== startIndex && intermediateIndex1 !== lastIndex) {
-          decimated.push({
-            ...data[intermediateIndex1],
-            x: avgX,
-          });
-        }
-        if (intermediateIndex2 !== startIndex && intermediateIndex2 !== lastIndex) {
-          decimated.push({
-            ...data[intermediateIndex2],
-            x: avgX
-          });
-        }
+      if (minIndex && maxIndex) {
+        decimated.push(data[minIndex], data[maxIndex]);
       }
-      if (i > 0 && lastIndex !== startIndex) {
-        decimated.push(data[lastIndex]);
+      if (i > 0) {
+        decimated.push(data[i - 1]);
       }
       decimated.push(point);
       prevX = truncX;
-      countX = 0;
       minY = maxY = y;
-      minIndex = maxIndex = startIndex = i;
+      minIndex = maxIndex = i;
     }
   }
   return decimated;
@@ -10338,11 +10270,9 @@ class Tooltip extends Element {
     }
     const chart = me._chart;
     const options = me.options;
-    const opts = options.enabled && chart.options.animation && options.animations;
+    const opts = options.enabled && chart.options.animation && options.animation;
     const animations = new Animations(me._chart, opts);
-    if (opts._cacheable) {
-      me._cachedAnimations = Object.freeze(animations);
-    }
+    me._cachedAnimations = Object.freeze(animations);
     return animations;
   }
   getTitle(context) {
@@ -10868,8 +10798,6 @@ var plugin_tooltip = {
     animation: {
       duration: 400,
       easing: 'easeOutQuart',
-    },
-    animations: {
       numbers: {
         type: 'number',
         properties: ['x', 'y', 'width', 'height', 'caretX', 'caretY'],
@@ -10950,12 +10878,6 @@ var plugin_tooltip = {
     callbacks: {
       _scriptable: false,
       _indexable: false,
-    },
-    animation: {
-      _fallback: false
-    },
-    animations: {
-      _fallback: 'animation'
     }
   },
   additionalOptionScopes: ['interaction']
@@ -11197,7 +11119,7 @@ class LinearScaleBase extends Scale {
       min: opts.min,
       max: opts.max,
       precision: tickOpts.precision,
-      stepSize: tickOpts.stepSize
+      stepSize: valueOrDefault(tickOpts.fixedStepSize, tickOpts.stepSize)
     };
     const ticks = generateTicks(numericGeneratorOptions, me);
     if (opts.bounds === 'ticks') {

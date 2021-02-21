@@ -22,8 +22,8 @@ const gradient = window["chartjs-gradient"]
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "1.1.5",
-    chartjs: Chart.version || "v3.0.0-beta.9a",
+    version: "1.1.6/3.0.0-11",
+    chartjs: Chart.version || "v3.0.0-beta.11",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
 }
@@ -879,6 +879,8 @@ class ChartCard extends HTMLElement {
                 }
                 this.dataInfo.param = `${this.dataInfo.endtime}:${this.dataInfo.entities}`
                 // build the api url
+                // &skip_initial_state
+                // &significant_changes_only=0
                 this.dataInfo.url = `history/period/${this.dataInfo.starttime.toISOString()}?end_time=${this.dataInfo.endtime.toISOString()}&filter_entity_id=${
                     this.dataInfo.entities
                 }&minimal_response`

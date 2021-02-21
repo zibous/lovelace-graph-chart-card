@@ -138,7 +138,6 @@ class graphChart {
                 }
 
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.point) {
-                    this.ChartControl.defaults.elements.point.radius = 0.33
                     this.ChartControl.defaults.elements.point.borderWidth = 0
                     this.ChartControl.defaults.elements.point.hoverRadius = 8
                     this.ChartControl.defaults.elements.point.hitRadius = 8
@@ -168,11 +167,11 @@ class graphChart {
                                     borderDash: [0]
                                 }
                             })
-                            this.ChartControl.defaults.elements.point.hoverRadius = 8
-                            this.ChartControl.defaults.elements.point.pointRadius = 8
                             break
 
                         case "polararea":
+                            // this.ChartControl.defaults.elements.point.pointRadius = 6
+                            // this.ChartControl.defaults.elements.point.hoverRadius = 8
                             this.ChartControl.defaults.set("controllers.polarArea.scales.r", {
                                 ticks: {
                                     backdropColor: "transparent"
@@ -196,7 +195,9 @@ class graphChart {
                             break
                         case "scatter":
                         case "bubble":
+                            break;
                         case "line":
+                            break;
                         case "bar":
                         case "pie":
                         case "doughnut":
@@ -521,7 +522,6 @@ class graphChart {
                             this.chart.destroy()
                             this.chart = null
                         }
-
                         this.chart = new window.Chart3(this.ctx, graphOptions)
                         this.graphDataSets = this.graphData.data.datasets
 

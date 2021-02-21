@@ -227,6 +227,7 @@ class chartData {
                     unit: _attr.unit || "",
                     hoverRadius: 20,
                     radius: 15,
+                    pointRadius: 15,
                     hitRadius: 20,
                     backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[20 + i],
                     borderColor: _attr.borderColor || COLOR_BUBBLECHAT
@@ -542,22 +543,16 @@ class chartData {
                         })
                     }
                 })
+                // default options
                 let _options = {
                     label: _attr.name || "",
                     unit: _attr.unit || "",
-                    hoverRadius: 20,
-                    radius: 15,
-                    hitRadius: 20,
+                    hoverRadius: 18,
+                    pointRadius: 16,
+                    hitRadius: 22,
                     backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[10 + r],
                     borderColor: _attr.borderColor || DEFAULT_COLORS[10 + r]
                     // TODO: min, max, avg values ???
-                }
-                if (_attr && _attr.pointStyle) {
-                    _options.pointStyle = _attr.pointStyle
-                    _options.pointRadius = 6
-                }
-                if (_attr && _attr.pointRadius) {
-                    _options.pointRadius = _attr.pointRadius
                 }
                 if (this.entityOptions) {
                     // simple merge the default with the global options
@@ -619,6 +614,7 @@ class chartData {
                 maxval: 0.0,
                 sumval: 0.0,
                 avgval: 0.0,
+                pointRadius: 0,
                 current: _attr.state || 0.0,
                 last_changed: items[0].last_changed || new Date(),
                 mode: "history"
@@ -635,9 +631,15 @@ class chartData {
                 _options.indexAxis = "y"
             }
 
+            if (this.card_config.chart.toLowerCase() === "radar") {
+                _options.pointRadius = 12
+                _options.hoverRadius = 18
+                _options.hitRadius = 22
+            }
+
             if (_attr && _attr.pointStyle) {
                 _options.pointStyle = _attr.pointStyle
-                _options.pointRadius = 6
+                //_options.pointRadius = 6
             }
             if (_attr && _attr.pointRadius) {
                 _options.pointRadius = _attr.pointRadius
