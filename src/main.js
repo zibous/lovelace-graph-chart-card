@@ -22,8 +22,8 @@ const gradient = window["chartjs-gradient"]
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "1.1.6/3.0.0-11",
-    chartjs: Chart.version || "v3.0.0-beta.11",
+    version: "1.1.6/3.0.0-13",
+    chartjs: Chart.version || "v3.0.0-beta.13",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
 }
@@ -858,7 +858,18 @@ class ChartCard extends HTMLElement {
      */
     _getHistory() {
         if (this.ready) {
+            
             if (this.data_hoursToShow && this.data_hoursToShow > 0 && this.entity_ids.length) {
+                 
+                // if (update) {
+                //     // we have stateHistories, get only new data
+                //     startTime = this.dataInfo.endtime
+                // } else {
+                //     // no stateHistories get all data
+                //     startTime = new Date();
+                //     startTime.setHours(startTime.getHours() - this.hoursToShow);
+                // }
+
                 // get histroy data
                 this.dataInfo = {
                     starttime: new Date(),
@@ -870,8 +881,10 @@ class ChartCard extends HTMLElement {
                     prev_url: "not_set",
                     param: ""
                 }
+
                 this.dataInfo.starttime.setHours(this.dataInfo.starttime.getHours() - this.data_hoursToShow)
                 this.dataInfo.endtime.setHours(this.dataInfo.endtime.getHours() + 2)
+
                 const _newparam = `${this.dataInfo.endtime}:${this.dataInfo.entities}`
                 if (this.dataInfo.param == _newparam) {
                     console.log("Data allready loaded...")

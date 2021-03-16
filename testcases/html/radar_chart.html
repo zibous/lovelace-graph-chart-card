@@ -13,7 +13,7 @@
 </head>
 
 <body>
-	
+
 	<div id="container" class="center">
 		<div class="chard-card">
 			<div class="chard-description">
@@ -32,7 +32,7 @@
 				label: 'Dataset 1',
 				backgroundColor: ['#03a9f4', '#00bcd4', '#8bc34a'],
 				borderWidth: 0,
-				data: [100, 200, 150]
+				data: [100, 200, 150],
 			}]
 
 		};
@@ -55,6 +55,46 @@
 		window.onload = function () {
 			// Chart.register(gradient);
 			var ctx = document.getElementById('canvas').getContext('2d');
+
+			console.log("Defaults",Chart.defaults)
+			
+			Chart.defaults.layout.padding = {
+				top: 4,
+				left: 0,
+				right: 0,
+				bottom: 50
+			}
+
+			// Chart.defaults.scales.radialLinear.ticks.backdropColor="transparent"
+			// Chart.defaults.scales.radialLinear.angleLines.color="#FFFFFF"
+			
+			Chart.defaults.set("scales.radialLinear", {
+				ticks: {
+					backdropColor: "transparent"
+				},
+				angleLines: {
+					display: true,
+					color: '#FFFFFF',
+					lineWidth: 0.2
+				},
+				gridLines: {
+					circular: true,
+					color: '#FFFFFF',
+					lineWidth: 0.3
+				}
+			})
+
+			// Chart.defaults.set("scale", {
+			// 	gridLines: {
+			// 		display: true,
+			// 		lineWidth: 0.34,
+			// 		borderDash: [0]
+			// 	},
+			// 	ticks: {
+			// 		backdropColor: "transparent"
+			// 	},
+			// })
+
 			window.myRadar = new Chart(ctx, options);
 		};
 	</script>

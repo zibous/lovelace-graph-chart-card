@@ -31,8 +31,8 @@ const gradient = window["chartjs-gradient"]
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "1.1.6/3.0.0-11",
-    chartjs: Chart.version || "v3.0.0-beta.11",
+    version: "1.1.6/3.0.0-13",
+    chartjs: Chart.version || "v3.0.0-beta.13",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
 }
@@ -867,7 +867,18 @@ class ChartCard extends HTMLElement {
      */
     _getHistory() {
         if (this.ready) {
+            
             if (this.data_hoursToShow && this.data_hoursToShow > 0 && this.entity_ids.length) {
+                 
+                // if (update) {
+                //     // we have stateHistories, get only new data
+                //     startTime = this.dataInfo.endtime
+                // } else {
+                //     // no stateHistories get all data
+                //     startTime = new Date();
+                //     startTime.setHours(startTime.getHours() - this.hoursToShow);
+                // }
+
                 // get histroy data
                 this.dataInfo = {
                     starttime: new Date(),
@@ -879,8 +890,10 @@ class ChartCard extends HTMLElement {
                     prev_url: "not_set",
                     param: ""
                 }
+
                 this.dataInfo.starttime.setHours(this.dataInfo.starttime.getHours() - this.data_hoursToShow)
                 this.dataInfo.endtime.setHours(this.dataInfo.endtime.getHours() + 2)
+
                 const _newparam = `${this.dataInfo.endtime}:${this.dataInfo.entities}`
                 if (this.dataInfo.param == _newparam) {
                     console.log("Data allready loaded...")
@@ -2206,18 +2219,20 @@ class graphChart {
                 ) {
                     this.ChartControl.defaults.font.family = this.themeSettings.fontFamily
                 }
+
                 if (this.ChartControl.defaults && this.ChartControl.defaults.color) {
                     this.ChartControl.defaults.color = this.themeSettings.fontColor
                     // new beta 7 !
                     this.ChartControl.defaults.plugins.legend.labels.color = this.themeSettings.fontColor
                 }
+
                 if (this.ChartControl.defaults.layout && this.ChartControl.defaults.layout.padding) {
-                    this.ChartControl.defaults.layout.padding = {
-                        top: 24,
-                        left: 0,
-                        right: 0,
-                        bottom: 0
-                    }
+                    // this.ChartControl.defaults.layout.padding = {
+                    //     top: 24,
+                    //     left: 0,
+                    //     right: 0,
+                    //     bottom: 0
+                    // }
                 }
 
                 // Legend new beta 7 !
@@ -2256,8 +2271,8 @@ class graphChart {
                 // arc element settings
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.arc)
                     this.ChartControl.defaults.elements.arc.borderWidth = 0
-                
-                // line element    
+
+                // line element
                 if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.line) {
                     this.ChartControl.defaults.elements.line.fill = false
                     this.ChartControl.defaults.elements.line.tension = 0.225
@@ -2272,58 +2287,29 @@ class graphChart {
                 // chart type based
                 if (this.ChartControl.defaults.set) {
                     switch (this.chart_type.toLowerCase()) {
-                        case "radar":
-                            this.ChartControl.defaults.set("controllers.radar.scales.r", {
-                                ticks: {
-                                    backdropColor: "transparent"
-                                },
-                                angleLines: {
-                                    display: true,
-                                    color: this.themeSettings.gridlineColor,
-                                    lineWidth: this.themeSettings.gridLineWidth
-                                },
-                                gridLines: {
-                                    circular: true
-                                }
-                            })
-                            this.ChartControl.defaults.set("scale", {
-                                gridLines: {
-                                    display: true,
-                                    lineWidth: this.themeSettings.gridLineWidth * 2,
-                                    borderDash: [0]
-                                }
-                            })
-                            break
-
                         case "polararea":
-                            // this.ChartControl.defaults.elements.point.pointRadius = 6
-                            // this.ChartControl.defaults.elements.point.hoverRadius = 8
-                            this.ChartControl.defaults.set("controllers.polarArea.scales.r", {
+                        case "radar":
+                            this.ChartControl.defaults.set("scales.radialLinear", {
                                 ticks: {
                                     backdropColor: "transparent"
                                 },
                                 angleLines: {
                                     display: true,
                                     color: this.themeSettings.gridlineColor,
-                                    lineWidth: this.themeSettings.gridLineWidth * 2
+                                    lineWidth: this.themeSettings.gridLineWidth * 0.95
                                 },
                                 gridLines: {
                                     circular: true,
-                                    lineWidth: this.themeSettings.gridLineWidth * 1.6,
-                                    borderDash: [0]
-                                }
-                            })
-                            this.ChartControl.defaults.set("scale", {
-                                gridLines: {
-                                    display: true
+                                    lineWidth: this.themeSettings.gridLineWidth * 1.4,
+                                    borderDash: [1, 4]
                                 }
                             })
                             break
                         case "scatter":
                         case "bubble":
-                            break;
+                            break
                         case "line":
-                            break;
+                            break
                         case "bar":
                         case "pie":
                         case "doughnut":
@@ -2521,6 +2507,7 @@ class graphChart {
 
         // chart global settings
         this._setChartDefaults()
+
         // ---------------------------------------
         // merge default with chart config options
         // this.chartconfig.options see yaml config
