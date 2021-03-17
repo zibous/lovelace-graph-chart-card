@@ -88,15 +88,14 @@ class graphChart {
                 }
 
                 if (this.ChartControl.defaults.layout && this.ChartControl.defaults.layout.padding) {
-                    // this.ChartControl.defaults.layout.padding = {
-                    //     top: 24,
-                    //     left: 0,
-                    //     right: 0,
-                    //     bottom: 0
-                    // }
+                    this.ChartControl.defaults.layout.padding = {
+                        top: 24,
+                        left: 0,
+                        right: 0,
+                        bottom: 0
+                    }
                 }
 
-                // Legend new beta 7 !
                 if (this.ChartControl.defaults.plugins && this.ChartControl.defaults.plugins.legend) {
                     this.ChartControl.defaults.plugins.legend.position = "top"
                     this.ChartControl.defaults.plugins.legend.labels.usePointStyle = true
@@ -104,7 +103,6 @@ class graphChart {
                     this.ChartControl.defaults.plugins.legend.show = false
                 }
 
-                // Tooltips new beta 7 !
                 if (this.ChartControl.defaults.plugins && this.ChartControl.defaults.plugins.tooltip) {
                     this.ChartControl.defaults.plugins.tooltip.enabled = true
                     this.ChartControl.defaults.plugins.tooltip.backgroundColor = this.themeSettings.tooltipsBackground
@@ -113,15 +111,14 @@ class graphChart {
                     this.ChartControl.defaults.plugins.tooltip.footerColor = this.themeSettings.tooltipsFontColor
                 }
 
-                // gridlines
                 if (this.themeSettings && this.themeSettings.showGridLines) {
-                    this.ChartControl.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth
                     if (this.ChartControl.defaults.set) {
                         this.ChartControl.defaults.set("scale", {
-                            gridLines: {
+                            grid: {
                                 display: true,
                                 color: this.themeSettings.gridlineColor,
                                 drawBorder: true,
+                                lineWidth: this.themeSettings.gridLineWidth,
                                 borderDash: this.themeSettings.borderDash,
                                 zeroLineWidth: 8
                             }
@@ -159,7 +156,7 @@ class graphChart {
                                     color: this.themeSettings.gridlineColor,
                                     lineWidth: this.themeSettings.gridLineWidth * 0.95
                                 },
-                                gridLines: {
+                                grid: {
                                     circular: true,
                                     lineWidth: this.themeSettings.gridLineWidth * 1.4,
                                     borderDash: [1, 4]

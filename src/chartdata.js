@@ -59,12 +59,15 @@ class chartData {
         try {
             if (!array) return
             if (array && !array.length) return
+
             let groups = {}
             const _num = (n) => (n === parseInt(n) ? Number(parseInt(n)) : Number(parseFloat(n).toFixed(2)))
+
             const _itemvalue = (item) => {
                 if (item.field) return _num(item[item.field] || 0.0)
                 return _num(item.state || 0.0)
             }
+
             const _fmd = (d) => {
                 const t = new Date(d)
                 if (isNaN(t)) return d
@@ -102,12 +105,37 @@ class chartData {
                         }
                 }
             }
-            // first build the groups
+
+            // first build the groups for all entities
+            let _useAlias = this.settings.aliasfield
+            let _df = this.settings.datafields
             array.forEach(function (o) {
-                let group = _fmd(o.last_changed)
-                groups[group.name] = groups[group.name] || []
-                o.timelabel = group.label
-                groups[group.name].push(o)
+                if (o && o.last_changed) {
+                    let group = _fmd(o.last_changed)
+                    if (group) {
+                        groups[group.name] = groups[group.name] || []
+                        if (_useAlias && _df) {
+                            // use the attribute value
+                            let fld = _df[o.entity_id].attribute || 0.0
+                            let _factor = _df[o.entity_id]._factor || 1.0
+                            if (fld in o.attributes) {
+                                groups[group.name].push({
+                                    timelabel: group.label,
+                                    state: (o.attributes[fld] || 0.0) * _factor,
+                                    last_changed: o.last_changed
+                                })
+                            }
+                        } else {
+                            // use the state value
+                            let _factor = _df && _df[o.entity_id] ? _df[o.entity_id]._factor || 1.0 : 1.0
+                            groups[group.name].push({
+                                timelabel: group.label,
+                                state: (o.state || 0.0) * _factor,
+                                last_changed: o.last_changed
+                            })
+                        }
+                    }
+                }
             })
 
             // create the grouped seriesdata
@@ -586,15 +614,10 @@ class chartData {
         // all for other carts
         for (const list of this.stateHistories) {
             if (list.length === 0) continue
-            if (!list[0].state) continue
+            //if (!list[0].state) continue
 
             // interate throw all entities data
             const items = this._getGroupHistoryData(list)
-
-            // if(this.data_aggregate==='first'){
-            //     console.log(this.chart_type, items, this.stateHistories)
-            // }
-
             const id = list[0].entity_id
 
             // get all settings from the selected entity
@@ -706,8 +729,6 @@ class chartData {
     getHistoryGraphData() {
         try {
             if (this.stateHistories && this.stateHistories.length) {
-                // merge with current...
-
                 switch (this.chart_type.toLowerCase()) {
                     case "bubble":
                         this.graphData = this.createHistoryBubbleData()

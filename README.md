@@ -1,6 +1,6 @@
 # Lovelace - graph-chartjs-card
 
-Chart.js card `Version 1.1.5` for Home Assistant -  Visualize your data in 8 different ways; each of them animated and customisable.
+Chart.js card `Version 1.1.6` for Home Assistant -  Visualize your data in 8 different ways; each of them animated and customisable.
 
 > DEVELOPER PREVIEW VERSION, CHART.JS v3.0.0-beta.xx NOT FINAL
 I'm still looking for help and would be happy if someone would get in touch to help me complete and improve (data processing, display / color selection charts ...) the graph-chartjs-card.
@@ -20,7 +20,7 @@ I'm still looking for help and would be happy if someone would get in touch to h
   - Firefox 82.0 (64-Bit)
   - Vivaldi 3.4.2066.76 (Stable channel) (x86_64)
   - Android Browser (Chrome, Firefox, Vivaldi)
-- Lovelace chart-card (Chart.js v3.0.0-beta.13)
+- Lovelace chart-card (Chart.js v3.0.0-beta.14)
 
 <br>
 
@@ -92,13 +92,15 @@ properties of the Entity object detailed in the following table (as per `sensor.
 
 | Name | Type | Default | Description |
 |------|:----:|:-------:|-------------|
-| - options | optional |  | Set a custom option (global) for all entites.  see: [Chart.js documentation](https://www.chartjs.org/docs/latest/).|
-| entity ***(required)*** | string |  | Entity id of the sensor.
-| - name | string |  | Set a custom display name, defaults to entity's friendly_name.
-| - backgroundColor | string |  | Set a custom color, overrides all other color options including thresholds.
-| - borderColor | string |  | Set a custom color, overrides all other color options including thresholds.
+| - options | optional | -- | Set a custom option (global) for all entites.  see: [Chart.js documentation](https://www.chartjs.org/docs/latest/).|
+| entity ***(required)*** | string |  | Entity id of the sensor.|
+| - name | string |--  | Set a custom display name, defaults to entity's friendly_name.|
+| - attribute | string |--  | Instead of retrieving the state, it will retrieve an attribute of the entity attribute: `sum_costall` |
+| - faktor | number |  | Calculation Factor for the current state: `factor: -1.00` |
+| - backgroundColor | string |  | Set a custom color, overrides all other color options including thresholds.|
+| - borderColor | string |  | Set a custom color, overrides all other color options including thresholds.|
 | - unit | string |  | Set a custom unit of measurement, overrides `unit` set in base config. |
-| - yAxisID | string |  | Set secondary axis yAxisID: "right" || yAxisID: "left" |
+| - yAxisID | string |  | Set secondary axis yAxisID: `right` or yAxisID: `left` |
 | - gradient | list |  | Set the colors for the gradient |
 | - fill | boolean | false  | How to fill the area under the. line see: [Chart.js documentation](https://www.chartjs.org/docs/latest/).|
 | - pointStyle | string |  | Set the pointer `circle`, `triangle`, `rectRounded`, `rect`, `rectRot`, `cross`, `star`, `line`, `dash` style.  |

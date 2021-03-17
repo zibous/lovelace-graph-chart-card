@@ -22,8 +22,8 @@ const gradient = window["chartjs-gradient"]
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "1.1.6/3.0.0-13",
-    chartjs: Chart.version || "v3.0.0-beta.13",
+    version: "1.1.6/3.0.0-14",
+    chartjs: Chart.version || "v3.0.0-beta.14",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
 }
@@ -264,10 +264,10 @@ class ChartCard extends HTMLElement {
     _setDefaultThemeSettings() {
         this.themeSettings = {
             theme: { theme: "system", dark: false },
-            fontColor: "#333333",
+            fontColor: "#1E1E1E",
             fontFamily: "Quicksand, Roboto,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
-            gridlineColor: "#DCDCDC",
-            zeroLineColor: "#555555",
+            gridlineColor: "1E1E1E",
+            zeroLineColor: "#333333",
             tooltipsBackground: "#ecf0f1",
             tooltipsFontColor: "#647687",
             showLegend:
@@ -339,8 +339,7 @@ class ChartCard extends HTMLElement {
                 showLegend:
                     ["pie", "doughnut", "polararea", "line"].includes(this.chart_type.toLowerCase()) ||
                     this.themeSettings.showLegend,
-                showGridLines:
-                    ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || this.showGridLines,
+                showGridLines: ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || false,
                 secondaryAxis: false,
                 themecolor: this._evaluateCssVariable("--chartjs-theme") || false,
                 charttheme: this.chart_themesettings !== null,
@@ -355,8 +354,8 @@ class ChartCard extends HTMLElement {
             if (this.theme && this.theme.dark != undefined) {
                 this.themeSettings.theme = this.theme
             }
-            this.themeSettings.gridLineWidth = this.themeSettings.theme.dark ? 0.18 : 0.45
-            this.themeSettings.borderDash = this.themeSettings.theme.dark ? [2] : [0]
+            this.themeSettings.gridLineWidth = this.themeSettings.theme.dark ? 0.16 : 0.55
+            this.themeSettings.borderDash = this.themeSettings.theme.dark ? [3, 1] : [2, 1]
             if (this._config.options && this._config.options.scale && this._config.options.scale.gridLines)
                 this.themeSettings.showGridLines = true
             if (this._config.options && this._config.options.legend) this.themeSettings.showLegend = true
@@ -528,9 +527,9 @@ class ChartCard extends HTMLElement {
      */
     getEntities() {
         const _entities = this._config.entities || []
-        if(!_entities || _entities.length===0) return
-        const _filterlist   = this._config.entities.filter((x) => x.entity_filter!=undefined)
-        const _entitylist = this._config.entities.filter((x) => x.entity!=undefined)
+        if (!_entities || _entities.length === 0) return
+        const _filterlist = this._config.entities.filter((x) => x.entity_filter != undefined)
+        const _entitylist = this._config.entities.filter((x) => x.entity != undefined)
         if (this._hass && this._hass.states && _filterlist && _filterlist.length) {
             const _hass_states = this._hass.states
             const _filterEntities = filter(_hass_states, _filterlist)
@@ -548,8 +547,8 @@ class ChartCard extends HTMLElement {
      */
     getEntityData() {
         // all entity data values
-        if (this.hassEntities && this.hassEntities.length)
-            this.entityData = this.hassEntities.map((x) => (x === undefined ? 0 : x.state))
+        if (this.entities && this.entities.length)
+            this.entityData = this.entities.map((x) => (x === undefined ? 0 : x.state * x.faktor || 1.0))
     }
 
     /**
@@ -662,6 +661,8 @@ class ChartCard extends HTMLElement {
             this.update_interval = this._config.update_interval * 1000 || 1000 * 60
             this.data_ignoreZero = this._config.ignoreZero || false
             this.data_units = this._config.units || ""
+            this._config.aliasfield = false
+            this._config.datafields = []
 
             // check if we can use showstate
             if (["bubble", "scatter"].includes(this.chart_type.toLocaleLowerCase())) {
@@ -740,6 +741,7 @@ class ChartCard extends HTMLElement {
             this.entityOptions = null
             this.entities = []
             this.entity_ids = []
+            this._config.aliasfield = false
             for (const entity of _entities) {
                 if (entity.options) {
                     // all global entity options
@@ -757,6 +759,18 @@ class ChartCard extends HTMLElement {
                         if (item.name !== undefined) {
                             item.last_changed = h.last_changed || this.startTime
                             item.state = h.state || 0.0
+                            item.alias = null
+                            if (item.faktor) {
+                                item.state = item.state * item.faktor || 1.0
+                            }
+                            if (item.attribute) {
+                                item.state = h.attributes[item.attribute] || 0.0
+                                this._config.aliasfield = true
+                                item.alias = item.attribute
+                            }
+                            if (item.faktor || item.attribute) {
+                                this._config.datafields[entity.entity] = item
+                            }
                             this.entities.push(item)
                             this.entity_ids.push(entity.entity)
                         }
@@ -858,9 +872,7 @@ class ChartCard extends HTMLElement {
      */
     _getHistory() {
         if (this.ready) {
-            
             if (this.data_hoursToShow && this.data_hoursToShow > 0 && this.entity_ids.length) {
-                 
                 // if (update) {
                 //     // we have stateHistories, get only new data
                 //     startTime = this.dataInfo.endtime
@@ -871,6 +883,10 @@ class ChartCard extends HTMLElement {
                 // }
 
                 // get histroy data
+                // # filter_entity_id=<entity_ids> to filter on one or more entities - comma separated.
+                // # end_time=<timestamp> to choose the end of the period in URL encoded format (defaults to 1 day).
+                // # minimal_response to only return last_changed and state for states other than the first and last state (much faster).
+                // # significant_changes_only to only return significant state changes.
                 this.dataInfo = {
                     starttime: new Date(),
                     endtime: new Date(),
@@ -879,9 +895,12 @@ class ChartCard extends HTMLElement {
                     loading: false,
                     url: "",
                     prev_url: "not_set",
-                    param: ""
+                    param: "",
+                    options: "&skip_initial_state&significant_changes_only=0"
                 }
-
+                if (this._config.aliasfield == false) {
+                    this.dataInfo.options += "&minimal_response"
+                }
                 this.dataInfo.starttime.setHours(this.dataInfo.starttime.getHours() - this.data_hoursToShow)
                 this.dataInfo.endtime.setHours(this.dataInfo.endtime.getHours() + 2)
 
@@ -891,12 +910,11 @@ class ChartCard extends HTMLElement {
                     return
                 }
                 this.dataInfo.param = `${this.dataInfo.endtime}:${this.dataInfo.entities}`
+
                 // build the api url
-                // &skip_initial_state
-                // &significant_changes_only=0
                 this.dataInfo.url = `history/period/${this.dataInfo.starttime.toISOString()}?end_time=${this.dataInfo.endtime.toISOString()}&filter_entity_id=${
                     this.dataInfo.entities
-                }&minimal_response`
+                }${this.dataInfo.options}`
 
                 if (this.dataInfo.url !== this.dataInfo.prev_url) {
                     // get the history data
@@ -1026,7 +1044,7 @@ class ChartCard extends HTMLElement {
             stateHistories: stateHistories,
             data_group_by: this.data_group_by,
             data_aggregate: this.data_aggregate,
-            setting: this._config,
+            settings: this._config,
             chart_locale: this.chart_locale,
             lastUpdate: this.lastUpdate
         })
