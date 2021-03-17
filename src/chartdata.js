@@ -117,20 +117,20 @@ class chartData {
                         if (_useAlias && _df) {
                             // use the attribute value
                             let fld = _df[o.entity_id].attribute || 0.0
-                            let _factor = _df[o.entity_id]._factor || 1.0
+                            let _faktor = _df[o.entity_id]._faktor || 1.0
                             if (fld in o.attributes) {
                                 groups[group.name].push({
                                     timelabel: group.label,
-                                    state: (o.attributes[fld] || 0.0) * _factor,
+                                    state: (o.attributes[fld] || 0.0) * _faktor,
                                     last_changed: o.last_changed
                                 })
                             }
                         } else {
                             // use the state value
-                            let _factor = _df && _df[o.entity_id] ? _df[o.entity_id]._factor || 1.0 : 1.0
+                            let _faktor = _df && _df[o.entity_id] ? _df[o.entity_id]._faktor || 1.0 : 1.0
                             groups[group.name].push({
                                 timelabel: group.label,
-                                state: (o.state || 0.0) * _factor,
+                                state: (o.state || 0.0) * _faktor,
                                 last_changed: o.last_changed
                             })
                         }

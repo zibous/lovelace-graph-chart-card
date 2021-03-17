@@ -548,7 +548,9 @@ class ChartCard extends HTMLElement {
     getEntityData() {
         // all entity data values
         if (this.entities && this.entities.length)
-            this.entityData = this.entities.map((x) => (x === undefined ? 0 : x.state * x.faktor || 1.0))
+            this.entityData = this.entities.map((x) =>
+                x === undefined ? 0.0 : x.faktor ? x.state * x.faktor : x.state
+            )
     }
 
     /**
@@ -760,8 +762,9 @@ class ChartCard extends HTMLElement {
                             item.last_changed = h.last_changed || this.startTime
                             item.state = h.state || 0.0
                             item.alias = null
+                            // TODO: check item.faktor
                             if (item.faktor) {
-                                item.state = item.state * item.faktor || 1.0
+                                item.state = item.state * (item.faktor || 1.0)                            
                             }
                             if (item.attribute) {
                                 item.state = h.attributes[item.attribute] || 0.0
