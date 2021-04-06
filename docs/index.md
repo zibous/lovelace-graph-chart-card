@@ -2,17 +2,13 @@
 
 Chart.js card `Version 2.0.2` for Home Assistant -  Visualize your data in 9 different ways; each of them animated and customisable.
 
-![charts2.png](docs/img/charts/charts.png)
+![charts2.png](img/charts/charts.png)
 
 
-<br>
-If you find any information on this page useful, feel free to buy me a coffee:
-<a href="https://www.buymeacoff.ee/zibous" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
-
-<hr>
-<br>
 
 ## Installation
+
+
 
 ### Manual install
 
@@ -119,9 +115,8 @@ In this example, we create a bar chart for a two dataset and render that in the 
 
 ## 
 
-![charts2.png](docs/img/charts/simple_bar.png)
+![charts2.png](img/charts/simple_bar.png)
 
- 
 
 ### YAML Configuration
 
@@ -146,32 +141,3 @@ In this example, we create a bar chart for a two dataset and render that in the 
 ```
 
 You can see all the ways to use `Lovelace - graph-chartjs-card` in the [usage documentation](./getting-started/index.md).
-
-<br>
-
-## Helper
-
-- [YAML to JSON Online](https://www.convertjson.com/yaml-to-json.htm) - Use this online tool to convert YAML into JSON. 
-- [JSON to YAML Online](https://www.convertjson.com/json-to-yaml.htm) - Use this online tool to convert JSON into YAML. 
-
-## Resources
-
-- [Chart.js v3](https://chartjs.org) - Chart.js - Simple yet flexible JavaScript charting for designers & developers
-- [Chart.js Official Guide](https://chartjs.org/docs) - The user guide and documentation site.
-- [Chart.js Samples](https://www.chartjs.org/samples/latest/) - Simple yet flexible JavaScript charting for designers & developers
-- [Colors with Chart.js & D3's](https://codenebula.io/javascript/frontend/dataviz/2019/04/18/automatically-generate-chart-colors-with-chart-js-d3s-color-scales/) - Automatically Generate Chart Colors with Chart.js & D3's Color Scales...
-- [SVG Loaders](http://samherbert.net/svg-loaders/) - SVG-Loaders...
-- [Colors Wall](https://colorswall.com) - Place to store your color Palettes
-- [UI gradients](https://uigradients.com/) - uiGradients - Beautiful colored gradients
-
-
-<hr>
-
-## Credits
-
-- [Evert Timberg](https://github.com/etimberg) - Maintainer of @chartjs
-- [Jukka Kurkela](https://github.com/kurkle) - Maintainer of @chartjs & Plugins for chartjs
-
-## License
-
-`graph-chartjs-card` is available under the [MIT license](https://opensource.org/licenses/MIT).

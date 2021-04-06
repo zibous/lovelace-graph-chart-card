@@ -3,8 +3,10 @@ yarn-error.log
 .archiv
 .history
 .DS_Store
-tests/
-release/
+/tests
+/release
+/testcases
+
 
 # Logs
 logs
@@ -12,3 +14,4 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.vscode/launch.json

@@ -1,10 +1,72 @@
 /** ----------------------------------------------------------
  
 	Lovelaces chartjs
-  	(c) 2020 Peter Siebler
+  	(c) 2021 Peter Siebler
   	Released under the MIT license
  
  * ----------------------------------------------------------*/
+
+/**
+ * format the x-axis date/time label
+ * @param {*} tickValue
+ * @param {*} index
+ * @param {*} ticks
+ * @returns formatted tick value
+ */
+function xAxisFormat(tickValue, index, ticks) {
+    if (this && this.options.time && this.options.time.unit) {
+        const dateFormatPattern = this.options.time.unit
+        if (dateFormatPattern && Number.isInteger(tickValue)) {
+            return formatdate(+tickValue, dateFormatPattern)
+        }
+    }
+    return tickValue
+}
+
+/**
+ * format the y-axis date/time label
+ * @param {*} tickValue
+ * @param {*} index
+ * @param {*} ticks
+ * @returns formated tick value
+ */
+function yAxisFormat(tickValue, index, ticks) {
+    return tickValue
+}
+
+/**
+ * format the tooltip title
+ * if attribute localedate is present, this is returned
+ * as label otherwise the data.label will be used.
+ * @param {*} context
+ * @returns string
+ */
+function formatToolTipTitle(context) {
+    const data = context[0].raw
+    if (context[0].label && data && data.localedate) {
+        return data.localedate || context[0].label
+    }
+    return context[0].label || ""
+}
+
+/**
+ * format the tooltip label
+ * @param {*} context
+ * @returns string
+ */
+function formatToolTipLabel(context) {
+    if (context.dataset.tooltip === false || !context.dataset.label) {
+        return null
+    }
+    let label = context.dataset.label || ""
+    const data = context.raw
+    const unit = context.dataset.unit ? ` ${context.dataset.unit}` : ""
+    label += ": " + context.formattedValue + unit
+    // if (context.raw.statistics) {
+    //   label = [label, "Statistics", context.raw.statistics]
+    // }
+    return label
+}
 
 /**
  * Lovelaces chartjs
@@ -22,7 +84,6 @@ class graphChart {
      *		ctx: this.ctx,
      *		chart_locale: this.chart_locale,
      *		chart_type: this.chart_type,
-     *		themeSettings: this.themeSettings,
      *		chartconfig: this.chartconfig,
      *	}
      *	// init the graph chart
@@ -34,152 +95,20 @@ class graphChart {
         this.ctx = config.ctx || null // the chart canvas element
         this.canvasId = config.canvasId // canvas container id
         this.card_config = config.card_config // current card settings
-        this.entities = config.entities // all entities
+        this.entity_items = config.entity_items // all entities
         this.chart_locale = config.locale || "de-DE" // the locale for number(s) and date(s)
         this.chart_type = config.chart_type || "bar" // the chart type
-        this.themeSettings = config.themeSettings || {} // the theme settings (dark or light)
         this.chartconfig = config.chartconfig || {} // the chart config from the template
         this.loader = config.loader // the loading animation
+        this.DEBUGMODE = config.debugmode || 0 // internal debugging enabled
+        this.DEBUGDATA = config.debugdata
         this.graphData = {} // the graph data
         this.graphDataSets = [] // current graph settings
         this.setting = config.setting
         this.chart_ready = false // boolean chart allready exits
         this.lastUpdate = null // timestamp last chart update
         this.ChartControl = window.Chart3 || Chart // chart global settings
-    }
-
-    /**
-     * change the theme settings
-     * @param {*} options
-     */
-    setThemeSettings(options) {
-        this.themeSettings = options
-        return true
-    }
-
-    /**
-     * chart global settings
-     */
-    _setChartDefaults() {
-        // global default settings
-        if (this.themeSettings.chartdefault === true) return
-        this.ChartControl = window.Chart3
-        try {
-            if (this.ChartControl && this.ChartControl.defaults) {
-                // global defailt settings
-                this.ChartControl.defaults.responsive = true
-                this.ChartControl.defaults.maintainAspectRatio = false
-                this.ChartControl.defaults.animation = 0
-                this.ChartControl.defaults.locale = this.chart_locale
-
-                // global font settings
-                if (
-                    this.ChartControl.defaults &&
-                    this.ChartControl.defaults.font &&
-                    this.ChartControl.defaults.font.family
-                ) {
-                    this.ChartControl.defaults.font.family = this.themeSettings.fontFamily
-                }
-
-                if (this.ChartControl.defaults && this.ChartControl.defaults.color) {
-                    this.ChartControl.defaults.color = this.themeSettings.fontColor
-                    // new beta 7 !
-                    this.ChartControl.defaults.plugins.legend.labels.color = this.themeSettings.fontColor
-                }
-
-                if (this.ChartControl.defaults.layout && this.ChartControl.defaults.layout.padding) {
-                    this.ChartControl.defaults.layout.padding = {
-                        top: 24,
-                        left: 0,
-                        right: 0,
-                        bottom: 0
-                    }
-                }
-
-                if (this.ChartControl.defaults.plugins && this.ChartControl.defaults.plugins.legend) {
-                    this.ChartControl.defaults.plugins.legend.position = "top"
-                    this.ChartControl.defaults.plugins.legend.labels.usePointStyle = true
-                    this.ChartControl.defaults.plugins.legend.labels.boxWidth = 8
-                    this.ChartControl.defaults.plugins.legend.show = false
-                }
-
-                if (this.ChartControl.defaults.plugins && this.ChartControl.defaults.plugins.tooltip) {
-                    this.ChartControl.defaults.plugins.tooltip.enabled = true
-                    this.ChartControl.defaults.plugins.tooltip.backgroundColor = this.themeSettings.tooltipsBackground
-                    this.ChartControl.defaults.plugins.tooltip.titleColor = this.themeSettings.tooltipsFontColor
-                    this.ChartControl.defaults.plugins.tooltip.bodyColor = this.themeSettings.tooltipsFontColor
-                    this.ChartControl.defaults.plugins.tooltip.footerColor = this.themeSettings.tooltipsFontColor
-                }
-
-                if (this.themeSettings && this.themeSettings.showGridLines) {
-                    if (this.ChartControl.defaults.set) {
-                        this.ChartControl.defaults.set("scale", {
-                            grid: {
-                                display: true,
-                                color: this.themeSettings.gridlineColor,
-                                drawBorder: true,
-                                lineWidth: this.themeSettings.gridLineWidth,
-                                borderDash: this.themeSettings.borderDash,
-                                zeroLineWidth: 8
-                            }
-                        })
-                    }
-                }
-
-                // arc element settings
-                if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.arc)
-                    this.ChartControl.defaults.elements.arc.borderWidth = 0
-
-                // line element
-                if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.line) {
-                    this.ChartControl.defaults.elements.line.fill = false
-                    this.ChartControl.defaults.elements.line.tension = 0.225
-                }
-
-                if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.point) {
-                    this.ChartControl.defaults.elements.point.borderWidth = 0
-                    this.ChartControl.defaults.elements.point.hoverRadius = 8
-                    this.ChartControl.defaults.elements.point.hitRadius = 8
-                }
-
-                // chart type based
-                if (this.ChartControl.defaults.set) {
-                    switch (this.chart_type.toLowerCase()) {
-                        case "polararea":
-                        case "radar":
-                            this.ChartControl.defaults.set("scales.radialLinear", {
-                                ticks: {
-                                    backdropColor: "transparent"
-                                },
-                                angleLines: {
-                                    display: true,
-                                    color: this.themeSettings.gridlineColor,
-                                    lineWidth: this.themeSettings.gridLineWidth * 0.95
-                                },
-                                grid: {
-                                    circular: true,
-                                    lineWidth: this.themeSettings.gridLineWidth * 1.4,
-                                    borderDash: [1, 4]
-                                }
-                            })
-                            break
-                        case "scatter":
-                        case "bubble":
-                            break
-                        case "line":
-                            break
-                        case "bar":
-                        case "pie":
-                        case "doughnut":
-                        default:
-                            break
-                    }
-                }
-                this.themeSettings.chartdefault = true
-            }
-        } catch (err) {
-            console.error("Error Set Chart defaults for", this.chart_type, ": ", err, err.message)
-        }
+        this.version = "1.0.1"
     }
 
     /**
@@ -196,14 +125,15 @@ class graphChart {
         const _loader = this.loader
         // chart default options
         let _options = {
-            units: this.data_units || "",
+            unit: "",
+            hoverOffset: 8,
             layout: {},
+            interaction: {
+                mode: "nearest",
+                intersect: false
+            },
             chartArea: {
                 backgroundColor: "transparent"
-            },
-            hover: {
-                mode: "nearest",
-                intersect: true
             },
             elements: {},
             spanGaps: true,
@@ -211,9 +141,8 @@ class graphChart {
                 title: {},
                 tooltip: {},
                 legend: {
-                    display: this.themeSettings.showLegend || false
-                },
-                scales: {}
+                    display: ["pie", "doughnut", "polararea", "line"].includes(this.chart_type.toLowerCase()) || false
+                }
             },
             animation: {
                 onComplete: function () {
@@ -223,33 +152,26 @@ class graphChart {
             onResize: null
         }
 
-        if (this.themeSettings.gradient === true) {
-            if (this.graphData.config.gradient === true && this.graphData.config.mode === "simple") {
-                //enable gradient colors for state charts
-                _options.gradientcolor = {
-                    color: true,
-                    type: this.chart_type
-                }
+        if (this.graphData.config.gradient === true && this.graphData.config.mode === "simple") {
+            //enable gradient colors for state charts
+            _options.gradientcolor = {
+                color: true,
+                type: this.chart_type
             }
-            if (this.graphData.config.gradient) {
-                // enable gradient colors for data series chart
-                _options.plugins = {
-                    gradient
-                }
+        }
+        if (gradient && this.graphData.config.gradient) {
+            // enable gradient colors for data series chart
+            _options.plugins = {
+                gradient
             }
         }
 
-        // ---------------------------------------------------
-        // check secondary axis
-        // this.graphData.config holds the configruation data
-        // this.graphData.data.datasets data per series
-        // ---------------------------------------------------
-        if (
-            this.graphData.config.secondaryAxis &&
-            this.graphData &&
-            this.graphData.data &&
-            this.graphData.data.datasets
-        ) {
+        /**
+         * check secondary axis
+         * this.graphData.config holds the configruation data
+         * this.graphData.data.datasets data per series
+         */
+        if (this.graphData.config.secondaryAxis && this.graphData && this.graphData.data && this.graphData.data.datasets) {
             let _scaleOptions = {}
             this.graphData.data.datasets.forEach((dataset) => {
                 if (dataset.yAxisID) {
@@ -259,8 +181,7 @@ class graphChart {
                     _scaleOptions[dataset.yAxisID].position = dataset.yAxisID
                     _scaleOptions[dataset.yAxisID].display = true
                     if (dataset.yAxisID.toLowerCase() == "right") {
-                        _scaleOptions[dataset.yAxisID].gridLines = {
-                            borderDash: [2, 5],
+                        _scaleOptions[dataset.yAxisID].grid = {
                             drawOnChartArea: false
                         }
                     }
@@ -272,8 +193,7 @@ class graphChart {
                     _scaleOptions[dataset.xAxisID].position = dataset.xAxisID
                     _scaleOptions[dataset.xAxisID].display = true
                     if (dataset.xAxisID.toLowerCase() == "top") {
-                        _scaleOptions[dataset.xAxisID].gridLines = {
-                            borderDash: [2, 5],
+                        _scaleOptions[dataset.xAxisID].grid = {
                             drawOnChartArea: false
                         }
                     }
@@ -283,12 +203,16 @@ class graphChart {
                 _options.scales = _scaleOptions
             }
         }
-        // set the axis label based on the data settings
+
+        /**
+         * bubble axis label based on the data settings
+         */
         if (this.chart_type.toLowerCase() === "bubble") {
-            let labelX = this.entities[0].name
-            labelX += this.entities[0].unit ? " (" + this.entities[0].unit + ")" : ""
-            let labelY = this.entities[1].name
-            labelY += this.entities[1].unit ? " (" + this.entities[1].unit + ")" : ""
+            const _itemlist = this.entity_items.getEntitieslist()
+            let labelX = _itemlist[0].name
+            labelX += _itemlist[0].unit ? " (" + _itemlist[0].unit + ")" : ""
+            let labelY = _itemlist[1].name
+            labelY += _itemlist[1].unit ? " (" + _itemlist[1].unit + ")" : ""
             _options.scales = {
                 x: {
                     id: "x",
@@ -306,20 +230,46 @@ class graphChart {
                 }
             }
             // scale bubble (optional)
-            // _options.elements = {
-            //     point: {
-            //         radius: (context) => {
-            //             const value = context.dataset.data[context.dataIndex];
-            //             return value._r * 0.5;
-            //         }
-            //     }
-            // };
+            if (this.graphData.config.bubbleScale) {
+                _options.elements = {
+                    point: {
+                        radius: (context) => {
+                            const value = context.dataset.data[context.dataIndex]
+                            return value._r * this.graphData.config.bubbleScale
+                        }
+                    }
+                }
+            }
         }
 
-        // case barchart segment
-        // TODO: better use a plugin for this feature.
-        // set bar as stacked, hide the legend for the segmentbar,
-        // hide the tooltip item for the segmentbar.
+        /**
+         * special case for timescales to translate the date format
+         */
+        if (this.graphData.config.timescale && this.card_config.datascales) {
+            _options.scales = _options.scales || {}
+            _options.scales.x = _options.scales.x || {}
+            _options.scales.x.type = "time"
+            _options.scales.x.time = {
+                unit: this.card_config.datascales.unit,
+                displayFormats: {}
+                //tooltipFormat: "EEEEEE, dd.MMM.yyyy H:ss" //this.card_config.datascales.format
+            }
+            _options.scales.x.ticks = {
+                callback: xAxisFormat
+            }
+            // _options.scales.y = _options.scales.y || {}
+            // _options.scales.y.ticks = {
+            //     callback: yAxisFormat
+            // }
+            // _options.scales.x.time.displayFormats[_options.scales.x.time.unit] = this.card_config.datascales.format
+        }
+
+        /**
+         * case barchart segment
+         * TODO: better use a plugin for this feature.
+         * set bar as stacked, hide the legend for the segmentbar,
+         * hide the tooltip item for the segmentbar.
+         */
         if (this.graphData.config.segmentbar === true) {
             _options.scales = {
                 x: {
@@ -339,39 +289,44 @@ class graphChart {
                     }
                 }
             }
-            _options.plugins.tooltip.callbacks = {
-                label: (chart) => {
-                    if (chart.dataset.tooltip === false || !chart.dataset.label) {
-                        return null
-                    }
-                    return chart.formattedValue + " " + chart.dataset.unit || ""
-                }
+        }
+
+        /**
+         * callbacks for tooltip
+         */
+        _options.plugins.tooltip = {
+            callbacks: {
+                label: formatToolTipLabel,
+                title: formatToolTipTitle
             }
         }
+
+        /**
+         * disable bubble legend
+         */
         if (this.chart_type.toLowerCase() === "bubble") {
             _options.plugins.legend = {
                 display: false
             }
         }
-        // preset cart current config
+
+        /**
+         * preset cart current config
+         */
         let chartCurrentConfig = {
             type: this.chart_type,
             data: {
-                labels: [],
                 datasets: []
             },
             options: _options
         }
 
-        // chart global settings
-        this._setChartDefaults()
-
-        // ---------------------------------------
-        // merge default with chart config options
-        // this.chartconfig.options see yaml config
-        // - chart
-        //   - options:
-        // ---------------------------------------
+        /**
+         * merge default with chart config options
+         * this.chartconfig.options see yaml config
+         * - chart
+         *   - options:
+         */
         if (this.chartconfig.options) {
             chartCurrentConfig.options = deepMerge(_options, this.chartconfig.options)
         } else {
@@ -400,13 +355,13 @@ class graphChart {
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 // Print received data from server
-                console.log("sendJson", this.responseText)
+                console.info("sendJson", this.responseText)
             }
         }
 
         // Converting JSON data to string
         var data = JSON.stringify(chartdata)
-        console.log(data)
+        console.info(data)
 
         // Sending data with the request
         xhr.send(data)
@@ -429,11 +384,14 @@ class graphChart {
                     // same data as before, skip redraw...
                     return
                 }
+
                 // append the data for the current chart settings
                 let graphOptions = this._setChartOptions()
                 graphOptions.data = {
-                    labels: this.graphData.data.labels,
                     datasets: this.graphData.data.datasets
+                }
+                if (this.graphData.data.labels) {
+                    graphOptions.data.labels = this.graphData.data.labels
                 }
 
                 // Chart declaration
@@ -446,12 +404,20 @@ class graphChart {
                             duration: 0,
                             easing: "linear"
                         })
+                        if (this.DEBUGMODE) {
+                            this.DEBUGDATA.CHARD = {
+                                chartOptions: graphOptions,
+                                chartMode: "update data ready",
+                                chartjs: window.Chart3.version,
+                                chartGraphdata: this.graphData.config
+                            }
+                        }
                     } else {
                         // set the chart options
                         if (this.chart_ready === false && this.ChartControl.register) {
                             // create and draw the new chart with the current settings
                             // and the dataseries. Register all plugins
-                            if (this.graphData.config.gradient && this.themeSettings.gradient === true) {
+                            if (this.graphData.config.gradient) {
                                 this.ChartControl.register(gradient)
                             }
                             if (
@@ -464,10 +430,7 @@ class graphChart {
                                 this.ChartControl.register({
                                     id: "chardbackground",
                                     beforeDraw: function (chart) {
-                                        if (
-                                            chart.config.options.chartArea &&
-                                            chart.config.options.chartArea.backgroundColor
-                                        ) {
+                                        if (chart.config.options.chartArea && chart.config.options.chartArea.backgroundColor) {
                                             const chartArea = chart.chartArea
                                             const ctx = chart.ctx
                                             ctx.save()
@@ -486,6 +449,7 @@ class graphChart {
                         }
 
                         // just for developer
+                        // console.log(this.chart_type, graphOptions)
                         // if (this.card_config.testcase) this.sendJSON(this.card_config.testcase, graphOptions)
 
                         if (this.chart) {
@@ -493,8 +457,23 @@ class graphChart {
                             this.chart.destroy()
                             this.chart = null
                         }
+
+                        if (this.DEBUGMODE) {
+                            console.log(graphOptions)
+                        }
+
                         this.chart = new window.Chart3(this.ctx, graphOptions)
                         this.graphDataSets = this.graphData.data.datasets
+
+                        if (this.DEBUGMODE) {
+                            this.DEBUGDATA.CHARD = {
+                                chartOptions: graphOptions,
+                                chartMode: "new data ready",
+                                chartjs: window.Chart3.version,
+                                chartmodul: "v " + this.version,
+                                chartGraphdata: this.graphData.config
+                            }
+                        }
 
                         if (this.chart) {
                             this.chart_ready = true

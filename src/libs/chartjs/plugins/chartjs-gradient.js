@@ -54,6 +54,54 @@
         }
     }
 
+    var cache = new Map();
+	var width = null;
+	var height = null;
+
+    /**
+     * createRadialGradient3
+     * see: view-source:https://www.chartjs.org/samples/next/advanced/radial-gradient.html
+     * @param {*} context 
+     * @param {*} c1 
+     * @param {*} c2 
+     * @param {*} c3 
+     * @returns 
+     */
+    function createRadialGradient3(context, c1, c2, c3) {
+        var chartArea = context.chart.chartArea;
+        if (!chartArea) {
+            // This case happens on initial chart load
+            return null;
+        }
+
+        var chartWidth = chartArea.right - chartArea.left;
+        var chartHeight = chartArea.bottom - chartArea.top;
+        if (width !== chartWidth || height !== chartHeight) {
+            cache.clear();
+        }
+        var gradient = cache.get(c1 + c2 + c3);
+        if (!gradient) {
+            // Create the gradient because this is either the first render
+            // or the size of the chart has changed
+            width = chartWidth;
+            height = chartHeight;
+            var centerX = (chartArea.left + chartArea.right) / 2;
+            var centerY = (chartArea.top + chartArea.bottom) / 2;
+            var r = Math.min(
+                (chartArea.right - chartArea.left) / 2,
+                (chartArea.bottom - chartArea.top) / 2
+            );
+            var ctx = context.chart.ctx;
+            gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, r);
+            gradient.addColorStop(0, c1);
+            gradient.addColorStop(0.5, c2);
+            gradient.addColorStop(1, c3);
+            cache.set(c1 + c2 + c3, gradient);
+        }
+
+        return gradient;
+    }
+
     /**
      * create gradient for simple pie and bar charts
      * not finish... do not work

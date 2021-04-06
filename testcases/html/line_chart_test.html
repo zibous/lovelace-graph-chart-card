@@ -10,7 +10,7 @@
 
 <body>
     <div id="container" class="center">
-        <div class="chard-card">
+        <div class="chard-card" style="background-color:#FFFFFF;">
             <div class="chard-description">
                 <h1>Testcase with simple data</h1>
             </div>
@@ -638,6 +638,21 @@
                         "bottom": 24
                     }
                 },
+                scales: {
+					x: [{
+						display: false,						
+					}],
+					y: [{						
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Request State'
+						},
+						ticks: {
+							reverse: true
+						}
+					}]
+				},
                 "chartArea": {
                     "backgroundColor": "transparent"
                 },

@@ -1,7 +1,7 @@
 /** ----------------------------------------------------------
  
 	Lovelaces chartjs - colors
-  	(c) 2020 Peter Siebler
+  	(c) 2021 Peter Siebler
   	Released under the MIT license
  
  * ----------------------------------------------------------*/
@@ -48,12 +48,12 @@ const DEFAULT_COLORS = [
     "rgba(39,174,96,0.85)",
     "rgba(41,128,185,0.85)",
     "rgba(142,68,173,0.85)"
-];
+]
 
-const COLOR_RADARCHART = "rgba(41, 182, 246, 0.45)";
-const COLOR_BUBBLECHAT = "rgba(255, 152, 0, 0.685)";
+const COLOR_RADARCHART = "rgba(41, 182, 246, 0.45)"
+const COLOR_BUBBLECHAT = "rgba(255, 152, 0, 0.685)"
 /**
  * get random color from DEFAULT_COLORS
  */
 // var randomColor = DEFAULT_COLORS[Math.floor(Math.random()*DEFAULT_COLORS.length)];
-const randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
+const randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16)

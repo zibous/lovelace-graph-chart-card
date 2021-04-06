@@ -17,15 +17,10 @@ class chartData {
     constructor(config) {
         this.chart_type = config.chart_type
         this.card_config = config.card_config
-        this.entities = config.entities
-        this.entityOptions = config.entityOptions
-        this.entityData = config.entityData
-        this.entityNames = config.entityNames
-        this.stateHistories = config.stateHistories
-        this.data_group_by = config.data_group_by || "day"
-        this.data_aggregate = config.data_aggregate || "last"
+        this.entity_options = config.entityOptions
+        this.entity_items = config.entity_items
         this.settings = config.settings
-        this.chart_locale = config.chart_locale
+        this.DEBUGMODE = config.debugmode
         this.data_pointStyles = [
             "circle",
             "triangle",
@@ -43,173 +38,7 @@ class chartData {
             equal: "≃"
         }
         this.graphData = {}
-    }
-
-    /**
-     * build the grouped historydata
-     *
-     *
-     * TODO: this is not final, try to find a optimized methode
-     * ---------------------------------------------------------
-     * @param {*} array
-     * @param {*} fmt
-     * @param {*} aggr
-     */
-    _getGroupHistoryData(array) {
-        try {
-            if (!array) return
-            if (array && !array.length) return
-
-            let groups = {}
-            const _num = (n) => (n === parseInt(n) ? Number(parseInt(n)) : Number(parseFloat(n).toFixed(2)))
-
-            const _itemvalue = (item) => {
-                if (item.field) return _num(item[item.field] || 0.0)
-                return _num(item.state || 0.0)
-            }
-
-            const _fmd = (d) => {
-                const t = new Date(d)
-                if (isNaN(t)) return d
-                if (this.data_group_by === "weekday") {
-                    return {
-                        name: date.toLocaleDateString(this.chart_locale, { weekday: "short" }),
-                        label: date.toLocaleDateString(this.chart_locale, { weekday: "long" })
-                    }
-                }
-                const day = ("0" + t.getDate()).slice(-2)
-                const month = ("0" + (t.getMonth() + 1)).slice(-2)
-                const year = t.getFullYear()
-                const hours = ("0" + t.getHours()).slice(-2)
-                const minutes = ("0" + t.getMinutes()).slice(-2)
-                const seconds = ("0" + t.getSeconds()).slice(-2)
-                // sorry not using Intl.DateTimeFormat because this is to slow
-                switch (this.data_group_by) {
-                    case "year":
-                        return { name: year, label: year }
-                    case "month":
-                        return { name: `${year}.${month}`, label: `${month}.${year}` }
-                    case "day":
-                        return { name: `${month}.${day}`, label: `${day}.${month}` }
-                    case "hour":
-                        return { name: `${month}.${day} ${hours}`, label: [`${day}.${month}`, `${hours}.${minutes}`] }
-                    case "minutes":
-                        return {
-                            name: `${month}.${day} ${hours}:${minutes}`,
-                            label: [`${day}.${month}`, `${hours}.${minutes}`]
-                        }
-                    default:
-                        return {
-                            name: `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`,
-                            label: `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`
-                        }
-                }
-            }
-
-            // first build the groups for all entities
-            let _useAlias = this.settings.aliasfield
-            let _df = this.settings.datafields
-            array.forEach(function (o) {
-                if (o && o.last_changed) {
-                    let group = _fmd(o.last_changed)
-                    if (group) {
-                        groups[group.name] = groups[group.name] || []
-                        if (_useAlias && _df) {
-                            // use the attribute value
-                            let fld = _df[o.entity_id].attribute || 0.0
-                            let _faktor = _df[o.entity_id]._faktor || 1.0
-                            if (fld in o.attributes) {
-                                groups[group.name].push({
-                                    timelabel: group.label,
-                                    state: (o.attributes[fld] || 0.0) * _faktor,
-                                    last_changed: o.last_changed
-                                })
-                            }
-                        } else {
-                            // use the state value
-                            let _faktor = _df && _df[o.entity_id] ? _df[o.entity_id]._faktor || 1.0 : 1.0
-                            groups[group.name].push({
-                                timelabel: group.label,
-                                state: (o.state || 0.0) * _faktor,
-                                last_changed: o.last_changed
-                            })
-                        }
-                    }
-                }
-            })
-
-            // create the grouped seriesdata
-            const aggr = this.data_aggregate
-            return Object.keys(groups).map(function (group) {
-                let items = groups[group].filter(
-                    (item) => item.state && !isNaN(parseFloat(item.state)) && isFinite(item.state)
-                )
-                if (items && items.length === 0) {
-                    return {
-                        y: 0.0,
-                        x: ""
-                    }
-                }
-                if (aggr == "first") {
-                    const item = items.shift()
-                    return {
-                        y: _itemvalue(item),
-                        x: item.timelabel
-                    }
-                }
-                if (aggr == "last") {
-                    const item = items[items.length - 1]
-                    return {
-                        y: _itemvalue(item),
-                        x: item.timelabel
-                    }
-                }
-                if (aggr == "max") {
-                    return items.reduce((a, b) =>
-                        _itemvalue(a) > _itemvalue(b)
-                            ? {
-                                  y: _itemvalue(a),
-                                  x: a.timelabel
-                              }
-                            : { y: _itemvalue(b), x: b.timelabel }
-                    )
-                }
-                if (aggr == "min")
-                    return items.reduce((a, b) =>
-                        _itemvalue(a) < _itemvalue(b)
-                            ? {
-                                  y: _itemvalue(a),
-                                  x: a.timelabel
-                              }
-                            : {
-                                  y: _itemvalue(b),
-                                  x: b.timelabel
-                              }
-                    )
-                if (aggr == "sum") {
-                    const val = items.reduce((sum, entry) => sum + _itemvalue(entry), 0)
-                    return {
-                        y: val,
-                        x: items[0].timelabel
-                    }
-                }
-                if (aggr == "avg") {
-                    const val = items.reduce((sum, entry) => sum + _itemvalue(entry), 0) / items.length
-                    return {
-                        y: val,
-                        x: items[0].timelabel
-                    }
-                }
-                return items.map((item) => {
-                    return {
-                        y: _itemvalue(item),
-                        x: items.timelabel
-                    }
-                })
-            })
-        } catch (err) {
-            console.error("Build Histroydata", err.message, err)
-        }
+        this.version = "1.0.1"
     }
 
     /**
@@ -218,15 +47,17 @@ class chartData {
     getDefaultGraphData() {
         return {
             data: {
-                labels: [],
                 datasets: []
             },
             config: {
+                mode: "init",
                 secondaryAxis: false,
-                series: 1,
+                series: 0,
                 gradient: false,
                 options: {},
-                statistics: {}
+                statistics: {},
+                segmentbar: false,
+                timescale: false
             }
         }
     }
@@ -242,29 +73,35 @@ class chartData {
      * @param {*} _entities
      */
     createScatterChartData() {
+        if (!this.entity_items.isValid) return null
         let _graphData = null
-        let _entities = this.entities
-        if (_entities && _entities.length % 2 === 0) {
+
+        let numEntyties = this.entity_items.getSize()
+        let _entities = this.entity_items.getEntitieslist()
+
+        if (numEntyties % 2 === 0) {
             _graphData = this.getDefaultGraphData()
             _graphData.config.mode = "simple"
-            for (let i = 0; i < _entities.length; i += 2) {
-                // first entity holds the attributes
-                const _attr = _entities[i]
+            for (let i = 0; i < numEntyties; i += 2) {
+                /**
+                 * first entity holds the attributes
+                 */
+                const _attr = this.entity_items.getOptions(i)
                 let _options = {
-                    label: _attr.name || "",
-                    unit: _attr.unit || "",
+                    label: _entities[i].name || "",
+                    unit: _entities[i].unit || "",
                     hoverRadius: 20,
                     radius: 15,
                     pointRadius: 15,
                     hitRadius: 20,
-                    backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[20 + i],
-                    borderColor: _attr.borderColor || COLOR_BUBBLECHAT
+                    backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[20 + i * 5],
+                    borderColor: _attr.borderColor || DEFAULT_COLORS[20 + i * 5]
                 }
-                if (this.entityOptions) {
-                    _options = { ...this.entityOptions, ..._options }
-                    _graphData.config.options = this.entityOptions
+                if (this.entity_options) {
+                    _options = { ...this.entity_options, ..._options }
+                    _graphData.config.options = this.entity_options
                 }
-                if (this.entityOptions && this.entityOptions.gradient !== undefined) {
+                if (this.entity_options && this.entity_options.gradient !== undefined) {
                     _graphData.config.gradient = true
                 }
                 _options.data = [
@@ -273,11 +110,12 @@ class chartData {
                         y: _entities[i + 1].state || 0.0
                     }
                 ]
+                if (_attr) _options = { ..._options, ..._attr }
                 _graphData.data.datasets.push(_options)
             }
             _graphData.config.options.scatter = true
         } else {
-            console.error("ScatterChart setting not valid", this.entities)
+            console.error("ScatterChart setting not valid ", _entities)
         }
         return _graphData
     }
@@ -290,25 +128,29 @@ class chartData {
      * that is drawn on the canvas.
      */
     createBubbleChartData() {
+        if (!this.entity_items.isValid) return null
         let _graphData = null
-        let _entities = this.entities
-        if (_entities && _entities.length % 3 === 0) {
+
+        let numEntyties = this.entity_items.getSize()
+        let _entities = this.entity_items.getEntitieslist()
+
+        if (numEntyties % 3 === 0) {
             _graphData = this.getDefaultGraphData()
             _graphData.config.mode = "simple"
             for (let i = 0; i < _entities.length; i += 3) {
-                const _attr = _entities[i + 2]
+                const _attr = this.entity_items.getOptions(i + 1)
                 let _options = {
-                    label: _attr.name || "",
+                    label: _entities[i + 2].name || "",
                     scale: _attr.scale || 1.0,
-                    unit: _attr.unit || "",
-                    backgroundColor: _attr.backgroundColor || COLOR_BUBBLECHAT,
-                    borderColor: _attr.borderColor || COLOR_BUBBLECHAT
+                    unit: _entities[i + 2].unit || "",
+                    backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[24 + i * 5],
+                    borderColor: _attr.borderColor || DEFAULT_COLORS[24 + i * 5]
                 }
-                if (this.entityOptions) {
-                    _options = { ...this.entityOptions, ..._options }
-                    _graphData.config.options = this.entityOptions
+                if (this.entity_options) {
+                    _options = { ...this.entity_options, ..._options }
+                    _graphData.config.options = this.entity_options
                 }
-                if (this.entityOptions && this.entityOptions.gradient !== undefined) {
+                if (this.entity_options && this.entity_options.gradient !== undefined) {
                     _graphData.config.gradient = true
                 }
                 if (_attr && _attr.pointStyle) {
@@ -325,14 +167,21 @@ class chartData {
                         r: _entities[i + 2].state || 0.0
                     }
                 ]
+                if (_attr) _options = { ..._options, ..._attr }
                 _graphData.data.datasets.push(_options)
             }
             _graphData.config.options.bubble = true
         } else {
-            console.error("BubbleChart setting not valid", this.entities)
+            console.error("BubbleChart setting not valid", _entities)
         }
         return _graphData
     }
+
+    /** ----------------------------------------------------------
+     *
+     * chart data builder state series data
+     *
+     * ----------------------------------------------------------*/
 
     /**
      * create the segment data for the bars
@@ -352,26 +201,19 @@ class chartData {
     }
 
     /**
-     * --------------------------------------
      * create chart data - entity state based
-     * --------------------------------------
      * this is used for pie-, doughnut-, polarArea-,radar-, simple bar chart
      * because we do not need time series - only the current state values.
-     *
-     * this.graphData.config holds the configruation data
-     *
      */
     createChartData() {
-        let _data = []
+        
+        /**
+         * entities      : all entities data and options
+         * entityOptions : global entities options
+         */
+        if (!this.entity_items.isValid) return null
 
-        // entityData    : holds all  current values
-        // entityNames   : holds all entities names
-
-        // entities      : all entities data and options
-        // entityOptions : global entities options
-
-        const emptyIndexes = this.entityData.reduce((arr, e, i) => (e == 0 && arr.push(i), arr), [])
-        _data = this.entityData.filter((element, index, array) => !emptyIndexes.includes(index))
+        let _data = this.entity_items.getData()
 
         if (_data.length === 0) {
             console.error("No Data present !")
@@ -379,41 +221,45 @@ class chartData {
         }
 
         let _defaultDatasetConfig = {
-            unit: this.data_units || "",
-            mode: "current"
+            mode: "current",
+            unit: ""
         }
 
         let _graphData = this.getDefaultGraphData()
         _graphData.config.mode = "simple"
 
-        // merge entity options
-        if (this.entityOptions) {
+        /**
+         * merge entity options
+         */
+        if (this.entity_options) {
             _defaultDatasetConfig = {
                 ..._defaultDatasetConfig,
-                ...this.entityOptions
+                ...this.entity_options
             }
         }
 
-        // merge dataset_config
-        _graphData.data.labels = this.entityNames.filter((element, index, array) => !emptyIndexes.includes(index))
-
+        /**
+         * merge dataset_config
+         */
+        _graphData.data.labels = this.entity_items.getNames()
         _graphData.data.datasets[0] = _defaultDatasetConfig
-        _graphData.data.datasets[0].unit = this.card_config.units || ""
         _graphData.data.datasets[0].label = this.card_config.title || ""
+        if (this.entity_options && this.entity_options.unit)
+            _graphData.data.datasets[0].unit = this.entity_options.unit || ""
 
-        // case horizontal bar
+        /**
+         * case horizontal bar
+         */
         if (this.card_config.chart.toLowerCase() === "horizontalbar") {
             _graphData.data.datasets[0].indexAxis = "y"
         }
 
-        // custom colors from the entities
-        let entityColors = this.entities
-            .map((x) => {
-                if (x.color !== undefined || x.backgroundColor !== undefined) return x.color || x.backgroundColor
-            })
-            .filter((notUndefined) => notUndefined !== undefined)
+        /**
+         * custom colors from the entities
+         */
+        let entityColors = this.entity_items.getColors()
 
-        if (this.entityOptions && this.entityOptions.gradient != undefined) {
+        if (this.entity_options && this.entity_options.gradient != undefined) {
             _graphData.config.gradient = true
         }
 
@@ -430,7 +276,9 @@ class chartData {
                 _graphData.data.datasets[0].tooltip = true
                 _graphData.config.gradient = false
             } else {
-                // get backgroundcolor from DEFAULT_COLORS
+                /**
+                 * get backgroundcolor from DEFAULT_COLORS
+                 */
                 entityColors = DEFAULT_COLORS.slice(1, _data.length + 1)
                 _graphData.data.datasets[0].backgroundColor = entityColors
                 _graphData.data.datasets[0].borderWidth = 0
@@ -440,7 +288,9 @@ class chartData {
         _graphData.data.datasets[0].data = _data
         _graphData.config.segmentbar = false
 
-        // add the data series and return the new graph data
+        /**
+         * add the data series and return the new graph data
+         */
         if (this.chart_type === "bar" && this.card_config.show && this.card_config.show.segmented) {
             const newData = this.createSimpleBarSegmentedData(_graphData.data.datasets[0])
             if (newData) {
@@ -480,20 +330,6 @@ class chartData {
         return null
     }
 
-    /**
-     * get series data for bubble or scatter chart
-     */
-    getSeriesData() {
-        let _seriesData = []
-        for (const list of this.stateHistories) {
-            if (list.length === 0) continue
-            if (!list[0].state) continue
-            const items = this._getGroupHistoryData(list)
-            _seriesData.push(items)
-        }
-        return _seriesData
-    }
-
     /** ----------------------------------------------------------
      *
      * chart data builder history series data
@@ -504,27 +340,30 @@ class chartData {
      * get the history bubble chart data
      */
     createHistoryBubbleData() {
-        let _seriesData = this.getSeriesData()
+        if (!this.entity_items.isValid) return null
+
+        let _seriesData = this.entity_items.getSeriesData()
+
         if (_seriesData && _seriesData.length % 3 === 0) {
             let _graphData = this.getDefaultGraphData()
             for (let r = 0; r < _seriesData.length; r += 3) {
-                const _attr = this.entities[r + 2]
+                const _attr = this.entity_items.getOptions(r + 2) || {}
                 let _data = []
-                _seriesData[r].forEach(function (e, i) {
-                    if (_seriesData[r + 1][i] && _seriesData[r + 2][i]) {
+                _seriesData[r].data.forEach(function (e, i) {
+                    if (_seriesData[r + 1].data[i] && _seriesData[r + 2].data[i]) {
                         _data.push({
-                            x: parseFloat(_seriesData[r + 0][i].y) || 0.0,
-                            y: parseFloat(_seriesData[r + 1][i].y || 0.0),
-                            r: parseFloat(_seriesData[r + 2][i].y || 0.0)
+                            x: parseFloat(_seriesData[r + 0].data[i].y) || 0.0,
+                            y: parseFloat(_seriesData[r + 1].data[i].y || 0.0),
+                            r: parseFloat(_seriesData[r + 2].data[i].y || 0.0)
                         })
                     }
                 })
                 let _options = {
-                    label: _attr.name || "",
-                    unit: _attr.unit || "",
-                    scale: _attr.scale || 1,
-                    backgroundColor: _attr.backgroundColor || COLOR_BUBBLECHAT,
-                    borderColor: _attr.borderColor || COLOR_BUBBLECHAT
+                    label: this.entity_items.getEntity(r + 2).name || "",
+                    unit: this.entity_items.getEntity(r + 2).unit || "",
+                    scale: this.entity_items.getEntity(r + 2).scale || 1,
+                    backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[17 + r * 5],
+                    borderColor: _attr.borderColor || DEFAULT_COLORS[17 + r * 5]
                     // TODO: min, max, avg values
                 }
                 if (_attr && _attr.pointStyle) {
@@ -534,11 +373,11 @@ class chartData {
                 if (_attr && _attr.pointRadius) {
                     _options.pointRadius = _attr.pointRadius
                 }
-                if (this.entityOptions) {
-                    // simple merge the default with the global options
-                    _options = { ..._options, ...this.entityOptions }
-                    _graphData.config.options = this.entityOptions
+                if (this.entity_options) {
+                    _options = { ..._options, ...this.entity_options }
+                    _graphData.config.options = this.entity_options
                 }
+                if (_attr) _options = { ..._options, ..._attr }
                 _options.data = _data
                 _graphData.data.datasets.push(_options)
             }
@@ -547,7 +386,7 @@ class chartData {
                 return _graphData
             }
         }
-        console.error("BubbleChart setting not valid", this.entities)
+        console.error("BubbleChart setting not valid for ", this.entity_items.getNames())
         return null
     }
 
@@ -555,38 +394,44 @@ class chartData {
      * get the history scatter chart data
      */
     createHistoryScatterData() {
-        let _seriesData = this.getSeriesData()
+        if (!this.entity_items.isValid) return null
+
+        let _seriesData = this.entity_items.getSeriesData()
+
         if (_seriesData && _seriesData.length % 2 === 0) {
             let _graphData = this.getDefaultGraphData()
             _graphData.config.mode = "history"
+
             for (let r = 0; r < _seriesData.length; r += 2) {
-                // first entity hols the attributes
-                const _attr = this.entities[r]
+                const _attr = this.entity_items.getOptions(r) || {}
                 let _data = []
-                _seriesData[r].forEach(function (e, i) {
-                    if (_seriesData[r][i] && _seriesData[r + 1][i]) {
+                _seriesData[r].data.forEach(function (e, i) {
+                    if (_seriesData[r].data[i] && _seriesData[r + 1].data[i]) {
                         _data.push({
-                            x: parseFloat(_seriesData[r + 0][i].y) || 0.0,
-                            y: parseFloat(_seriesData[r + 1][i].y || 0.0)
+                            x: parseFloat(_seriesData[r + 0].data[i].y) || 0.0,
+                            y: parseFloat(_seriesData[r + 1].data[i].y || 0.0)
                         })
                     }
                 })
-                // default options
+                /**
+                 * default options
+                 */
                 let _options = {
-                    label: _attr.name || "",
-                    unit: _attr.unit || "",
+                    label: this.entity_items.getEntity(r).name || "",
+                    unit: this.entity_items.getEntity(r).unit || "",
                     hoverRadius: 18,
                     pointRadius: 16,
                     hitRadius: 22,
-                    backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[10 + r],
-                    borderColor: _attr.borderColor || DEFAULT_COLORS[10 + r]
+                    backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[27 + r * 5],
+                    borderColor: _attr.borderColor || DEFAULT_COLORS[27 + r * 5]
                     // TODO: min, max, avg values ???
                 }
-                if (this.entityOptions) {
-                    // simple merge the default with the global options
-                    _options = { ..._options, ...this.entityOptions }
-                    _graphData.config.options = this.entityOptions
+                if (this.entity_options) {
+                    _options = { ..._options, ...this.entity_options }
+                    _graphData.config.options = this.entity_options
                 }
+                if (_attr) _options = { ..._options, ..._attr }
+
                 _options.data = _data
                 _graphData.data.datasets.push(_options)
             }
@@ -595,59 +440,45 @@ class chartData {
                 return _graphData
             }
         }
-        console.error("ScatterChart setting not valid", this.entities)
+        console.error("ScatterChart setting not valid for ", this.entity_items.getNames())
         return null
     }
 
     /**
-     * ----------------------------------------
+     * ----------------------------------------------------------------------
      * create chart data - history state based
-     * ----------------------------------------
+     * ----------------------------------------------------------------------
      * Get the series data for all entities from the
      * history and create the chart history data
      */
     createHistoryChartData() {
         let _graphData = this.getDefaultGraphData()
+
         _graphData.config.options.fill = false
         _graphData.config.mode = "history"
 
-        // all for other carts
-        for (const list of this.stateHistories) {
-            if (list.length === 0) continue
-            //if (!list[0].state) continue
+        const entities = this.entity_items.getEntityIds()
+        entities.forEach((id) => {
+            /**
+             * current selected entity
+             */
+            const _entity = this.entity_items.items[id]
+            let _entityOptions = { ...this.entity_items.getOptions(_entity.entity) }
 
-            // interate throw all entities data
-            const items = this._getGroupHistoryData(list)
-            const id = list[0].entity_id
-
-            // get all settings from the selected entity
-            const _attr = this.entities.find((x) => x.entity === id)
-
-            // build the dataseries and check ignore data with zero values
-
-            let _items = this.card_config.ignoreZero
-                ? items.map((d) => d.y).filter((x) => x != 0)
-                : items.map((d) => d.y)
-
-            // default Dataset Properties
+            /**
+             * default Dataset Properties
+             */
             let _options = {
-                label: _attr.name || "unkonwn",
-                unit: _attr.unit || "",
+                label: _entity.name || "unkonwn",
+                unit: _entity.unit || "",
                 minval: 0.0,
                 maxval: 0.0,
                 sumval: 0.0,
                 avgval: 0.0,
                 pointRadius: 0,
-                current: _attr.state || 0.0,
-                last_changed: items[0].last_changed || new Date(),
+                current: _entity.state || 0.0,
+                last_changed: _entity.last_changed || new Date(),
                 mode: "history"
-            }
-
-            if (this.card_config.showdetails) {
-                _options.minval = Math.min(..._items)
-                _options.maxval = Math.max(..._items)
-                _options.sumval = arrSum(_items)
-                _options.avgval = arrAvg(_items)
             }
 
             if (this.card_config.chart.toLowerCase() === "horizontalbar") {
@@ -660,61 +491,61 @@ class chartData {
                 _options.hitRadius = 22
             }
 
-            if (_attr && _attr.pointStyle) {
-                _options.pointStyle = _attr.pointStyle
-                //_options.pointRadius = 6
-            }
-            if (_attr && _attr.pointRadius) {
-                _options.pointRadius = _attr.pointRadius
+            if (this.entity_options) {
+                _options = { ..._options, ...this.entity_options }
+                _graphData.config.options = { ..._graphData.config.options, ...this.entity_options }
             }
 
-            if (this.entityOptions) {
-                // simple merge the default with the global options
-                _options = { ..._options, ...this.entityOptions }
-                _graphData.config.options = { ..._graphData.config.options, ...this.entityOptions }
-            }
+            /**
+             * add all options from style settings
+             */
+            _options = { ..._options, ..._entityOptions }
+            _graphData.config.options.fill =
+                _entityOptions.fill || ["bar", "horizontalbar"].includes(this.card_config.chart.toLowerCase())
 
-            // simple merge the entity options
-            if (_attr) _options = { ..._options, ..._attr }
-
-            if (_attr.fill !== undefined) {
-                _graphData.config.options.fill = _attr.fill
-            } else {
-                _attr.fill = ["bar", "horizontalbar"].includes(this.card_config.chart.toLowerCase())
-            }
-
-            if (_attr.fill && _attr.gradient && _attr.gradient.colors) {
+            if (_entityOptions.fill && _entityOptions.gradient && _entityOptions.gradient.colors) {
                 const _axis = _options.indexAxis === "y" ? "x" : "y"
                 _options.gradient = {
                     backgroundColor: {
                         axis: _axis,
-                        colors: _attr.gradient.colors
+                        colors: _entityOptions.gradient.colors
                     }
                 }
-                _options.labelcolor = _attr.gradient.colors[0]
-                _options.borderColor = _attr.gradient.colors[0] || DEFAULT_COLORS[_graphData.config.series]
+                _options.labelcolor = _entityOptions.gradient.colors[0]
+                _options.borderColor = _entityOptions.gradient.colors[0] || DEFAULT_COLORS[_graphData.config.series]
                 _graphData.config.gradient = true
             } else {
-                if (_attr.backgroundColor === undefined) {
+                if (_entityOptions.backgroundColor === undefined) {
                     _options.backgroundColor = DEFAULT_COLORS[_graphData.config.series]
                     _options.borderColor = DEFAULT_COLORS[_graphData.config.series]
                 }
             }
 
-            // check secondary axis
+            /**
+             * check secondary axis
+             */
             if (!_graphData.config.secondaryAxis) {
-                _graphData.config.secondaryAxis = _attr.yAxisID != undefined || _attr.xAxisID != undefined
+                _graphData.config.secondaryAxis =
+                    _entityOptions.yAxisID != undefined || _entityOptions.xAxisID != undefined
             }
 
-            // assign the data for the current series
-            _options.data = _items
-
-            // add the options, labels and data series
-            _graphData.data.labels = items.map((l) => l.x)
+            /**
+             * add the options, labels and data series
+             */
+            _graphData.config.timescale = _entity.datascales.useTimeSeries
+            if (_entity.datascales.useTimeSeries && _entity.seriesdata && _entity.seriesdata.data) {
+                _options.data = _entity.seriesdata.data
+            } else {
+                const _seriesdata = this.entity_items.getDataset(id)
+                if(_seriesdata){
+                    _graphData.data.labels = _seriesdata.labels
+                    _options.data = _seriesdata.data
+                }                
+            }
 
             _graphData.data.datasets.push(_options)
             _graphData.config.series++
-        }
+        })
         return _graphData
     }
 
@@ -722,26 +553,21 @@ class chartData {
      * build the graph cart data and datasets for the
      * defined graph chart. Uses the history data
      * for each entity
-     *
-     * @param {*} stateHistories
-     * @param {*} update
      */
     getHistoryGraphData() {
         try {
-            if (this.stateHistories && this.stateHistories.length) {
-                switch (this.chart_type.toLowerCase()) {
-                    case "bubble":
-                        this.graphData = this.createHistoryBubbleData()
-                        break
-                    case "scatter":
-                        this.graphData = this.createHistoryScatterData()
-                        break
-                    default:
-                        this.graphData = this.createHistoryChartData()
-                        break
-                }
-                return this.graphData
+            switch (this.chart_type.toLowerCase()) {
+                case "bubble":
+                    this.graphData = this.createHistoryBubbleData()
+                    break
+                case "scatter":
+                    this.graphData = this.createHistoryScatterData()
+                    break
+                default:
+                    this.graphData = this.createHistoryChartData()
+                    break
             }
+            return this.graphData
         } catch (err) {
             console.error("Build History GraphData", err.message, err)
         }

@@ -55,143 +55,7 @@ class graphChart {
         this.themeSettings = options;
         return true;
     }
-
-    /**
-     * chart global settings
-     */
-    _setChartDefaults() {
-        // global default settings
-        try {
-            if (this.ChartControl && this.ChartControl.defaults) {
-                // global defailt settings
-                this.ChartControl.defaults.responsive = true;
-                this.ChartControl.defaults.maintainAspectRatio = false;
-                this.ChartControl.defaults.animation = 0;
-                this.ChartControl.defaults.locale = this.chart_locale;
-
-                // global font settings
-                if (
-                    this.ChartControl.defaults &&
-                    this.ChartControl.defaults.font &&
-                    this.ChartControl.defaults.font.family
-                ) {
-                    this.ChartControl.defaults.font.family = this.themeSettings.fontFamily;
-                }
-                if (this.ChartControl.defaults && this.ChartControl.defaults.color) {
-                    this.ChartControl.defaults.color = this.themeSettings.fontColor;
-                    // new beta 7 !
-                    this.ChartControl.defaults.plugins.legend.labels.color = this.themeSettings.fontColor;
-                }
-
-                // Legend new beta 7 !
-                this.ChartControl.defaults.plugins.legend.position = "top";
-                this.ChartControl.defaults.plugins.legend.labels.usePointStyle = true;
-                this.ChartControl.defaults.plugins.legend.labels.boxWidth = 8;
-                this.ChartControl.defaults.plugins.legend.show = this.themeSettings.showLegend || false;
-
-                // Tooltips new beta 7 !
-                this.ChartControl.defaults.plugins.tooltip.enabled = true;
-                this.ChartControl.defaults.plugins.tooltip.backgroundColor = this.themeSettings.tooltipsBackground;
-                this.ChartControl.defaults.plugins.tooltip.titleColor = this.themeSettings.tooltipsFontColor;
-                this.ChartControl.defaults.plugins.tooltip.bodyColor = this.themeSettings.tooltipsFontColor;
-                this.ChartControl.defaults.plugins.tooltip.footerColor = this.themeSettings.tooltipsFontColor;
-
-                // gridlines
-                if (this.themeSettings && this.themeSettings.showGridLines) {
-                    this.ChartControl.defaults.scale.gridLines.lineWidth = this.themeSettings.gridLineWidth;
-                    if (this.ChartControl.defaults.set) {
-                        this.ChartControl.defaults.set("scale", {
-                            gridLines: {
-                                display: true,
-                                color: this.themeSettings.gridlineColor,
-                                drawBorder: true,
-                                borderDash: this.themeSettings.borderDash,
-                                zeroLineWidth: 8
-                            }
-                        });
-                    }
-                }
-
-                // element settings
-                if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.arc)
-                    this.ChartControl.defaults.elements.arc.borderWidth = 0;
-                if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.line) {
-                    this.ChartControl.defaults.elements.line.fill = false;
-                    this.ChartControl.defaults.elements.line.tension = 0;
-                }
-                if (this.ChartControl.defaults.elements && this.ChartControl.defaults.elements.point) {
-                    this.ChartControl.defaults.elements.point.radius = 0.33;
-                    this.ChartControl.defaults.elements.point.borderWidth = 0;
-                    this.ChartControl.defaults.elements.point.hoverRadius = 8;
-                    this.ChartControl.defaults.elements.point.hitRadius = 8;
-                }
-
-                // chart type based
-                if (this.ChartControl.defaults.set) {
-                    switch (this.chart_type.toLowerCase()) {
-                        case "radar":
-                            this.ChartControl.defaults.set("controllers.radar.scales.r", {
-                                ticks: {
-                                    backdropColor: "transparent"
-                                },
-                                angleLines: {
-                                    display: true,
-                                    color: this.themeSettings.gridlineColor,
-                                    lineWidth: this.themeSettings.gridLineWidth
-                                },
-                                gridLines: {
-                                    circular: true
-                                }
-                            });
-                            this.ChartControl.defaults.set("scale", {
-                                gridLines: {
-                                    display: true,
-                                    lineWidth: this.themeSettings.gridLineWidth * 2,
-                                    borderDash: [0]
-                                }
-                            });
-                            this.ChartControl.defaults.elements.point.hoverRadius = 8;
-                            this.ChartControl.defaults.elements.point.pointRadius = 8;
-                            break;
-
-                        case "polararea":
-                            this.ChartControl.defaults.set("controllers.polarArea.scales.r", {
-                                ticks: {
-                                    backdropColor: "transparent"
-                                },
-                                angleLines: {
-                                    display: true,
-                                    color: this.themeSettings.gridlineColor,
-                                    lineWidth: this.themeSettings.gridLineWidth * 2
-                                },
-                                gridLines: {
-                                    circular: true,
-                                    lineWidth: this.themeSettings.gridLineWidth * 1.6,
-                                    borderDash: [0]
-                                }
-                            });
-                            this.ChartControl.defaults.set("scale", {
-                                gridLines: {
-                                    display: true
-                                }
-                            });
-                            break;
-                        case "scatter":
-                        case "bubble":
-                        case "line":
-                        case "bar":
-                        case "pie":
-                        case "doughnut":
-                        default:
-                            break;
-                    }
-                }
-            }
-        } catch (err) {
-            console.error("Error Set Chart defaults for", this.chart_type, ": ", err, err.message);
-        }
-    }
-
+    
     /**
      * set the chart option based on the default
      * and the chart settings.
@@ -207,14 +71,7 @@ class graphChart {
         // chart default options
         let _options = {
             units: this.data_units || "",
-            layout: {
-                padding: {
-                    left: 24,
-                    right: 24,
-                    top: 0,
-                    bottom: 24
-                }
-            },
+            
             chartArea: {
                 backgroundColor: "transparent"
             },
@@ -375,8 +232,6 @@ class graphChart {
             options: _options
         };
 
-        // chart global settings
-        this._setChartDefaults();
         // ---------------------------------------
         // merge default with chart config options
         // this.chartconfig.options see yaml config

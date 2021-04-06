@@ -6,6 +6,9 @@
   chartjs:    https://www.chartjs.org/
   gradient:   https://github.com/kurkle/chartjs-plugin-gradient#readme
 
+  (c) 2021 Peter Siebler
+  Released under the MIT license
+
 /** -------------------------------------------------------------------*/
 "use strict"
 
@@ -22,14 +25,14 @@ const gradient = window["chartjs-gradient"]
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "1.1.6/3.0.0-14",
-    chartjs: Chart.version || "v3.0.0-beta.14",
+    version: "v2.0.2/v3.0.1",
+    chartjs: Chart.version || "v3.0.1",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
 }
 // render the app-info for this custom card
 console.info(
-    "%c " + appinfo.name + "     %c ▪︎▪︎▪︎▪︎ Version: " + appinfo.version + " ▪︎▪︎▪︎▪︎ ",
+    `%c ${appinfo.name}          %c ▪︎▪︎▪︎▪︎ ${appinfo.version}  ▪︎▪︎▪︎▪︎`,
     "color:#FFFFFF; background:#3498db;display:inline-block;font-size:12px;font-weight:300;padding: 6px 0 6px 0",
     "color:#2c3e50; background:#ecf0f1;display:inline-block;font-size:12px;font-weight:300;padding: 6px 0 6px 0"
 )
@@ -172,11 +175,220 @@ style.innerHTML = `
     
     }
 `
+/**
+ * set the default setting for the cart
+ * @param {*} theme
+ */
+function setChartDefaults(theme) {
+    if (window.Chart3 && window.Chart3.defaults) {
+        if (window.Chart3.defaults.theme && theme.theme == window.Chart3.defaults.theme) return
 
-// ONLY for chrome !
-// const sheet = new CSSStyleSheet();
-// this.shadowRoot.adoptedStyleSheets = [sheet];
-// sheet.replaceSync(CSS);
+        window.Chart3.defaults.theme = theme.theme
+        window.Chart3.defaults.responsive = true
+        window.Chart3.defaults.maintainAspectRatio = false
+        window.Chart3.defaults.hoverOffset = 8
+        if (!theme.useAnimations) window.Chart3.defaults.animation = 0
+
+        window.Chart3.defaults.locale = theme.locale
+        window.localeNames = getLocaleText(window.Chart3.defaults.locale)
+
+        window.Chart3.defaults.font.family = theme.font
+        window.Chart3.defaults.color = convertColor(theme.fontColor)
+
+        window.Chart3.defaults.layout.padding.top = theme.padding.top || 0
+        window.Chart3.defaults.layout.padding.bottom = theme.padding.bottom || 0
+        window.Chart3.defaults.layout.padding.left = theme.padding.left || 0
+        window.Chart3.defaults.layout.padding.right = theme.padding.right || 0
+
+        window.Chart3.defaults.plugins.legend.labels.color = convertColor(theme.fontColor)
+        window.Chart3.defaults.plugins.legend.position = "top"
+        window.Chart3.defaults.plugins.legend.labels.usePointStyle = true
+        window.Chart3.defaults.plugins.legend.labels.boxWidth = 8
+        window.Chart3.defaults.plugins.legend.show = false
+
+        window.Chart3.defaults.plugins.tooltip.backgroundColor = convertColor(theme.tooltipsBackground)
+        window.Chart3.defaults.plugins.tooltip.titleColor = convertColor(theme.tooltipsFontColor)
+        window.Chart3.defaults.plugins.tooltip.bodyColor = convertColor(theme.tooltipsFontColor)
+        window.Chart3.defaults.plugins.tooltip.footerColor = convertColor(theme.tooltipsFontColor)
+        window.Chart3.defaults.plugins.tooltip.enabled = true
+
+        window.Chart3.defaults.elements.arc.borderWidth = 0
+        window.Chart3.defaults.elements.line.fill = false
+        window.Chart3.defaults.elements.line.tension = 0.225
+
+        window.Chart3.defaults.elements.point.borderWidth = 0
+        window.Chart3.defaults.elements.point.hoverRadius = 8
+        window.Chart3.defaults.elements.point.hitRadius = 8
+
+        window.Chart3.defaults.scale.grid.drawBorder = true
+        window.Chart3.defaults.scale.grid.borderWidth = parseFloat((theme.gridLineWidth * 1.1).toFixed(3)) || 1.0
+
+        window.Chart3.defaults.scale.grid.color = convertColor(theme.gridlineColor, 0.8)
+        window.Chart3.defaults.scale.grid.lineWidth = theme.gridLineWidth
+        window.Chart3.defaults.scale.grid.borderDash = theme.borderDash
+
+        window.Chart3.defaults.scale.grid.lineWidth = (ctx) => (ctx.index === 0 ? 0 : theme.gridLineWidth || 1.0)
+        window.Chart3.defaults.scale.grid.borderColor = convertColor(theme.zeroLineColor)
+
+        window.Chart3.defaults.scale.alignToPixels = true
+        window.Chart3.defaults.scales.radialLinear.ticks.backdropColor = "transparent"
+
+        if (window.gradient) window.Chart3.register(window.gradient)
+    }
+}
+
+/**
+ * Entities Data Class
+ */
+class Entities {
+    constructor(entities) {
+        this.items = entities || {}
+    }
+    addEntity(entity) {
+        this.items[entity.entity] = entity
+    }
+    setData(entity, data) {
+        this.items[entity] = data
+    }
+    setDataField(name, field, value) {
+        this.items[name][field] = value
+    }
+    getSize() {
+        return this.getEntityIds().length
+    }
+    isValid() {
+        return this.getSize() != 0
+    }
+    useAliasFields() {
+        let count = 0
+        this.getEntityIds().forEach((id) => {
+            const _entity = this.items[id]
+            count += this.items[id].attribute ? 1 : 0
+        })
+        return count != 0
+    }
+    hasChanged(hassEntities) {
+        let hasChanged = false
+        if (hassEntities && hassEntities.length) {
+            const _entityList = this.getEntitieslist()
+            for (let entity of _entityList) {
+                const h = hassEntities.find((x) => x.entity_id === entity.entity)
+                entity.laststate = entity.state
+                entity.update = false
+                if (h && entity.last_changed !== h.last_changed && entity.state !== h.state) {
+                    entity.last_changed = h.last_changed
+                    entity.state = h.state
+                    entity.update = true
+                    hasChanged = true
+                }
+            }
+        }
+        return hasChanged
+    }
+    getEntity(index) {
+        if (Number.isInteger(index)) {
+            return this.getEntitieslist()[index]
+        }
+        return this.items[index]
+    }
+    getNames() {
+        return this.getAttribute("name")
+    }
+    getAttribute(name) {
+        let d = this.items
+        return Object.keys(d)
+            .map(function (index) {
+                return d[index][name]
+            })
+            .filter((notUndefined) => notUndefined !== undefined)
+    }
+    getOptions(index, name) {
+        const d = this.getEntity(index)
+        if (d && d.style && !name) return d.style
+        if (d && d.style && d.style[name] !== undefined) return d.style[name]
+        return {}
+    }
+    getDataScales(index) {
+        const d = this.getEntity(index)
+        if (d) {
+            return d.datascales
+        }
+        return { range: 24, unit: "day", format: "MMM d", factor: 1.0, ignoreZero: true, aggregate: "last" }
+    }
+    getStyle(index) {
+        return this.getEntity(index).style
+    }
+    getColors() {
+        const d = this.items
+        return Object.keys(d)
+            .map(function (index) {
+                if (
+                    (d[index].style && d[index].style.color) !== undefined ||
+                    (d[index].style && d[index].style.backgroundColor) !== undefined
+                )
+                    return d[index].style.color || d[index].style.backgroundColor
+            })
+            .filter((notUndefined) => notUndefined !== undefined)
+    }
+    getData(name = null) {
+        if (!name) {
+            return this.getAttribute("state")
+        }
+        return this.items[name].state
+    }
+    getEntityIds() {
+        return Object.keys(this.items)
+    }
+    getEntityIdsAsString() {
+        const d = Object.keys(this.items).map((x) => this.items[x].entity)
+        return [...new Set(d)].join(",")
+        // return Object.keys(this.items).join(",")
+    }
+    getEntities() {
+        return Object.entries(this.items)
+    }
+    getEntitieslist() {
+        const d = this.items
+        return Object.keys(d).map(function (field) {
+            return d[field]
+        })
+    }
+    getItemLabels(index) {
+        this.getEntity(index).labels
+    }
+    getItemData(index) {
+        this.getEntity(index).seriesdata.data
+    }
+    getDataset(name) {
+        if (this.items[name].seriesdata && this.items[name].seriesdata.data) {
+            const _seriesdata = this.items[name].seriesdata.data
+            let labels = []
+            let data = []
+            _seriesdata.forEach((item) => {
+                labels.push(item.localedate)
+                data.push(item.y)
+            })
+            return { labels: labels, data: data }
+        }
+        return { labels: [], data: [] }
+    }
+    getSeriesData() {
+        let _seriesData = []
+        const _itmList = this.getEntityIds()
+        for (const id of _itmList) {
+            const _entity = this.items[id]
+            if (_entity.seriesdata) _seriesData.push(_entity.seriesdata)
+        }
+        return _seriesData
+        // this.getEntityIds().forEach((id) => {
+        //     const _entity = this.items[id]
+        //     if (_entity.seriesdata) {
+        //         _seriesData.push(_entity.seriesdata)
+        //     }
+        // })
+        // return _seriesData
+    }
+}
 
 /**
  * lovelace card chart graph
@@ -192,18 +404,23 @@ class ChartCard extends HTMLElement {
         // https://github.com/mdn/web-components-examples/blob/master/life-cycle-callbacks/main.js
         super()
 
-        // Element functionality written in here
+        /**
+         * Element functionality written in here
+         */
         this._hass = null
         this._config = null
-
         this.attachShadow({ mode: "open" })
 
-        // card settings
+        /**
+         * card settings
+         */
         this.card_icon = null
         this.card_title = null
         this.card_height = 240
 
-        // all for chart
+        /**
+         * all for chart
+         */
         this.theme = ""
         this.themeSettings = null
         this.graphChart = null
@@ -214,38 +431,52 @@ class ChartCard extends HTMLElement {
         this.chartconfig = null
         this.graphData = {}
 
-        // data providers
-        this.hassEntities = []
-        this.entities = []
-        this.entityOptions = null
-        this.entity_ids = []
-        this.entityData = []
-        this.entityNames = []
+        /**
+         *  data providers
+         */
+        this.hassEntities = [] // all from hass
+        this.entity_items = new Entities(null, false) // all entity data
+        this.entity_options = null // all entity options
 
-        // data service
-        this.data_hoursToShow = 0
-        this.data_group_by = "day"
-        this.data_aggregate = "last"
+        /**
+         *  data service
+         */
         this.updateTimer = -1
         this.update_interval = 60 * 1000
-        this.data_ignoreZero = false
-        this.data_units = ""
         this.skipRender = false
         this.lastUpdate = null
         this.ready = false
         this.updating = false
-        this.loginfo_enabled = true
         this._initialized = false
         this.initial = true
+
+        /**
+         * all for the dataprovider
+         */
         this.dataInfo = {
             starttime: new Date(),
             endtime: new Date(),
+            entity_items: null,
             entities: "",
+            group_by: "1h",
             time: new Date().getTime(),
             loading: false,
             url: "",
-            param: ""
+            prev_url: "not_set",
+            param: "",
+            options: ""
         }
+
+        /**
+         * internal debugger and profiler
+         */
+        this.DEBUGMODE = 0
+        this.DEBUGDATA = {
+            API: {}
+        }
+        this.APISTART = performance.now()
+        this.DEBUGDATA.API.elapsed = 0
+        this.DEBUGDATA.PROFILER = {}
     }
 
     /**
@@ -256,11 +487,13 @@ class ChartCard extends HTMLElement {
         try {
             return getComputedStyle(document.documentElement).getPropertyValue(v).trim()
         } catch (err) {
-            console.log("ERROR evaluateCssVariable:", v, "ERROR", err.message, err)
+            console.error("ERROR evaluateCssVariable:", v, "ERROR", err.message, err)
         }
         return v
     }
-
+    /**
+     * set the default settings
+     */
     _setDefaultThemeSettings() {
         this.themeSettings = {
             theme: { theme: "system", dark: false },
@@ -270,95 +503,84 @@ class ChartCard extends HTMLElement {
             zeroLineColor: "#333333",
             tooltipsBackground: "#ecf0f1",
             tooltipsFontColor: "#647687",
-            showLegend:
-                ["pie", "doughnut", "polararea", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) ||
-                false,
             showGridLines: ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || false,
             secondaryAxis: false,
-            gridLineWidth: 0.18,
-            borderDash: [2],
-            gradient: true
+            gridLineWidth: 1.0,
+            borderDash: [1, 1],
+            padding: {
+                top: 20,
+                right: 12,
+                bottom: 12,
+                left: 12
+            },
+            useAnimations: true,
+            locale: this.chart_locale
         }
     }
     /**
-     * set the card based theme settings
-     * theese will overwrite the all theme settings
+     * get the settings from the hass theme
+     * @returns boolean
      */
-    _setChartTheme() {}
-    /**
-	 * THEME SETTINGS
-	 * get the font and colorsettings from the hass view.
-	 * optional the settings can be overwritten by the
-	 * card definition "card_theme" and the theme css
-		--chartjs-text-fontColor: '#2F3846'
-  		--chartjs-fontFamily: "Quicksand, Roboto, 'Open Sans','Rubik',sans-serif"
-  		--chartjs-gridline-color: '#EAEEF1'
-  		--chartjs-zero-gridline-color: '#C9CBD0'
-  		--chartjs-tooltip-background: '#EAEEF1'
-        --chartjs-text-fontcolor: '#292F33'
-     * card definition "theme"
-        0: {fontcolor: "#FFFFFF"}
-        1: {gridlinecolor: "#FFFFFF"}
-        2: {zerolinecolor: "#DCDCDC"}
-        3: {tooltipsbackground: "#FFFFFF"}
-        4: {tooltipsfontcolor: "#555555"}
-        5: {cardbackground: "linear-gradient(to bottom, #009fff, #ec2f4b);"}
-
-	 */
     _getThemeSettings() {
         this._setDefaultThemeSettings()
         try {
-            this.themeSettings = {
-                fontColor:
-                    (this.chart_themesettings && this.chart_themesettings.fontcolor) ||
-                    this._evaluateCssVariable("--chartjs-text-fontColor") ||
-                    this._evaluateCssVariable("--primary-text-color") ||
-                    this.themeSettings.fontFamily,
-                fontFamily:
-                    this._evaluateCssVariable("--chartjs-fontFamily") ||
-                    this._evaluateCssVariable("--paper-font-common-base_-_font-family") ||
-                    "Quicksand, Roboto,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
-                gridlineColor:
-                    (this.chart_themesettings && this.chart_themesettings.gridlinecolor) ||
-                    this._evaluateCssVariable("--chartjs-gridline-color") ||
-                    this._evaluateCssVariable("--light-primary-color") ||
-                    this.themeSettings.gridlineColor,
-                zeroLineColor:
-                    (this.chart_themesettings && this.chart_themesettings.zerolinecolor) ||
-                    this._evaluateCssVariable("--chartjs-zero-gridline-color") ||
-                    this._evaluateCssVariable("--dark-primary-color") ||
-                    this.themeSettings.zeroLineColor,
-                tooltipsBackground:
-                    (this.chart_themesettings && this.chart_themesettings.tooltipsbackground) ||
-                    this._evaluateCssVariable("--chartjs-tooltip-background") ||
-                    this.themeSettings.tooltipsBackground,
-                tooltipsFontColor:
-                    (this.chart_themesettings && this.chart_themesettings.tooltipsfontcolor) ||
-                    this._evaluateCssVariable("--chartjs-text-fontcolor") ||
-                    this.themeSettings.tooltipsFontColor,
-                showLegend:
-                    ["pie", "doughnut", "polararea", "line"].includes(this.chart_type.toLowerCase()) ||
-                    this.themeSettings.showLegend,
-                showGridLines: ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || false,
-                secondaryAxis: false,
-                themecolor: this._evaluateCssVariable("--chartjs-theme") || false,
-                charttheme: this.chart_themesettings !== null,
-                gradient: this.themeSettings.gradient,
-                chartdefault: false
-            }
-            // get the theme from the hass or private theme settings
+            this.themeSettings.fontColor =
+                (this.chart_themesettings && this.chart_themesettings.fontcolor) ||
+                this._evaluateCssVariable("--chartjs-text-fontColor") ||
+                this._evaluateCssVariable("--primary-text-color") ||
+                this.themeSettings.fontFamily
+            this.themeSettings.fontFamily =
+                this._evaluateCssVariable("--chartjs-fontFamily") ||
+                this._evaluateCssVariable("--paper-font-common-base_-_font-family") ||
+                "Quicksand, Roboto,'Open Sans','Rubik','Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+            this.themeSettings.gridlineColor =
+                (this.chart_themesettings && this.chart_themesettings.gridlinecolor) ||
+                this._evaluateCssVariable("--chartjs-gridline-color") ||
+                this._evaluateCssVariable("--light-primary-color") ||
+                this.themeSettings.gridlineColor
+            this.themeSettings.zeroLineColor =
+                (this.chart_themesettings && this.chart_themesettings.zerolinecolor) ||
+                this._evaluateCssVariable("--chartjs-zero-gridline-color") ||
+                this._evaluateCssVariable("--dark-primary-color") ||
+                this.themeSettings.zeroLineColor
+            this.themeSettings.tooltipsBackground =
+                (this.chart_themesettings && this.chart_themesettings.tooltipsbackground) ||
+                this._evaluateCssVariable("--chartjs-tooltip-background") ||
+                this.themeSettings.tooltipsBackground
+            this.themeSettings.tooltipsFontColor =
+                (this.chart_themesettings && this.chart_themesettings.tooltipsfontcolor) ||
+                this._evaluateCssVariable("--chartjs-text-fontcolor") ||
+                this.themeSettings.tooltipsFontColor
+            this.themeSettings.showGridLines = ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || false
+            this.themeSettings.secondaryAxis = false
+            this.themeSettings.themecolorused = this._evaluateCssVariable("--chartjs-theme") || false
+
+            this.themeSettings.useAnimations = this._evaluateCssVariable("--chart-animantions") || this.themeSettings.useAnimations
+
+            /**
+             * get the theme from the hass or private theme settings
+             */
             if (this.theme === undefined || this.theme.dark === undefined) {
-                this.theme = { theme: "system", dark: this.themeSettings.themecolor === "dark" || false }
+                this.theme = { theme: "system", dark: this.themeSettings.themecolorused === "dark" || false }
                 this.themeSettings.theme = this.theme
             }
             if (this.theme && this.theme.dark != undefined) {
                 this.themeSettings.theme = this.theme
             }
-            this.themeSettings.gridLineWidth = this.themeSettings.theme.dark ? 0.16 : 0.55
-            this.themeSettings.borderDash = this.themeSettings.theme.dark ? [3, 1] : [2, 1]
-            if (this._config.options && this._config.options.scale && this._config.options.scale.gridLines)
+            this.themeSettings.gridLineWidth = this.themeSettings.theme.dark ? 0.8 : 1.0
+            this.themeSettings.borderDash = [1, 1]
+
+            console.log(this.chartconfig, this._config.options)
+
+            if (this.chartconfig.options && this.chartconfig.options.scale && this.chartconfig.options.scale.gridLines)
                 this.themeSettings.showGridLines = true
-            if (this._config.options && this._config.options.legend) this.themeSettings.showLegend = true
+            if (this.chartconfig.options && this.chartconfig.options.legend) this.themeSettings.showLegend = true
+
+            if (this.DEBUGMODE) {
+                this.DEBUGDATA.THEMESETTINGS = this.themeSettings
+            }
+            setChartDefaults(this.themeSettings)
+
             return true
         } catch (err) {
             console.error("Fatal Error theme settings", err.message, err)
@@ -372,29 +594,35 @@ class ChartCard extends HTMLElement {
      * overwrite the default settings
      */
     _setChartConfig() {
-        let config = {}
-        // get the config
-        config.type = this.chart_type
-        if (this._config.options) {
-            config.options = {}
-            config.options = this._config.options
-        }
-        this.chartconfig = config
-        // get the theme settings (color, font...)
+        // /**
+        //  * get the config
+        //  */
+        // let config = {}
+        // config.type = this.chart_type
+        // if (this._config.options || this._config.chartOptions ) {
+        //     config.options = {}
+        //     config.options = this._config.options || this._config.chartOptions
+        // }
+        // this.chartconfig = config
+
+        /**
+         * get the theme settings (color, font...)
+         * and init the graph chart
+         */
         this._getThemeSettings()
-        // init the graph chart
         if (this.ctx) {
             let settings = {
                 ctx: this.ctx,
                 canvasId: this.canvasId,
                 card_config: this._config,
-                entities: this.entities,
+                entity_items: this.entity_items,
                 chart_locale: this.chart_locale,
                 chart_type: this.chart_type,
-                themeSettings: this.themeSettings,
                 chartconfig: this.chartconfig,
                 setting: this._config,
-                loader: this.loader
+                loader: this.loader,
+                debugmode: this.DEBUGMODE,
+                debugdata: this.DEBUGDATA
             }
             this.graphChart = new graphChart(settings)
         } else {
@@ -408,10 +636,11 @@ class ChartCard extends HTMLElement {
      */
     _creatHACard() {
         if (this.id) return
-
         this.id = "TC" + Math.floor(Math.random() * 1000)
 
-        // the ha-card --------------------------------
+        /**
+         * the ha-card
+         */
         const card = document.createElement("ha-card")
         card.setAttribute("class", "graph-card")
         card.id = this.id + "-card"
@@ -421,13 +650,17 @@ class ChartCard extends HTMLElement {
             card.style.cssText += `background: ${this.chart_themesettings.cardbackground} !important;`
         }
 
-        // ha-card content layer ---------------------
+        /**
+         * ha-card content layer
+         */
         const content = document.createElement("div")
         content.setAttribute("class", "card-content")
         content.id = this.id + "-view"
         content.style.height = cssAttr(this.card_height)
 
-        // ha-card icon and title -------------------
+        /**
+         * ha-card icon and title
+         */
         if (this.card_title || this.card_icon) {
             const cardHeader = document.createElement("div")
             cardHeader.setAttribute("class", "card-header header flex")
@@ -447,17 +680,26 @@ class ChartCard extends HTMLElement {
             card.append(cardHeader)
         }
 
-        // ha-card canavas element --------------------
+        /**
+         * ha-card canavas element
+         */
         this.canvasId = this.id + "-chart"
         const canvas = document.createElement("canvas")
         canvas.setAttribute("class", "card-canvas")
         this.ctx = canvas.getContext("2d")
         canvas.id = this.canvasId
-        canvas.height = this.card_height - 10
-        canvas.style.height = cssAttr(this.card_height - 10)
-        canvas.style.maxHeight = cssAttr(this.card_height - 10)
+        let _canavasOffset = 10
+        if (this.showstate && this.showstate === "center") {
+            _canavasOffset = 60
+        }
+        canvas.height = this.card_height - _canavasOffset
+        canvas.style.height = cssAttr(this.card_height - _canavasOffset)
+        canvas.style.maxHeight = cssAttr(this.card_height - _canavasOffset)
+        canvas.style.display = "block"
 
-        // ha-card svg loader element -----------------
+        /**
+         * ha-card svg loader element
+         */
         if (this.loaderart) {
             this.loader = document.createElement("img")
             this.loader.setAttribute("class", "card-loader")
@@ -467,14 +709,18 @@ class ChartCard extends HTMLElement {
             this.loader.src = appinfo.assets + this.loaderart + ".svg"
         }
 
-        // ha-card state data -----------------
+        /**
+         * ha-card state data
+         */
         if (this.chart_showstate) {
             this.currentData = document.createElement("div")
             this.currentData.setAttribute("class", "card-state-view")
             this.currentData.id = this.id + "state-view"
         }
 
-        // ha-card detail data ---------------
+        /**
+         * ha-card detail data
+         */
         if (this.chart_showdetails) {
             this.detailData = document.createElement("div")
             this.detailData.setAttribute("class", "card-detail-view")
@@ -484,7 +730,9 @@ class ChartCard extends HTMLElement {
             content.style.maxHeight = cssAttr(this.card_height)
         }
 
-        // add all defined elements to the card --------------------------
+        /**
+         * add all defined elements to the card
+         */
         content.appendChild(canvas)
         if (this.loader) content.append(this.loader)
         if (this.chart_showdetails && this.detailData) {
@@ -501,8 +749,11 @@ class ChartCard extends HTMLElement {
             this.timestampLayer.innerHTML = localDatetime(new Date().toISOString())
             card.appendChild(this.timestampLayer)
         }
+        this.card = card
 
-        // create the ha-card ------
+        /**
+         * create the ha-card
+         */
         this.root.appendChild(card)
     }
 
@@ -528,29 +779,21 @@ class ChartCard extends HTMLElement {
     getEntities() {
         const _entities = this._config.entities || []
         if (!_entities || _entities.length === 0) return
+        /**
+         * remove filterlist items
+         * only entity items skip options
+         */
         const _filterlist = this._config.entities.filter((x) => x.entity_filter != undefined)
         const _entitylist = this._config.entities.filter((x) => x.entity != undefined)
+        /**
+         * check filterlist and merge this
+         */
         if (this._hass && this._hass.states && _filterlist && _filterlist.length) {
             const _hass_states = this._hass.states
             const _filterEntities = filter(_hass_states, _filterlist)
-            // if (this._config.filter.filteroptions) {
-            //     // addional filters...
-            //     // _filterEntities = _filterEntities.slice(0, 5) //
-            // }
             return [..._entitylist, ..._filterEntities]
         }
         return _entities
-    }
-
-    /**
-     * all entity data values
-     */
-    getEntityData() {
-        // all entity data values
-        if (this.entities && this.entities.length)
-            this.entityData = this.entities.map((x) =>
-                x === undefined ? 0.0 : x.faktor ? x.state * x.faktor : x.state
-            )
     }
 
     /**
@@ -559,41 +802,67 @@ class ChartCard extends HTMLElement {
      * Lovelace will render an error card to notify the user.
      */
     setConfig(config) {
+        /**
+         * check yaml config
+         */
         if (!config.entities) {
             throw new Error("You need to define an entity")
         }
 
         try {
-            this.root = this.shadowRoot
+            /**
+             * simple check if we have allready the config present
+             */
+            if (this._config) {
+                console.error("CHART-CART Config", config.title, " allready loaded...")
+                return
+            }
 
+            /**
+             * set the root element for the card
+             */
+            this.root = this.shadowRoot
             while (this.root.hasChildNodes()) {
                 this.root.removeChild(root.lastChild)
             }
 
-            // Deep cloning of style node
+            /**
+             * default style settings
+             */
             const clonedStyle = style.cloneNode(true)
             this.root.appendChild(clonedStyle)
 
-            if (this._config) {
-                console.log("CHART-CART Config", config.title, " allready loaded")
-                return
-            }
-
-            // get the config from the lovelace
+            /**
+             * get the config from the lovelace
+             */
             this._config = Object.assign({}, config)
-            this.loginfo_enabled = this._config.loginfo || false
 
-            // ha-card settings -----------------------------------
+            /**
+             * debugger settings
+             * default is no debug mode
+             */
+            this.DEBUGMODE = this._config.debug || this.DEBUGMODE
+
+            /**
+             * ha-card settings
+             * default is no title
+             */
             this.card_title = this._config.title || ""
             this.card_icon = this._config.icon || null
             this.card_height = this._config.height || 240
-            this.card_timestamp = this._config.cardtimestamp || false
+            this.card_timestamp = this._config.cardtimestamp || true
 
-            // all settings for the chart --------------------------
+            /**
+             * all settings for the chart
+             * default is bar chart
+             */
             this.chart_type = this._config.chart || "bar"
             this._config.id = this.chart_type + Math.floor(Math.random() * 1000)
 
-            // showstate settings: right, left, center
+            /**
+             * showstate settings: right, left, center
+             * default do not show the state
+             */
             this.chart_showstate = this._config.showstate || false
             this.chart_showstate = this.chart_showstate === true ? "right" : this.chart_showstate
             if (this.chart_showstate) {
@@ -602,6 +871,10 @@ class ChartCard extends HTMLElement {
                 }
             }
 
+            /**
+             * detail settings and loader
+             * default is spinning-circles, lovelace config can overwrite the default
+             */
             this.chart_showdetails = this._config.showdetails
             this.chart_themesettings = this._config.theme || null
             this.loaderart = this._config.loader || "three-dots"
@@ -623,65 +896,153 @@ class ChartCard extends HTMLElement {
                 this.loaderart = "spinning-circles"
             }
 
-            const availableTypes = [
-                "line",
-                "radar",
-                "bar",
-                "horizontalBar",
-                "pie",
-                "doughnut",
-                "polarArea",
-                "bubble",
-                "scatter"
-            ]
+            /**
+             * check chart type
+             */
+            const availableTypes = ["line", "radar", "bar", "horizontalBar", "pie", "doughnut", "polarArea", "bubble", "scatter"]
             if (!this.chart_type) {
                 throw new Error("You need to define type of chart")
             } else if (!availableTypes.includes(this.chart_type)) {
                 throw new Error(
-                    "Invalid config for 'chart:'" +
-                        this.chart_type +
-                        ". Available options are: " +
-                        availableTypes.join(", ")
+                    "Invalid config for 'chart:'" + this.chart_type + ". Available options are: " + availableTypes.join(", ")
                 )
             }
             if (this.chart_type.toLowerCase() === "horizontalbar") {
                 this.chart_type = "bar"
             }
 
-            const _browserlocale = navigator.language || navigator.userLanguage || "en-GB"
-            this.chart_locale = this._config.locale || _browserlocale
+            /**
+             * set the chartconfig config
+             */
+             this.chartconfig = {}
+             this.chartconfig.type = this.chart_type
+            if (this._config.options || this._config.chartOptions) {
+                this.chartconfig.options = this._config.options || this._config.chartOptions
+            }
+            
+            /**
+             * setting for data handling
+             * default is navigator language, hass will overrite this
+             */
+            this.chart_locale = navigator.language || navigator.userLanguage || "DE"
             this._checkLocale()
 
-            // setting for data handling
-            this.show = this._config.show || {}
-            this.data_hoursToShow = this._config.hours_to_show || 0
-            if (this.chart_type === "line" && this.data_hoursToShow === 0) {
-                this.data_hoursToShow = 24 * 7 // show the last 7 days...
+            /**
+             * all setting for history charts (timeseries charts)
+             * line charts allway set as timeseries charts
+             */
+            this.datascales = Object.assign({}, this._config.datascales)
+            this.datascales.useTimeSeries = this.datascales.unit != undefined ? true : false
+            this.datascales.range = this.datascales.range || 0
+            if (this.chart_type === "line" && this.datascales.range === 0) {
+                this.datascales.range = 144
             }
-            this.data_group_by = this._config.group_by || "minutes"
-            this.data_aggregate = this._config.aggregate || "last"
-            this.update_interval = this._config.update_interval * 1000 || 1000 * 60
-            this.data_ignoreZero = this._config.ignoreZero || false
-            this.data_units = this._config.units || ""
-            this._config.aliasfield = false
-            this._config.datafields = []
+            this.datascales.unit = this.datascales.unit || "day"
+            this.datascales.format = this.datascales.format || "MM d"
+            this.datascales.factor = this.datascales.factor || 1.0
+            this.datascales.ignoreZero = this.datascales.ignoreZero || true
+            this.datascales.aggregate = this.datascales.aggregate || "last"
 
-            // check if we can use showstate
+            /**
+             * set the update_intervall
+             * default is every minute (60 * 1000)
+             * lovelace setting can overwrite this
+             */
+            this.update_interval = this._config.update_interval * 1000 || this.update_interval
+
+            /**
+             * check if we can use showstate
+             * showstate not possible for bubble and scatter or
+             * on simple state charts
+             */
             if (["bubble", "scatter"].includes(this.chart_type.toLocaleLowerCase())) {
                 this.chart_showstate = false
             } else {
-                if (this.data_hoursToShow === 0 && this.chart_showstate) {
-                    this.chart_showstate = null
+                if (this.datascales.range === 0 && this.chart_showstate) {
+                    this.chart_showstate = false
                 }
             }
+            this.chart_showstate = this.chart_showstate == true ? "right" : this.chart_showstate
 
-            // create the card and apply the chartjs config
+            /**
+             * create the card and apply the chartjs config
+             */
             if (this._initialized === false) {
                 this._creatHACard()
             }
         } catch (err) {
-            console.log(err.message, config, err)
+            console.error(err.message, config, err)
         }
+    }
+
+    /**
+     * apply all data to the used entity items
+     * @param {*} _entities
+     * @returns true / false
+     */
+    setEntity_itemsData(_entities) {
+        if (this.ready === false && this.entity_items.getSize() !== this.hassEntities.length) {
+            /**
+             * init interate throw all _config.entities
+             */
+            this.entity_options = null
+            this.entity_items = new Entities(null)
+            for (const entity of _entities) {
+                if (entity.options) {
+                    /**
+                     * all global entity options
+                     */
+                    this.entity_options = entity.options
+                } else {
+                    /**
+                     * hass entity
+                     */
+                    const h = this.hassEntities.find((x) => x.entity_id === entity.entity)
+                    if (h) {
+                        /**
+                         * create new item
+                         */
+                        let item = this.entity_items.getEntity(entity.entity) || Object.assign({}, entity)
+                        if (h.attributes) {
+                            if (item.name === undefined) item.name = h.attributes.friendly_name || item.name
+                            item.unit = h.attributes.unit_of_measurement || item.unit || ""
+                        }
+                        /**
+                         * add this the entities list
+                         */
+                        if (item.name !== undefined) {
+                            /**
+                             * item state
+                             */
+                            item.last_changed = h.last_changed
+                            item.state = h.state || 0.0
+                            item.value = h.state || 0.0
+                            /**
+                             * item data scales
+                             */
+                            item.datascales = this.datascales
+                            item.datascales.ignoreZero = item.ignoreZero || this.datascales.ignoreZero
+                            item.datascales.aggregate = item.aggregate || this.datascales.aggregate
+                            item.datascales.factor = item.factor || this.datascales.factor
+                            item.datascales.useTimeSeries = this.datascales.useTimeSeries
+                            item.datascales.useStatistics = this.chart_showdetails || false
+                            item.state = item.state * item.datascales.factor
+                            item.factor = item.datascales.factor
+                            if (item.attribute) {
+                                item.state = (h.attributes[item.attribute] || 0.0) * item.factor
+                            }
+                            item.chart = this.chart_type
+                            /**
+                             * add the item to the entity_items
+                             */
+                            this.entity_items.addEntity(item)
+                        }
+                    }
+                }
+            }
+            return this.entity_items.isValid() || false
+        }
+        return false
     }
 
     /**
@@ -689,15 +1050,36 @@ class ChartCard extends HTMLElement {
      *
      */
     set hass(hass) {
-        // check if hass is present
+        /**
+         * check if hass is present
+         */
         if (hass === undefined) return
 
-        // skip not initialized
+        /**
+         * skip not initialized
+         */
         if (this.timeOut) clearTimeout(this.timeOut)
 
         this._hass = hass
 
-        // check the theme or if theme changed
+        /**
+         * check locale changed
+         */
+        const _locale = this._hass.language || navigator.language || navigator.userLanguage || "en-GB"
+        if (this.chart_locale !== _locale) {
+            this.chart_locale = _locale
+            window.localeNames = getLocaleText(_locale)
+            window.Chart3.defaults.locale = _locale
+            this._getThemeSettings()
+            if (this.graphChart) {
+                this.themeSettings.theme = this.theme
+                this.updateGraph(true)
+            }
+        }
+
+        /**
+         * check the theme or if theme changed
+         */
         this.selectedTheme = hass.selectedTheme || { theme: "system", dark: false }
         if (this.theme && this.theme.dark !== this.selectedTheme.dark) {
             // theme has changed
@@ -705,94 +1087,47 @@ class ChartCard extends HTMLElement {
             this._getThemeSettings()
             if (this.graphChart) {
                 this.themeSettings.theme = this.theme
-                this.graphChart.setThemeSettings(this.themeSettings)
                 this.updateGraph(true)
             }
         }
         this.theme = this.selectedTheme
 
-        // get the list of all entities
+        /**
+         * get the list of all entities
+         */
         const _entities = this.getEntities()
         if (!_entities) {
             console.error(this.chart_type, "No valid entities found, check your settings...")
             return
         }
 
-        // An object list containing the states of all entities in Home Assistant.
-        // The key is the entity_id, the value is the state object.
-        this.hassEntities = _entities
-            .map((x) => hass.states[x.entity])
-            .filter((notUndefined) => notUndefined !== undefined)
+        /**
+         * An object list containing the states of all entities in Home Assistant.
+         * The key is the entity_id, the value is the state object.
+         */
+        this.hassEntities = _entities.map((x) => hass.states[x.entity]).filter((notUndefined) => notUndefined !== undefined)
 
-        // check if we have valid entities and skip if we can'nt find the
-        // entities in the hass entities list.
+        /**
+         * check if we have valid entities and skip if we can'nt find the
+         * entities in the hass entities list.
+         */
         if (!this.hassEntities || this.hassEntities.length === 0) {
             console.error(this.chart_type, "No valid entities found, check your settings...")
             return
         }
 
-        // update only if we has a chart and update_interval is not set
-        //
+        /**
+         * update only if we has a chart and update_interval is not set
+         */
         if (this.skipRender && this.updating === false && this.update_interval === 0) {
             this.checkUpdate()
             return
         }
+        this.ready = this.setEntity_itemsData(_entities)
 
-        if (this.ready === false && this.entities.length !== this.hassEntities.length) {
-            // init interate throw all _config.entities
-            this.entityOptions = null
-            this.entities = []
-            this.entity_ids = []
-            this._config.aliasfield = false
-            for (const entity of _entities) {
-                if (entity.options) {
-                    // all global entity options
-                    this.entityOptions = entity.options
-                } else {
-                    // hass entity
-                    const h = this.hassEntities.find((x) => x.entity_id === entity.entity)
-                    if (h) {
-                        let item = Object.assign({}, entity)
-                        if (h.attributes) {
-                            if (item.name === undefined) item.name = h.attributes.friendly_name || item.name
-                            item.unit = h.attributes.unit_of_measurement || item.unit || ""
-                        }
-                        // add this the entities list
-                        if (item.name !== undefined) {
-                            item.last_changed = h.last_changed || this.startTime
-                            item.state = h.state || 0.0
-                            item.alias = null
-                            // TODO: check item.faktor
-                            if (item.faktor) {
-                                item.state = item.state * (item.faktor || 1.0)                            
-                            }
-                            if (item.attribute) {
-                                item.state = h.attributes[item.attribute] || 0.0
-                                this._config.aliasfield = true
-                                item.alias = item.attribute
-                            }
-                            if (item.faktor || item.attribute) {
-                                this._config.datafields[entity.entity] = item
-                            }
-                            this.entities.push(item)
-                            this.entity_ids.push(entity.entity)
-                        }
-                    }
-                }
-            }
-            this.ready = (this.entity_ids && this.entity_ids.length) !== 0
-        }
-
-        // all entity names this.entities
-        this.entityNames = this.entities.map((x) =>
-            x.name !== undefined
-                ? x.name
-                : hass.states[x.entity]["attributes"]["friendly_name"] !== undefined
-                ? hass.states[x.entity]["attributes"]["friendly_name"]
-                : x.entity
-        )
-
-        // wait for 1 before call updateGraph
+        /**
+         * wait for 1 before call updateGraph
+         */
         this.timeOut = setTimeout(
             () => {
                 this.updateGraph(false)
@@ -810,7 +1145,9 @@ class ChartCard extends HTMLElement {
         doUpdate = doUpdate === "undefined" ? !this.initial : doUpdate
         if (this.updating === true) return
         if (!this.graphChart) {
-            // create the graph chart
+            /**
+             * create the graph chart
+             */
             this._getThemeSettings()
             this.themeSettings.theme = this.theme
             this._setChartConfig()
@@ -818,18 +1155,23 @@ class ChartCard extends HTMLElement {
         }
         if (!this.graphChart) return
         this.updating = true
-        // get the histroy data and render the graph
+
+        /**
+         * get the histroy data and render the graph
+         */
         this._getThemeSettings()
         this.themeSettings.theme = this.theme
-        this.graphChart.setThemeSettings(this.themeSettings)
-        // get all current entitydata
-        this.getEntityData()
-        if (this.entityData) {
-            this.graphChart.entityData = this.entityData
+
+        /**
+         * get all current entitydata
+         */
+        if (this.entity_items.getSize) {
+            this.graphChart.entityData = this.entity_items.getData()
             this.chart_update = doUpdate
             this._getHistory()
             if (this.card_timestamp) this.timestampLayer.innerHTML = localDatetime(new Date().toISOString())
         }
+
         this.updating = false
         this.initial = false
     }
@@ -839,88 +1181,80 @@ class ChartCard extends HTMLElement {
      */
     checkUpdate() {
         if (this.updating === true) return false
-        // check if we has changes
+        this.hasChanged = false
+        const _entityList = this.entity_items.getEntitieslist()
         if (this.hassEntities && this.hassEntities.length && this._hass) {
-            this.hasChanged = false
-            // reload the hass entities
-            this.hassEntities = this.entities
+            this.hassEntities = _entityList
                 .map((x) => this._hass.states[x.entity])
                 .filter((notUndefined) => notUndefined !== undefined)
-
-            // check for update and set the entity state last and update flag
-            for (let entity of this.entities) {
-                const h = this.hassEntities.find((x) => x.entity_id === entity.entity)
-                entity.laststate = entity.state
-                entity.update = false
-                if (h && entity.last_changed !== h.last_changed && entity.state !== h.state) {
-                    entity.last_changed = h.last_changed
-                    entity.state = h.state
-                    entity.update = true
-                    this.hasChanged = true
-                }
-            }
-
+            this.hasChanged = this.entity_items.hasChanged(this.hassEntities)
             if (this.hasChanged) {
-                // refresh and update the graph
+                /**
+                 * refresh and update the graph
+                 */
                 this.updateGraph(true)
             }
-            return this.hasChanged
         }
+        return this.hasChanged
     }
 
     /**
      * Get all histroy data for all registrated entity ids
-     * or get the entity data if no time slot (hoursToShow) is defined.
+     * or get the entity data if no time slot (datascales.range) is defined.
      * Call an API on the Home Assistant server.
      */
     _getHistory() {
+        /**
+         * check if the card is visible
+         */
+        if (this.card.getClientRects().length == 0) return
+        this.APISTART = performance.now()
+        this.DEBUGDATA.PROFILER.APICALL = {
+            start: performance.now()
+        }
         if (this.ready) {
-            if (this.data_hoursToShow && this.data_hoursToShow > 0 && this.entity_ids.length) {
-                // if (update) {
-                //     // we have stateHistories, get only new data
-                //     startTime = this.dataInfo.endtime
-                // } else {
-                //     // no stateHistories get all data
-                //     startTime = new Date();
-                //     startTime.setHours(startTime.getHours() - this.hoursToShow);
-                // }
+            if (this.datascales.range > 0 && this.entity_items.getSize()) {
+                /**
+                 * start date, time and end date
+                 */
+                this.dataInfo.time = new Date().getTime()
+                this.dataInfo.starttime = new Date()
+                this.dataInfo.starttime.setHours(-this.datascales.range, 1, 0, 0)
+                this.dataInfo.endtime = new Date()
+                this.dataInfo.entities = this.entity_items.getEntityIdsAsString()
+                this.dataInfo.entity_items = this.entity_items.items
+                this.dataInfo.useAlias = this.entity_items.useAliasFields()
 
-                // get histroy data
-                // # filter_entity_id=<entity_ids> to filter on one or more entities - comma separated.
-                // # end_time=<timestamp> to choose the end of the period in URL encoded format (defaults to 1 day).
-                // # minimal_response to only return last_changed and state for states other than the first and last state (much faster).
-                // # significant_changes_only to only return significant state changes.
-                this.dataInfo = {
-                    starttime: new Date(),
-                    endtime: new Date(),
-                    entities: this.entity_ids.join(","),
-                    time: new Date().getTime(),
-                    loading: false,
-                    url: "",
-                    prev_url: "not_set",
-                    param: "",
-                    options: "&skip_initial_state&significant_changes_only=0"
-                }
-                if (this._config.aliasfield == false) {
-                    this.dataInfo.options += "&minimal_response"
-                }
-                this.dataInfo.starttime.setHours(this.dataInfo.starttime.getHours() - this.data_hoursToShow)
-                this.dataInfo.endtime.setHours(this.dataInfo.endtime.getHours() + 2)
+                /**
+                 * remove skip initial state when fetching not-cached data (slow)
+                 * significant_changes_only to only return significant state changes.
+                 * minimal_response to only return last_changed and state for
+                 * states other than the first and last state (much faster).
+                 * disable minimal_response this if alias (attribute) fields is used...
+                 */
+                this.dataInfo.options = "&skip_initial_state"
+                this.dataInfo.options += `&significant_changes_only=${this.dataInfo.useAlias ? 1 : 0}`
+                if (!this.dataInfo.useAlias) this.dataInfo.options += "&minimal_response"
 
                 const _newparam = `${this.dataInfo.endtime}:${this.dataInfo.entities}`
                 if (this.dataInfo.param == _newparam) {
-                    console.log("Data allready loaded...")
+                    console.warn("Data allready loaded...")
                     return
                 }
                 this.dataInfo.param = `${this.dataInfo.endtime}:${this.dataInfo.entities}`
 
-                // build the api url
+                /**
+                 * build the api url
+                 */
                 this.dataInfo.url = `history/period/${this.dataInfo.starttime.toISOString()}?end_time=${this.dataInfo.endtime.toISOString()}&filter_entity_id=${
                     this.dataInfo.entities
                 }${this.dataInfo.options}`
 
                 if (this.dataInfo.url !== this.dataInfo.prev_url) {
-                    // get the history data
+                    /**
+                     * get the history data
+                     */
+                    this.dataInfo.loading = true
                     const prom = this._hass.callApi("GET", this.dataInfo.url).then(
                         (stateHistory) => this._buildGraphData(stateHistory, 1),
                         () => null
@@ -928,7 +1262,9 @@ class ChartCard extends HTMLElement {
                     this.dataInfo.prev_url = this.dataInfo.url
                 }
             } else {
-                // build the current for the sensor(s)
+                /**
+                 * build the current for the sensor(s)
+                 */
                 this._buildGraphData(null, 2)
             }
             this.lastUpdate = new Date().toISOString()
@@ -940,13 +1276,13 @@ class ChartCard extends HTMLElement {
      * @param {*} data
      */
     renderStateData(data) {
-        // ------------------------------------------------
-        //  SHOW STATE
-        // ------------------------------------------------
         let _html = []
+        /**
+         * SHOW STATE LAYER
+         */
         if (this.currentData && this.chart_showstate && data) {
             let _visible = "margin:0;line-height:1.2em"
-            _html.push('<div class="state-view-data">')
+            _html.push(`<div class="state-view-data ${this.chart_showstate}">`)
             for (const item of data) {
                 let _style = ' style="' + _visible + ";color:" + item.color + '"'
                 _html.push('<div class="stateitem" id="' + item.name + '"' + _style + '">')
@@ -965,11 +1301,10 @@ class ChartCard extends HTMLElement {
             _html.push("</div>")
             this.currentData.innerHTML = _html.join("")
         }
-
+        /**
+         * SHOW DETAIL DATA
+         */
         if (this.currentData && this.detailData && data) {
-            // ------------------------------------------------
-            //  DETAIL DATA
-            // ------------------------------------------------
             if (this.detailData) {
                 _html = []
                 if (this.chart_showdetails.title) _html.push("<h2>" + this.chart_showdetails.title + "</h2>")
@@ -990,26 +1325,10 @@ class ChartCard extends HTMLElement {
                             item.name +
                             "</td>"
                     )
+                    _html.push("<td align='right'>" + _formatNumber(this.chart_locale, item.min || 0.0) + " " + item.unit + "</td>")
+                    _html.push("<td align='right'>" + _formatNumber(this.chart_locale, item.max || 0.0) + " " + item.unit + "</td>")
                     _html.push(
-                        "<td align='right'>" +
-                            _formatNumber(this.chart_locale, item.min || 0.0) +
-                            " " +
-                            item.unit +
-                            "</td>"
-                    )
-                    _html.push(
-                        "<td align='right'>" +
-                            _formatNumber(this.chart_locale, item.max || 0.0) +
-                            " " +
-                            item.unit +
-                            "</td>"
-                    )
-                    _html.push(
-                        "<td align='right'>" +
-                            _formatNumber(this.chart_locale, item.current || 0.0) +
-                            " " +
-                            item.unit +
-                            "</td>"
+                        "<td align='right'>" + _formatNumber(this.chart_locale, item.current || 0.0) + " " + item.unit + "</td>"
                     )
                     _html.push("<td>" + localDatetime(item.timestamp, this.chart_locale) + "</span>")
                     _html.push("</tr></tbody>")
@@ -1021,6 +1340,27 @@ class ChartCard extends HTMLElement {
     }
 
     /**
+     * for developers show the debugdata if enabled
+     */
+    _renderDebugInfo() {
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.CARD = this.card_title
+            this.DEBUGDATA.API.updateIntervall = msToTime(this.update_interval)
+            this.DEBUGDATA.API.elapsed = msToTime(performance.now() - this.APISTART)
+            this.DEBUGDATA.DATA_ENTITIES = this.entity_items.items
+            this.DEBUGDATA.LOVELACE_CONFIG = this._config
+            this.DEBUGDATA.LOCALEINFO = window.localeNames
+            delete this.DEBUGDATA.PROFILER.APICALL.start
+            delete this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
+            console.info(
+                `%cDEBUGDATA ${this.chart_type.toUpperCase()} ${appinfo.name} ${appinfo.version}:`,
+                "color:white;background:#cc283a;padding:4px",
+                this.DEBUGDATA
+            )
+        }
+    }
+
+    /**
      * build the graph cart data and datasets for the
      * defined graph chart. Uses the history data and the
      * entity data.
@@ -1028,31 +1368,71 @@ class ChartCard extends HTMLElement {
      * @param {*} stateHistories
      */
     _buildGraphData(stateHistories, mode) {
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.API.datamode = mode == 1 ? "History" : "Current"
+            this.DEBUGDATA.PROFILER.APICALL.elapsed = msToTime(performance.now() - this.DEBUGDATA.PROFILER.APICALL.start)
+            this.DEBUGDATA.PROFILER.GETBUCKETDATA = {
+                start: performance.now()
+            }
+        }
+        /**
+         * check historydata
+         */
         if ((mode === 1 && !stateHistories) || (stateHistories && !stateHistories.length)) {
+            if (this.DEBUGMODE) {
+                this.DEBUGDATA.API.ERROR = "No Historydata found!"
+                this._renderDebugInfo()
+            }
+            this.dataInfo.loading = false
             return null
         }
 
-        // all entity data values
-        this.getEntityData()
-        if (!this.entityData) return
+        /**
+         * checke all entity data values
+         */
+        if (!this.entity_items.isValid) {
+            if (this.DEBUGMODE) {
+                this.DEBUGDATA.API.ERROR = "No valid Entities found!"
+                this.DEBUGDATA.API.DATA = stateHistories
+                this._renderDebugInfo()
+            }
+            this.dataInfo.loading = false
+            return null
+        }
 
-        // start get chart data
+        if (mode == 1) {
+            const dataprovider = new DataProvider({
+                datainfo: this.dataInfo,
+                datascales: this.datascales,
+                debugmode: this.DEBUGMODE,
+                debugdata: this.DEBUGDATA
+            })
+            /**
+             * create the seriesdata
+             */
+            if (dataprovider.getSeriesdata(stateHistories) == false) {
+                if (this.DEBUGMODE) {
+                    this.DEBUGDATA.API.DATA = stateHistories
+                    this.DEBUGDATA.API.ERROR = "Transform Historydata failed!"
+                    this._renderDebugInfo()
+                }
+                this.dataInfo.loading = false
+                return null
+            }
+        }
+
+        /**
+         * get the chart data
+         */
         const _chartData = new chartData({
             chart_type: this.chart_type,
             card_config: this._config,
-            entities: this.entities,
-            entityOptions: this.entityOptions,
-            entityData: this.entityData,
-            entityNames: this.entityNames,
-            stateHistories: stateHistories,
-            data_group_by: this.data_group_by,
-            data_aggregate: this.data_aggregate,
+            entityOptions: this.entity_options,
+            entity_items: this.entity_items,
             settings: this._config,
-            chart_locale: this.chart_locale,
-            lastUpdate: this.lastUpdate
+            debugmode: this.DEBUGMODE,
+            debugdata: this.DEBUGDATA
         })
-
-        // get the chart data
         if (mode === 1) {
             this.graphData = _chartData.getHistoryGraphData()
         } else {
@@ -1060,8 +1440,13 @@ class ChartCard extends HTMLElement {
         }
 
         if (this.graphData === null) {
-            console.error("No GraphData found for ", this.entityNames)
-            return
+            if (this.DEBUGMODE) {
+                this.DEBUGDATA.API.ERROR = "No GraphData found!"
+                this.DEBUGDATA.API.DATA = stateHistories
+                this._renderDebugInfo()
+            }
+            this.dataInfo.loading = false
+            return null
         } else {
             if (this.graphData && this.graphData.config) {
                 this.themeSettings.secondaryAxis = this.graphData.config.secondaryAxis || false
@@ -1095,8 +1480,23 @@ class ChartCard extends HTMLElement {
                 }
             })
             if (_data) this.renderStateData(_data)
+            if (this.DEBUGMODE) {
+                this.DEBUGDATA.PROFILER.GETBUCKETDATA.elapsed = msToTime(
+                    performance.now() - this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
+                )
+                this._renderDebugInfo()
+            }
+            this.dataInfo.loading = false
             return true
         }
+
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.PROFILER.GETBUCKETDATA.elapsed = msToTime(
+                performance.now() - this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
+            )
+            this._renderDebugInfo()
+        }
+
         this.dataInfo.loading = false
     }
 
