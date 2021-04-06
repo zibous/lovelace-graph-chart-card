@@ -114,7 +114,8 @@ For `chartOptions` and `entity.style`,   see: [Chart.js documentation](https://w
 
 It's easy to get started with `Lovelace - graph-chartjs-card`. All that's required is the libraries included in your Home-assistant installation to render the charts.
 
-In this example, we create a bar chart for a two dataset and render that in the lovelace page. [Data source](https://github.com/zibous/ha-miscale2) - See --> Read weight measurements from Xiaomi Body Scales....
+In this example, we create a bar chart for a two dataset and render that in the lovelace page. 
+[Data source](https://github.com/zibous/ha-miscale2), read weight measurements from Xiaomi Body Scales....
 
 
 ## 
