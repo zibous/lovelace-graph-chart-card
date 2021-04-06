@@ -570,8 +570,6 @@ class ChartCard extends HTMLElement {
             this.themeSettings.gridLineWidth = this.themeSettings.theme.dark ? 0.8 : 1.0
             this.themeSettings.borderDash = [1, 1]
 
-            console.log(this.chartconfig, this._config.options)
-
             if (this.chartconfig.options && this.chartconfig.options.scale && this.chartconfig.options.scale.gridLines)
                 this.themeSettings.showGridLines = true
             if (this.chartconfig.options && this.chartconfig.options.legend) this.themeSettings.showLegend = true
@@ -594,17 +592,7 @@ class ChartCard extends HTMLElement {
      * overwrite the default settings
      */
     _setChartConfig() {
-        // /**
-        //  * get the config
-        //  */
-        // let config = {}
-        // config.type = this.chart_type
-        // if (this._config.options || this._config.chartOptions ) {
-        //     config.options = {}
-        //     config.options = this._config.options || this._config.chartOptions
-        // }
-        // this.chartconfig = config
-
+        
         /**
          * get the theme settings (color, font...)
          * and init the graph chart
