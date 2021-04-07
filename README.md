@@ -146,7 +146,7 @@ In this example, we create a bar chart for a two dataset and render that in the 
       name: Kohlenhydrate
 ```
 
-You can see all the ways to use `Lovelace - graph-chartjs-card` in the [usage documentation](./getting-started/index.md).
+You can see all the ways to use `Lovelace - graph-chartjs-card` in the [usage documentation](docs/getting-started/index.md).
 
 <br>
 

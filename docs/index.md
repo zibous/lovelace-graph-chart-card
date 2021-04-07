@@ -43,9 +43,16 @@ YAML Structure for `custom:chart-card`
   showdetails:{boolean: true|false}
   loader: '{text: audio|ball-triangle|bars|circles|grid|hearts|'
            'oval|pfuff|rings|spinning-circles|tail-spin|three-dots}'
-  update_interval: {integer: secunds}     
-  
-  ## otional settings for data scales (time-series)
+  update_interval: {integer: secunds}  
+  ## optional theme settings
+  theme:
+    fontcolor: '{text: HEX|RGB|RGBA color}'
+    gridlinecolor: '{text: HEX|RGB|RGBA color}'
+    zerolinecolor: '{text: HEX|RGB|RGBA color}'
+    tooltipsbackground: '{text: HEX|RGB|RGBA color}'
+    tooltipsfontcolor: '{text: HEX|RGB|RGBA color}'
+    cardbackground: '{text: HEX|RGB|RGBA color}'
+  ## optional settings for data scales (time-series)
   datascales:
     range: {integer}
     unit: '{text: millisecond|datetime|secund|minute|hour|day|month|year}'

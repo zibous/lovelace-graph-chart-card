@@ -601,7 +601,6 @@ class ChartCard extends HTMLElement {
      * overwrite the default settings
      */
     _setChartConfig() {
-        
         /**
          * get the theme settings (color, font...)
          * and init the graph chart
@@ -616,7 +615,6 @@ class ChartCard extends HTMLElement {
                 chart_locale: this.chart_locale,
                 chart_type: this.chart_type,
                 chartconfig: this.chartconfig,
-                setting: this._config,
                 loader: this.loader,
                 debugmode: this.DEBUGMODE,
                 debugdata: this.DEBUGDATA
@@ -911,12 +909,12 @@ class ChartCard extends HTMLElement {
             /**
              * set the chartconfig config
              */
-             this.chartconfig = {}
-             this.chartconfig.type = this.chart_type
+            this.chartconfig = {}
+            this.chartconfig.type = this.chart_type
             if (this._config.options || this._config.chartOptions) {
                 this.chartconfig.options = this._config.options || this._config.chartOptions
             }
-            
+
             /**
              * setting for data handling
              * default is navigator language, hass will overrite this
@@ -1221,6 +1219,8 @@ class ChartCard extends HTMLElement {
                 this.dataInfo.entities = this.entity_items.getEntityIdsAsString()
                 this.dataInfo.entity_items = this.entity_items.items
                 this.dataInfo.useAlias = this.entity_items.useAliasFields()
+                this.dataInfo.ISO_startime = this.dataInfo.starttime.toISOString()
+                this.dataInfo.ISO_endtime = this.dataInfo.endtime.toISOString()
 
                 /**
                  * remove skip initial state when fetching not-cached data (slow)
@@ -1233,8 +1233,10 @@ class ChartCard extends HTMLElement {
                 this.dataInfo.options += `&significant_changes_only=${this.dataInfo.useAlias ? 1 : 0}`
                 if (!this.dataInfo.useAlias) this.dataInfo.options += "&minimal_response"
 
-                const _newparam = `${this.dataInfo.endtime}:${this.dataInfo.entities}`
-                if (this.dataInfo.param == _newparam) {
+                /**
+                 * simple param check
+                 */
+                if (this.dataInfo.param == `${this.dataInfo.endtime}:${this.dataInfo.entities}`) {
                     console.warn("Data allready loaded...")
                     return
                 }
@@ -1243,10 +1245,7 @@ class ChartCard extends HTMLElement {
                 /**
                  * build the api url
                  */
-                this.dataInfo.url = `history/period/${this.dataInfo.starttime.toISOString()}?end_time=${this.dataInfo.endtime.toISOString()}&filter_entity_id=${
-                    this.dataInfo.entities
-                }${this.dataInfo.options}`
-
+                this.dataInfo.url = `history/period/${this.dataInfo.ISO_startime}?end_time=${this.dataInfo.ISO_endtime}&filter_entity_id=${this.dataInfo.entities}${this.dataInfo.options}`
                 if (this.dataInfo.url !== this.dataInfo.prev_url) {
                     /**
                      * get the history data
@@ -1344,6 +1343,7 @@ class ChartCard extends HTMLElement {
             this.DEBUGDATA.CARD = this.card_title
             this.DEBUGDATA.API.updateIntervall = msToTime(this.update_interval)
             this.DEBUGDATA.API.elapsed = msToTime(performance.now() - this.APISTART)
+            this.DEBUGDATA.API.datainfo = this.dataInfo
             this.DEBUGDATA.DATA_ENTITIES = this.entity_items.items
             this.DEBUGDATA.LOVELACE_CONFIG = this._config
             this.DEBUGDATA.LOCALEINFO = window.localeNames
@@ -1426,7 +1426,7 @@ class ChartCard extends HTMLElement {
             card_config: this._config,
             entityOptions: this.entity_options,
             entity_items: this.entity_items,
-            settings: this._config,
+            //settings: this._config,
             debugmode: this.DEBUGMODE,
             debugdata: this.DEBUGDATA
         })
@@ -2245,7 +2245,7 @@ class chartData {
         this.card_config = config.card_config
         this.entity_options = config.entityOptions
         this.entity_items = config.entity_items
-        this.settings = config.settings
+        // this.settings = config.settings
         this.DEBUGMODE = config.debugmode
         this.data_pointStyles = [
             "circle",
@@ -2517,7 +2517,7 @@ class chartData {
         /**
          * add the data series and return the new graph data
          */
-        if (this.chart_type === "bar" && this.card_config.show && this.card_config.show.segmented) {
+        if (this.chart_type === "bar" && this.card_config.options && this.card_config.options.segmented) {
             const newData = this.createSimpleBarSegmentedData(_graphData.data.datasets[0])
             if (newData) {
                 _graphData.data.datasets[1] = {}
@@ -2880,21 +2880,9 @@ class graphChart {
     /**
      * graph chart constructor
      * @param {*} config
-     *
-     * @example:
-     *  called form setConfig(config)...
-     *  let settings = {
-     *		ctx: this.ctx,
-     *		chart_locale: this.chart_locale,
-     *		chart_type: this.chart_type,
-     *		chartconfig: this.chartconfig,
-     *	}
-     *	// init the graph chart
-     *	this.graphChart = new graphChart(settings);
-     *
      */
     constructor(config) {
-        this.chart = null // current chart
+        // settings
         this.ctx = config.ctx || null // the chart canvas element
         this.canvasId = config.canvasId // canvas container id
         this.card_config = config.card_config // current card settings
@@ -2905,9 +2893,10 @@ class graphChart {
         this.loader = config.loader // the loading animation
         this.DEBUGMODE = config.debugmode || 0 // internal debugging enabled
         this.DEBUGDATA = config.debugdata
+        // all class based
+        this.chart = null // current chart
         this.graphData = {} // the graph data
         this.graphDataSets = [] // current graph settings
-        this.setting = config.setting
         this.chart_ready = false // boolean chart allready exits
         this.lastUpdate = null // timestamp last chart update
         this.ChartControl = window.Chart3 || Chart // chart global settings
@@ -3019,16 +3008,16 @@ class graphChart {
             _options.scales = {
                 x: {
                     id: "x",
-                    scaleLabel: {
+                    title: {
                         display: true,
-                        labelString: labelX
+                        text: labelX
                     }
                 },
                 y: {
                     id: "y",
-                    scaleLabel: {
+                    title: {
                         display: true,
-                        labelString: labelY
+                        text: labelY
                     }
                 }
             }
@@ -3060,11 +3049,26 @@ class graphChart {
             _options.scales.x.ticks = {
                 callback: xAxisFormat
             }
+            _options.plugins.tooltip = {
+                callbacks: {
+                    label: formatToolTipLabel,
+                    title: formatToolTipTitle
+                }
+            }
             // _options.scales.y = _options.scales.y || {}
             // _options.scales.y.ticks = {
             //     callback: yAxisFormat
             // }
             // _options.scales.x.time.displayFormats[_options.scales.x.time.unit] = this.card_config.datascales.format
+        }else{
+            /**
+             * callbacks for tooltip
+             */
+            _options.plugins.tooltip = {
+                callbacks: {
+                    label: formatToolTipLabel
+                }
+            }
         }
 
         /**
@@ -3091,16 +3095,6 @@ class graphChart {
                         return data.datasets[legendItem.datasetIndex].tooltip !== false
                     }
                 }
-            }
-        }
-
-        /**
-         * callbacks for tooltip
-         */
-        _options.plugins.tooltip = {
-            callbacks: {
-                label: formatToolTipLabel,
-                title: formatToolTipTitle
             }
         }
 

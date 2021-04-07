@@ -19,7 +19,7 @@ class chartData {
         this.card_config = config.card_config
         this.entity_options = config.entityOptions
         this.entity_items = config.entity_items
-        this.settings = config.settings
+        // this.settings = config.settings
         this.DEBUGMODE = config.debugmode
         this.data_pointStyles = [
             "circle",
@@ -291,7 +291,7 @@ class chartData {
         /**
          * add the data series and return the new graph data
          */
-        if (this.chart_type === "bar" && this.card_config.show && this.card_config.show.segmented) {
+        if (this.chart_type === "bar" && this.card_config.options && this.card_config.options.segmented) {
             const newData = this.createSimpleBarSegmentedData(_graphData.data.datasets[0])
             if (newData) {
                 _graphData.data.datasets[1] = {}

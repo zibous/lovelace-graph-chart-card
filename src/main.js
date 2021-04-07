@@ -592,7 +592,6 @@ class ChartCard extends HTMLElement {
      * overwrite the default settings
      */
     _setChartConfig() {
-        
         /**
          * get the theme settings (color, font...)
          * and init the graph chart
@@ -607,7 +606,6 @@ class ChartCard extends HTMLElement {
                 chart_locale: this.chart_locale,
                 chart_type: this.chart_type,
                 chartconfig: this.chartconfig,
-                setting: this._config,
                 loader: this.loader,
                 debugmode: this.DEBUGMODE,
                 debugdata: this.DEBUGDATA
@@ -902,12 +900,12 @@ class ChartCard extends HTMLElement {
             /**
              * set the chartconfig config
              */
-             this.chartconfig = {}
-             this.chartconfig.type = this.chart_type
+            this.chartconfig = {}
+            this.chartconfig.type = this.chart_type
             if (this._config.options || this._config.chartOptions) {
                 this.chartconfig.options = this._config.options || this._config.chartOptions
             }
-            
+
             /**
              * setting for data handling
              * default is navigator language, hass will overrite this
@@ -1212,6 +1210,8 @@ class ChartCard extends HTMLElement {
                 this.dataInfo.entities = this.entity_items.getEntityIdsAsString()
                 this.dataInfo.entity_items = this.entity_items.items
                 this.dataInfo.useAlias = this.entity_items.useAliasFields()
+                this.dataInfo.ISO_startime = this.dataInfo.starttime.toISOString()
+                this.dataInfo.ISO_endtime = this.dataInfo.endtime.toISOString()
 
                 /**
                  * remove skip initial state when fetching not-cached data (slow)
@@ -1224,8 +1224,10 @@ class ChartCard extends HTMLElement {
                 this.dataInfo.options += `&significant_changes_only=${this.dataInfo.useAlias ? 1 : 0}`
                 if (!this.dataInfo.useAlias) this.dataInfo.options += "&minimal_response"
 
-                const _newparam = `${this.dataInfo.endtime}:${this.dataInfo.entities}`
-                if (this.dataInfo.param == _newparam) {
+                /**
+                 * simple param check
+                 */
+                if (this.dataInfo.param == `${this.dataInfo.endtime}:${this.dataInfo.entities}`) {
                     console.warn("Data allready loaded...")
                     return
                 }
@@ -1234,10 +1236,7 @@ class ChartCard extends HTMLElement {
                 /**
                  * build the api url
                  */
-                this.dataInfo.url = `history/period/${this.dataInfo.starttime.toISOString()}?end_time=${this.dataInfo.endtime.toISOString()}&filter_entity_id=${
-                    this.dataInfo.entities
-                }${this.dataInfo.options}`
-
+                this.dataInfo.url = `history/period/${this.dataInfo.ISO_startime}?end_time=${this.dataInfo.ISO_endtime}&filter_entity_id=${this.dataInfo.entities}${this.dataInfo.options}`
                 if (this.dataInfo.url !== this.dataInfo.prev_url) {
                     /**
                      * get the history data
@@ -1335,6 +1334,7 @@ class ChartCard extends HTMLElement {
             this.DEBUGDATA.CARD = this.card_title
             this.DEBUGDATA.API.updateIntervall = msToTime(this.update_interval)
             this.DEBUGDATA.API.elapsed = msToTime(performance.now() - this.APISTART)
+            this.DEBUGDATA.API.datainfo = this.dataInfo
             this.DEBUGDATA.DATA_ENTITIES = this.entity_items.items
             this.DEBUGDATA.LOVELACE_CONFIG = this._config
             this.DEBUGDATA.LOCALEINFO = window.localeNames
@@ -1417,7 +1417,7 @@ class ChartCard extends HTMLElement {
             card_config: this._config,
             entityOptions: this.entity_options,
             entity_items: this.entity_items,
-            settings: this._config,
+            //settings: this._config,
             debugmode: this.DEBUGMODE,
             debugdata: this.DEBUGDATA
         })

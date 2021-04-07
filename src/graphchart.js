@@ -77,21 +77,9 @@ class graphChart {
     /**
      * graph chart constructor
      * @param {*} config
-     *
-     * @example:
-     *  called form setConfig(config)...
-     *  let settings = {
-     *		ctx: this.ctx,
-     *		chart_locale: this.chart_locale,
-     *		chart_type: this.chart_type,
-     *		chartconfig: this.chartconfig,
-     *	}
-     *	// init the graph chart
-     *	this.graphChart = new graphChart(settings);
-     *
      */
     constructor(config) {
-        this.chart = null // current chart
+        // settings
         this.ctx = config.ctx || null // the chart canvas element
         this.canvasId = config.canvasId // canvas container id
         this.card_config = config.card_config // current card settings
@@ -102,9 +90,10 @@ class graphChart {
         this.loader = config.loader // the loading animation
         this.DEBUGMODE = config.debugmode || 0 // internal debugging enabled
         this.DEBUGDATA = config.debugdata
+        // all class based
+        this.chart = null // current chart
         this.graphData = {} // the graph data
         this.graphDataSets = [] // current graph settings
-        this.setting = config.setting
         this.chart_ready = false // boolean chart allready exits
         this.lastUpdate = null // timestamp last chart update
         this.ChartControl = window.Chart3 || Chart // chart global settings
@@ -216,16 +205,16 @@ class graphChart {
             _options.scales = {
                 x: {
                     id: "x",
-                    scaleLabel: {
+                    title: {
                         display: true,
-                        labelString: labelX
+                        text: labelX
                     }
                 },
                 y: {
                     id: "y",
-                    scaleLabel: {
+                    title: {
                         display: true,
-                        labelString: labelY
+                        text: labelY
                     }
                 }
             }
@@ -257,11 +246,26 @@ class graphChart {
             _options.scales.x.ticks = {
                 callback: xAxisFormat
             }
+            _options.plugins.tooltip = {
+                callbacks: {
+                    label: formatToolTipLabel,
+                    title: formatToolTipTitle
+                }
+            }
             // _options.scales.y = _options.scales.y || {}
             // _options.scales.y.ticks = {
             //     callback: yAxisFormat
             // }
             // _options.scales.x.time.displayFormats[_options.scales.x.time.unit] = this.card_config.datascales.format
+        }else{
+            /**
+             * callbacks for tooltip
+             */
+            _options.plugins.tooltip = {
+                callbacks: {
+                    label: formatToolTipLabel
+                }
+            }
         }
 
         /**
@@ -288,16 +292,6 @@ class graphChart {
                         return data.datasets[legendItem.datasetIndex].tooltip !== false
                     }
                 }
-            }
-        }
-
-        /**
-         * callbacks for tooltip
-         */
-        _options.plugins.tooltip = {
-            callbacks: {
-                label: formatToolTipLabel,
-                title: formatToolTipTitle
             }
         }
 
