@@ -1,6 +1,12 @@
 # Lovelace - graph-chartjs-card
 
-Chart.js card `Version 2.0.2` for Home Assistant -  Visualize your data in 9 different ways; each of them animated and customisable.
+This is higly customizable graph card for [Home-Assistant](https://www.home-assistant.io/)'s Lovelace UI.
+
+Graph ChartJS Chart `Version 2.0.2` for Home Assistant -  Visualize your data in different ways- `BAR`, `HORIZONTALBAR` ,`SEGMENTEDBAR`, `PIE`, `DOUGHNUT`, `LINE`,`RADAR`,`SCATTR`,`BUBBLE` - ; each of them animated and customisable. Respects the set Homeassistant `locale` for numbers and dates.
+
+It is based on [chart.js](https://chartjs.org) and offers most of the features of the library.
+
+<br>
 
 ![charts2.png](docs/img/charts/charts.png)
 
@@ -26,9 +32,15 @@ If you find any information on this page useful, feel free to buy me a coffee:
       - url: /hacsfiles/chart-card/chart-card-min.js
         type: module
     ```
-<br>
+    <br>
 
-YAML Structure for `custom:chart-card`
+    You can see all the ways to use `Lovelace - graph-chartjs-card` in the [usage documentation](docs/getting-started/index.md).
+
+    
+
+    <br>
+
+## YAML Structure for `custom:chart-card`
 
 ```yaml
 ## -------------------------------------
@@ -172,6 +184,7 @@ You can see all the ways to use `Lovelace - graph-chartjs-card` in the [usage do
 
 - [Evert Timberg](https://github.com/etimberg) - Maintainer of @chartjs
 - [Jukka Kurkela](https://github.com/kurkle) - Maintainer of @chartjs & Plugins for chartjs
+
 
 ## License
 

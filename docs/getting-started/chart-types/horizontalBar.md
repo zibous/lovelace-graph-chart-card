@@ -8,6 +8,8 @@ A horizontal bar chart is a variation on a vertical bar chart. It is sometimes u
 
 <br>
 
+### Example
+
 ```yaml
 - type: 'custom:chart-card'
   title: Stromkosten der Geschosse
@@ -22,8 +24,9 @@ A horizontal bar chart is a variation on a vertical bar chart. It is sometimes u
 <br>
 
 #### Advanced Horizontal Bar Chart
-![horizontalBar1](img/horizontalBar1.png)
-<br>
+![horizontalBar1](img/horizontalBar1.png)<br>
+
+### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -56,6 +59,8 @@ A horizontal bar chart is a variation on a vertical bar chart. It is sometimes u
 ```
 
 <hr>
-##Chart Options `chartOptions`
+**Chart Options `chartOptions`**
+
 see: https://www.chartjs.org/docs/latest/charts/bar.html#horizontal-bar-chart
+
 

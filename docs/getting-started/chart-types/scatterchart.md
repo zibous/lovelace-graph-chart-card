@@ -8,6 +8,8 @@ Scatter charts are based on basic line charts with the x axis changed to a linea
 
 <br>
 
+### Example
+
 ```yaml
 - type: 'custom:chart-card'
   title: Körperwerte
@@ -27,6 +29,8 @@ Scatter charts are based on basic line charts with the x axis changed to a linea
 ![scatterchart](img/scatterchart.png)
 
 <br>
+
+### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -66,6 +70,10 @@ Scatter charts are based on basic line charts with the x axis changed to a linea
 ```
 <br>
 <hr>
-##Chart Options `chartOptions`
+
+
+**Chart Options `chartOptions`**
+
 see: https://www.chartjs.org/docs/latest/charts/scatter.html#dataset-properties
+
 

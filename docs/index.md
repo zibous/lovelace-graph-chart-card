@@ -1,14 +1,120 @@
 # Lovelace - graph-chartjs-card
 
-Chart.js card `Version 2.0.2` for Home Assistant -  Visualize your data in 9 different ways; each of them animated and customisable.
+This is higly customizable graph card for [Home-Assistant](https://www.home-assistant.io/)'s Lovelace UI.
 
-![charts2.png](img/charts/charts.png)
+Graph ChartJS Chart `Version 2.0.2` for Home Assistant -  Visualize your data in different ways- `BAR`, `HORIZONTALBAR` ,`SEGMENTEDBAR`, `PIE`, `DOUGHNUT`, `LINE`,`RADAR`,`SCATTR`,`BUBBLE` - ; each of them animated and customisable. Respects the set Homeassistant `locale` for numbers and dates
+
+It is based on [chart.js](https://chartjs.org) and offers most of the features of the library.
+
+<br>
+
+## 1. Bar Charts
+
+
+| <img src="getting-started/chart-types/img/simplebar1.png" alt="barchart_simple" style="zoom:60%;" /> | <img src="getting-started/chart-types/img/barchartfilled.png" alt="barchart_simple" style="zoom:50%;" /> | <img src="getting-started/chart-types/img/barchartseries.png" alt="barchart_simple" style="zoom:45%;" /> | <img src="getting-started/chart-types/img/barchartstacked1.png" alt="barchart_simple" style="zoom:45%;" /> |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| **Bar Chart State based**                                    | **Bar Chart State based (segmented)**                        | **Bar Chart Timeseries**                                     | **Bar Chart Timeseries  stacked**                            |
+
+▶︎ [Bar Charts Examples see](./getting-started/chart-types/barchart.md)
+
+<br>
+
+## 2. Horizontal Bar Chart
+
+| <img src="getting-started/chart-types/img/simpehorizontalBar1.png" alt="barchart_simple" style="zoom:50%;" /> | <img src="getting-started/chart-types/img/horizontalBar1.png" alt="barchart_simple" style="zoom:40%;" /> |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| **Horizontal Bar Chart State based**                         | **Horizontal Bar Chart State based**                         |
+
+▶︎ [Horizontal Bar Example see](./getting-started/chart-types/horizontalBar.md)
+
+<br>
+
+## 3. Pie- & **Doughnut** Charts
+
+
+| <img src="getting-started/chart-types/img/piechart.png" alt="barchart_simple" style="zoom:50%;" /> | <img src="getting-started/chart-types/img/doughnutchart.png" alt="barchart_simple" style="zoom:50%;" /> |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| **Pie Chart State based**                                    | **Doughnut ChartState based**                                |
+
+▶︎ [Pie Chard Example see](./getting-started/chart-types/piechard.md)
+
+▶︎ [ Doughnut Chard Example see](./getting-started/chart-types/doughnut.md)
+
+<br>
+
+## 4. Line Charts
+
+| <img src="getting-started/chart-types/img/simpeline1.png" alt="Linechart" style="zoom:60%;" /> | <img src="getting-started/chart-types/img/areachart.png" alt="Areachart" style="zoom:45%;" /> | <img src="getting-started/chart-types/img/linechart1.png" alt="Linechart 2" style="zoom:45%;" /> | <img src="getting-started/chart-types/img/linechart2.png" alt="Linechart2" style="zoom:45%;" /> |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| **Line Chart Timeseries**                                    | **Area (line) Chart stacked Timeseries**                     | **Line Chart (filled) Timeseries**                           | **Line Chart (filled) Timeseries**                           |
+
+▶︎ [Line Charts Example see](./getting-started/chart-types/line.md)
+
+<br>
+
+## 5. Mixed Charts
+
+| <img src="getting-started/chart-types/img/mixedchart1.png" alt="Mixed Chart" style="zoom:60%;" /> |
+| ------------------------------------------------------------ |
+| **Mixed Chart (Bar and Lines)  Timeseries**                  |
+
+▶︎ [Mixed Charts Example see](./getting-started/chart-types/mixedcharts.md)
+
+<br>
+
+## 6. Radar - & Scatter Charts
+
+| <img src="getting-started/chart-types/img/simpleradar1.png" alt="Radar Chart" style="zoom:40%;" /> | <img src="getting-started/chart-types/img/simplescatter1.png" alt="Scatter Chart" style="zoom:45%;" /> | <img src="getting-started/chart-types/img/scatterchart.png" alt="Scatter Chart" style="zoom:45%;" /> |      |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ---- |
+| **Radar Chart State based**                                  | **Scatter Chart State based**                                | **Scatter Chart Timeseries**                                 |      |
+|                                                              |                                                              |                                                              |      |
+
+▶︎ [Radar Chart Example see](./getting-started/chart-types/radarcharts.md)
+
+▶︎ [Scatter Chart Example see](./getting-started/chart-types/scattercharts.md)
+
+<br>
+
+## 7. Bubble Charts
+
+
+| <img src="getting-started/chart-types/img/simplebubblechart.png" alt="barchart_simple" style="zoom:60%;" /> | <img src="getting-started/chart-types/img/bubblechart.png" alt="barchart_simple" style="zoom:50%;" /> |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| **Bubble Chart State based**                                 | **Bubble Chart Timeseries**                                  |
+
+▶︎ [Bubble Chart Example see](./getting-started/chart-types/bubblechart.md)
+
+<br>
 
 
 
 ## Installation
 
 
+
+### Requirements
+
+\- Home Assistant 2021.3.4
+
+  \- Frontend-Version: 20210302.6 - latest
+
+  \- Lovelace Mode
+
+\- Tested Browser
+
+  \- Chrome Version 86.0.4240.111 
+
+  \- Safari Version 13.1.2 (13609.3.5.1.5)
+
+  \- Firefox 82.0 (64-Bit)
+
+  \- Vivaldi 3.4.2066.76 (Stable channel) (x86_64)
+
+  \- Android Browser (Chrome, Firefox, Vivaldi)
+
+\- Lovelace chart-card (Chart.js v3.0.1)
+
+<br>
 
 ### Manual install
 
@@ -107,11 +213,11 @@ YAML Structure for `custom:chart-card`
 
 ```
 
-
+<br>
 
 For `chartOptions` and `entity.style`,   see: [Chart.js documentation](https://www.chartjs.org/docs/latest/)
 
-
+<br>
 
 ## Creating a Chart
 
@@ -124,6 +230,7 @@ In this example, we create a bar chart for a two dataset and render that in the 
 
 ![charts2.png](img/charts/simple_bar.png)
 
+<br>
 
 ### YAML Configuration
 
@@ -146,5 +253,7 @@ In this example, we create a bar chart for a two dataset and render that in the 
     - entity: sensor.kohlenhydrate_makronahrstoff
       name: Kohlenhydrate
 ```
+
+<br>
 
 You can see all the ways to use `Lovelace - graph-chartjs-card` in the [usage documentation](./getting-started/index.md).

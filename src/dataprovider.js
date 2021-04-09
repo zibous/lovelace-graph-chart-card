@@ -6,13 +6,6 @@
  
  * ----------------------------------------------------------*/
 
-const SERIESDEFAULT_VALUE = 0.0 // default value if missing data
-const TRANSFORM_MODE = {
-    statebased: 1, // entity.state based on aggregation
-    datalabel: 2, // data.array label.array
-    seriesdata: 3 // data.x and data.y
-}
-
 /**
  * Lovelaces chartjs
  * Dataprovider for chart.js
@@ -39,8 +32,6 @@ class DataProvider {
      */
     _checkParam() {
         if (this.datascales && this.dataInfo.entity_items && Object.keys(this.dataInfo.entity_items)) {
-            // settings series data
-            this.datascales.unit = this.datascales.unit || "day"
             this.datascales.range = this.datascales.range || 24
             this.datascales.aggregate = this.datascales.aggregate || "last"
             return true
@@ -91,8 +82,8 @@ class DataProvider {
     getSeriesdata(deviceStates) {
         function validItem(item, ignoreZero = false) {
             return ignoreZero
-                ? item != 0 && item != "unavailable" && item != "undefined"
-                : item != "unavailable" && item != "undefined"
+                ? item != 0 && item != "unavailable" && item != "undefined" && item != "unknown"
+                : item != "unavailable" && item != "undefined" && item != "unknown"
         }
         /**
          * dateformat
@@ -102,17 +93,23 @@ class DataProvider {
          * @returns
          */
         function formatDateLabel(datevalue, mode = "label", format = "day") {
+            /**
+             * group format must be a valid date/time format
+             * otherwise the timeseries do not work
+             */
             const groupFormats = {
-                millisecond: "yyyy/m/d H:MM:ss",
-                datetime: "yyyy/m/d H:MM:ss",
-                secund: "yyyy/m/d H:MM:ss",
-                minute: "yyyy/m/d H:MM:00",
-                hour: "yyyy/m/d H:00",
+                millisecond: "yyyy/m/d H:M:ss.l",
+                datetime: "yyyy/md/ H:M:s",
+                second: "yyyy/m/d H:M:s",
+                minute: "yyyy/m/d H:M:00",
+                hour: "yyyy/m/d H:00:00",
                 day: "yyyy/m/d",
                 month: "yyyy/m/1",
-                year: "yyyy/1/1"
+                year: "yyyy/12/31"
             }
-            if (mode == "group") return formatdate(datevalue, groupFormats[format] || "day")
+            if (mode == "group") {
+                return formatdate(datevalue, groupFormats[format] || "yyyymd")
+            }
             return formatdate(datevalue, format)
         }
         /**
@@ -122,8 +119,8 @@ class DataProvider {
         if (deviceStates && deviceStates.length) {
             deviceStates.forEach((states) => {
                 const _entityId = states[0].entity_id
-                const _entity = this.dataInfo.entity_items[_entityId]                
-                if (_entityId) {                    
+                const _entity = this.dataInfo.entity_items[_entityId]
+                if (_entityId) {
                     const _fld = _entity.attribute
                     const _factor = _entity.factor || 1.0
                     /**
@@ -157,7 +154,12 @@ class DataProvider {
                         _val = _val * _factor
                         _data[_index] = _data[_index] || []
                         _data[_index]["data"] = _data[_index]["data"] || []
-                        _data[_index]["localedate"] = formatDateLabel(row.last_changed, "label", _entity.datascales.unit)
+                        _data[_index]["localedate"] = formatDateLabel(
+                            row.last_changed,
+                            "label",
+                            _entity.datascales.format || _entity.datascales.unit
+                        )
+                        //_data[_index]["localedate"] = formatDateLabel(row.last_changed, "label", _entity.datascales.unit)
                         _data[_index]["data"].push(_safeParseFloat(_val))
                     })
                     /**

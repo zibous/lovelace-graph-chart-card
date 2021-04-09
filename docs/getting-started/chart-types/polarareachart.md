@@ -11,6 +11,8 @@ This type of chart is often useful when we want to show a comparison data simila
 
 <br>
 
+### Example
+
 ```yaml
 - type: 'custom:chart-card'
   title: Körperwerte
@@ -31,6 +33,8 @@ This type of chart is often useful when we want to show a comparison data simila
 ![polarArea](img/polararea1.png)
 
 <br>
+
+### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -72,5 +76,8 @@ This type of chart is often useful when we want to show a comparison data simila
 ```
 <br>
 <hr>
-##Chart Options `chartOptions`
+
+
+**Chart Options `chartOptions`**
+
 see: https://www.chartjs.org/docs/latest/charts/polar.html#dataset-properties

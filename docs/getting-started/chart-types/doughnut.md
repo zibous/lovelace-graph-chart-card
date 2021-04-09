@@ -8,6 +8,8 @@ Doughnut charts are probably the most commonly used charts. They are divided int
 
 <br>
 
+### Example
+
 ```yaml
 - type: 'custom:chart-card'
   title: Stromkosten der Geschosse
@@ -25,6 +27,8 @@ Doughnut charts are probably the most commonly used charts. They are divided int
 ![doughnutchart](img/doughnutchart.png)
 
 <br>
+
+### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -56,6 +60,10 @@ Doughnut charts are probably the most commonly used charts. They are divided int
         backgroundColor: '#009688'
 ```
 <hr>
-##Chart Options `chartOptions`
+
+
+**Chart Options `chartOptions`**
+
 see: https://www.chartjs.org/docs/latest/charts/doughnut.html#dataset-properties
+
 

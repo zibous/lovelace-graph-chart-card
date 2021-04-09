@@ -1,4 +1,5 @@
 ## Lovelace - graph-chartjs-card
+
 ### Line Charts
 
 A line chart is a way of plotting data points on a line. Often, it is used to show trend data, or the comparison of two data sets.
@@ -7,6 +8,8 @@ A line chart is a way of plotting data points on a line. Often, it is used to sh
 ![simpeline1](img/simpeline1.png)
 
 <br>
+
+### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -25,6 +28,8 @@ A line chart is a way of plotting data points on a line. Often, it is used to sh
 ![areachart](img/areachart.png)
 
 <br>
+
+### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -75,6 +80,8 @@ A line chart is a way of plotting data points on a line. Often, it is used to sh
 
 <br>
 
+### Example
+
 ```yaml
 - type: 'custom:chart-card'
   title: Temperaturverlauf
@@ -111,6 +118,8 @@ A line chart is a way of plotting data points on a line. Often, it is used to sh
 ![barchart_simple](img/linechart2.png)
 
 <br>
+
+### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -156,6 +165,10 @@ A line chart is a way of plotting data points on a line. Often, it is used to sh
 ### Advanced Line Chart with 4 entities (`datascales`: default)
 ![barchart_simple](img/linechart3.png)
 
+<br>
+
+### Example
+
 ```yaml
 - type: 'custom:chart-card'
   title: Temperaturverlauf
@@ -199,5 +212,6 @@ A line chart is a way of plotting data points on a line. Often, it is used to sh
 ```
 
 <hr>
-##Chart Options `chartOptions`
+**Chart Options `chartOptions`**
+
 see: https://www.chartjs.org/docs/latest/charts/line.html#dataset-properties

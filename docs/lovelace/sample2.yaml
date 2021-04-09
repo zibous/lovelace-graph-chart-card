@@ -1,0 +1,239 @@
+views:
+  - title: MT174
+    icon: 'mdi:counter'
+    id: SMT174
+    panel: true
+    path: mt174
+    cards:
+      - type: 'custom:cards-layout'
+        toolbar:
+          backgroundcolor: '#366484'
+          iconcolor: '#FFFFFF'
+          visible: true
+        header:
+          title: Stromverbrauch & -Produktion
+          icon: 'mdi:counter'
+          iconcolor: '#FFFFFF'
+          style: >-
+            background-image:
+            url('/hacsfiles/cards-layout/assets/ha-header-house.png');
+            background-color: #366484; color: #FFFFFF;
+        page:
+          title: Übersicht
+          icon: 'mdi:view-agenda'
+          iconcolor: '#FFFFFF'
+          description: Austellung Stromverbrauchsdaten - Messung Smartmeter
+          width: 95%
+          style: >-
+            color: #FFFFFF; background: linear-gradient(to bottom, #366484,#182848);
+        content:
+          - row:
+              - columns: null
+                width: 50%
+                title: 'Zeitraum letzen: 24h'
+                description: >-
+                  Stromverbrauch  & -Produktion Photovoltaik Anlage (Hoch- &
+                  Niedertarif)
+                entities:
+                  - type: 'custom:chart-card'
+                    title: Stromkosten der Geschosse
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: doughnut
+                    entities:
+                      - options:
+                          hoverOffset: 8
+                          unit: €
+                      - entity: sensor.0_eg
+                        name: Erdgeschoss
+                        attribute: cost_month
+                        factor: -1
+                        style:
+                          backgroundColor: '#FF8066'
+                      - entity: sensor.1_og
+                        name: Wohngeschoss
+                        attribute: cost_month
+                        factor: -1
+                        style:
+                          backgroundColor: '#2196f3'
+                      - entity: sensor.2_og
+                        name: Obgeschoss
+                        attribute: cost_month
+                        factor: -1
+                        style:
+                          backgroundColor: '#b968c7'
+                      - entity: sensor.3_og
+                        name: Dachgeschoss
+                        attribute: cost_hour
+                        factor: -1
+                        style:
+                          backgroundColor: '#009788'
+                  - type: 'custom:chart-card'
+                    title: Verbrauch total
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: pie
+                    chartOptions:
+                      plugins:
+                        legend:
+                          position: top
+                          display: true
+                    entities:
+                      - options:
+                          hoverOffset: 8
+                          unit: kWh
+                      - entity: sensor.0_eg
+                        name: Erdgeschoss
+                        attribute: total
+                        factor: 10
+                        style:
+                          backgroundColor: '#FF8066'
+                      - entity: sensor.1_og
+                        name: Wohngeschoss
+                        attribute: total
+                        factor: 10
+                        style:
+                          backgroundColor: '#2196f3'
+                      - entity: sensor.2_og
+                        name: Obgeschoss
+                        attribute: total
+                        factor: 10
+                        style:
+                          backgroundColor: '#b968c7'
+                      - entity: sensor.3_og
+                        name: Dachgeschoss
+                        attribute: total
+                        factor: 10
+                        style:
+                          backgroundColor: '#009788'
+          - row:
+              - columns: null
+                width: 100%
+                title: 'Zeitraum letzen: 24h'
+                description: >-
+                  Stromverbrauch  & -Produktion Photovoltaik Anlage (Hoch- &
+                  Niedertarif)
+                entities:
+                  - type: 'custom:chart-card'
+                    title: Verbrauch vs. Produktion
+                    icon: 'mdi:counter'
+                    height: 480
+                    chart: bar
+                    showstate: false
+                    datascales:
+                      range: 120
+                      unit: day
+                    chartOptions:
+                      plugins:
+                        legend:
+                          position: top
+                          display: true
+                      scales:
+                        x:
+                          alignToPixels: true
+                          stacked: true
+                          offset: true
+                          title:
+                            display: true
+                            text: Zeitraum
+                        'y':
+                          alignToPixels: true
+                          stacked: true
+                          title:
+                            display: true
+                            text: Energie kWh
+                    entities:
+                      - entity: sensor.verbrauch_gesamt
+                        name: Verbrauch
+                        attribute: sum_hour
+                        unit: kWh
+                        ignoreZero: false
+                        aggregate: sum
+                        style:
+                          backgroundColor: '#FF8066'
+                      - entity: sensor.solarpower_current_power
+                        name: Energieproduktion
+                        attribute: power_hour
+                        unit: kWh
+                        ignoreZero: true
+                        factor: 0.001
+                        aggregate: sum
+                        style:
+                          backgroundColor: '#fcec34'
+          - row:
+              - columns: null
+                width: 50%
+                title: 'Zeitraum letzen: 24h'
+                description: Stromverbrauch der Geschosse (Hoch- & Niedertarif)
+                entities:
+                  - type: 'custom:chart-card'
+                    title: Stromverbrauch der Geschosse
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: line
+                    showstate: false
+                    chartOptions:
+                      plugins:
+                        legend:
+                          position: top
+                          display: true
+                      scales:
+                        x:
+                          alignToPixels: true
+                        'y':
+                          stacked: true
+                    entities:
+                      - entity: sensor.1_og
+                        name: Wohngeschoss
+                        attribute: sum_hour
+                        unit: kWh
+                        factor: -1
+                        style:
+                          fill: true
+                          backgroundColor: '#2196f3'
+                      - entity: sensor.2_og
+                        name: Obgeschoss
+                        attribute: sum_hour
+                        unit: kWh
+                        factor: -1
+                        style:
+                          fill: true
+                          backgroundColor: '#b968c7'
+                      - entity: sensor.3_og
+                        name: Dachgeschoss
+                        attribute: sum_hour
+                        unit: kWh
+                        factor: -1
+                        style:
+                          fill: true
+                          backgroundColor: '#009788'
+                  - type: 'custom:chart-card'
+                    title: Energieproduktion Photovoltaik
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: bar
+                    showstate: false
+                    update_interval: 30
+                    debug: true
+                    datascales:
+                      range: 24
+                      unit: hour
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: false
+                      scales:
+                        x:
+                          alignToPixels: true
+                          stacked: true
+                        'y':
+                          stacked: true
+                    entities:
+                      - entity: sensor.solarpower_current_power
+                        name: Energieproduktion
+                        unit: kWh
+                        ignoreZero: true
+                        factor: 0.001
+                        aggregate: max
+                        style:
+                          backgroundColor: '#fcec34'

@@ -7,6 +7,10 @@ A bubble chart is used to display three dimensions of data at the same time. The
 #### Minimal Bubble Chart
 ![barchart_simple](img/simplebubblechart.png)
 
+<br>
+
+### Example
+
 ```yaml
 - type: 'custom:chart-card'
   title: Körper-Typ
@@ -26,6 +30,10 @@ A bubble chart is used to display three dimensions of data at the same time. The
 ### Advanced Bubble Chart
 
 ![bubblechart](img/bubblechart.png)
+
+<br>
+
+### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -79,5 +87,7 @@ A bubble chart is used to display three dimensions of data at the same time. The
 ```
 
 <hr>
-##Chart Options `chartOptions` 
+**Chart Options `chartOptions`**
+
 see: https://www.chartjs.org/docs/latest/charts/bubble.html#dataset-properties
+

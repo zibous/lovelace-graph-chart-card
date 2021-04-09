@@ -13,8 +13,9 @@ const zip = require("gulp-zip")
 const settings = {
     // all for the custom card
     files: [
+        "./src/const.js",
         "./src/main.js",
-        //"./src/datetools.js",
+        "./src/entitydata.js",
         "./src/tools.js",
         "./src/dataprovider.js",
         "./src/colors.js",

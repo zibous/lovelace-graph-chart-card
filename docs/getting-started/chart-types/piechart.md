@@ -8,6 +8,8 @@ Pie charts are probably the most commonly used charts. They are divided into seg
 
 <br>
 
+### Example
+
 ```yaml
 - type: 'custom:chart-card'
   title: Stromkosten der Geschosse
@@ -26,13 +28,15 @@ Pie charts are probably the most commonly used charts. They are divided into seg
 
 <br>
 
+### Example
+
 ```yaml
 - type: 'custom:chart-card'
   title: 'Makro Nährstoffe'
   icon: 'mdi:nutrition'
   height: 320
   chart: 'pie'
-  options:
+  chartOptions:
     plugins:
       title:
         display: true
@@ -47,5 +51,9 @@ Pie charts are probably the most commonly used charts. They are divided into seg
       name: Kohlenhydrate
 ```
 <hr>
-##Chart Options `chartOptions`
+
+
+**Chart Options `chartOptions`**
+
 see: https://www.chartjs.org/docs/latest/charts/doughnut.html#dataset-properties
+

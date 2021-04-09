@@ -8,6 +8,8 @@ A radar chart is a way of showing multiple data points and the variation between
 
 <br>
 
+### Example
+
 ```yaml
 - type: 'custom:chart-card'
   title: Körperwerte
@@ -24,5 +26,8 @@ A radar chart is a way of showing multiple data points and the variation between
 <br>
 
 <hr>
-##Chart Options `chartOptions`
+
+
+**Chart Options `chartOptions`**
+
 see: https://www.chartjs.org/docs/latest/charts/radar.html#dataset-properties

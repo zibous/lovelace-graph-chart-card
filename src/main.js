@@ -1,41 +1,12 @@
 /** --------------------------------------------------------------------
-
-  Custom Chart Card 
-  based on https://github.com/sdelliot/pie-chart-card
-
-  chartjs:    https://www.chartjs.org/
-  gradient:   https://github.com/kurkle/chartjs-plugin-gradient#readme
-
+  Custom Chart Card for chart.js
   (c) 2021 Peter Siebler
   Released under the MIT license
-
 /** -------------------------------------------------------------------*/
-"use strict"
-
-// Chart.js  and used plugins, production use min.js
-import "/hacsfiles/chart-card/chart.js?module"
 
 // ! importend to fix the collision with ha used chart.js 2.9
 window.Chart3 = Chart
-
-// gradient, see themesettings
 const gradient = window["chartjs-gradient"]
-
-// all about the application
-const appinfo = {
-    name: "✓ custom:chart-card ",
-    app: "chart-card",
-    version: "v2.0.2/v3.0.1",
-    chartjs: Chart.version || "v3.0.1",
-    assets: "/hacsfiles/chart-card/assets/",
-    github: "https://github.com/zibous/lovelace-graph-chart-card"
-}
-// render the app-info for this custom card
-console.info(
-    `%c ${appinfo.name}          %c ▪︎▪︎▪︎▪︎ ${appinfo.version}  ▪︎▪︎▪︎▪︎`,
-    "color:#FFFFFF; background:#3498db;display:inline-block;font-size:12px;font-weight:300;padding: 6px 0 6px 0",
-    "color:#2c3e50; background:#ecf0f1;display:inline-block;font-size:12px;font-weight:300;padding: 6px 0 6px 0"
-)
 
 // From weather-card
 // fireEvent(this, "hass-more-info", { entityId: aqiSensor.config });
@@ -135,27 +106,36 @@ style.innerHTML = `
         line-height:2em
     } 
     .card-detail-view{
-        margin-top: 1.2em;
-        border-top:1px dotted;
+        margin-top: 1.925em;
     }
+    .card-detail-view  hr{
+        border-bottom-width: 0px;
+        opacity:0.5;
+    }   
     .card-detail-view h2{
         margin-left: 0.5em
     }
     .card-detail-table{
         margin: 0 auto;
-        font-size:0.95em;
+        font-size:0.925em;
         font-weight:300;
-        width: 100%;
-        border-spacing:10px;
-        border-collapse: separate;
+        width: 95%;
+        border-collapse: collapse !important;
         table-layout: fixed;
         text-align:left;
+        line-height: 1.8rem
     }
+    table-row-background-color
+
+    .card-detail-table  tr:nth-child(even) {background: var(--table-row-background-color)}
+    .card-detail-table  tr:nth-child(odd) {background:var(--table-row-alternative-background-color)}
+
     .card-detail-table th{
-        padding: 0 4px;
+        padding: 0 6px;
         font-weight:400;
     }
     .card-detail-table td{
+        padding: 0 6px;
         overflow:hidden;
         text-overflow:ellipsis;
         white-space:nowrap;
@@ -175,220 +155,6 @@ style.innerHTML = `
     
     }
 `
-/**
- * set the default setting for the cart
- * @param {*} theme
- */
-function setChartDefaults(theme) {
-    if (window.Chart3 && window.Chart3.defaults) {
-        if (window.Chart3.defaults.theme && theme.theme == window.Chart3.defaults.theme) return
-
-        window.Chart3.defaults.theme = theme.theme
-        window.Chart3.defaults.responsive = true
-        window.Chart3.defaults.maintainAspectRatio = false
-        window.Chart3.defaults.hoverOffset = 8
-        if (!theme.useAnimations) window.Chart3.defaults.animation = 0
-
-        window.Chart3.defaults.locale = theme.locale
-        window.localeNames = getLocaleText(window.Chart3.defaults.locale)
-
-        window.Chart3.defaults.font.family = theme.font
-        window.Chart3.defaults.color = convertColor(theme.fontColor)
-
-        window.Chart3.defaults.layout.padding.top = theme.padding.top || 0
-        window.Chart3.defaults.layout.padding.bottom = theme.padding.bottom || 0
-        window.Chart3.defaults.layout.padding.left = theme.padding.left || 0
-        window.Chart3.defaults.layout.padding.right = theme.padding.right || 0
-
-        window.Chart3.defaults.plugins.legend.labels.color = convertColor(theme.fontColor)
-        window.Chart3.defaults.plugins.legend.position = "top"
-        window.Chart3.defaults.plugins.legend.labels.usePointStyle = true
-        window.Chart3.defaults.plugins.legend.labels.boxWidth = 8
-        window.Chart3.defaults.plugins.legend.show = false
-
-        window.Chart3.defaults.plugins.tooltip.backgroundColor = convertColor(theme.tooltipsBackground)
-        window.Chart3.defaults.plugins.tooltip.titleColor = convertColor(theme.tooltipsFontColor)
-        window.Chart3.defaults.plugins.tooltip.bodyColor = convertColor(theme.tooltipsFontColor)
-        window.Chart3.defaults.plugins.tooltip.footerColor = convertColor(theme.tooltipsFontColor)
-        window.Chart3.defaults.plugins.tooltip.enabled = true
-
-        window.Chart3.defaults.elements.arc.borderWidth = 0
-        window.Chart3.defaults.elements.line.fill = false
-        window.Chart3.defaults.elements.line.tension = 0.225
-
-        window.Chart3.defaults.elements.point.borderWidth = 0
-        window.Chart3.defaults.elements.point.hoverRadius = 8
-        window.Chart3.defaults.elements.point.hitRadius = 8
-
-        window.Chart3.defaults.scale.grid.drawBorder = true
-        window.Chart3.defaults.scale.grid.borderWidth = parseFloat((theme.gridLineWidth * 1.1).toFixed(3)) || 1.0
-
-        window.Chart3.defaults.scale.grid.color = convertColor(theme.gridlineColor, 0.8)
-        window.Chart3.defaults.scale.grid.lineWidth = theme.gridLineWidth
-        window.Chart3.defaults.scale.grid.borderDash = theme.borderDash
-
-        window.Chart3.defaults.scale.grid.lineWidth = (ctx) => (ctx.index === 0 ? 0 : theme.gridLineWidth || 1.0)
-        window.Chart3.defaults.scale.grid.borderColor = convertColor(theme.zeroLineColor)
-
-        window.Chart3.defaults.scale.alignToPixels = true
-        window.Chart3.defaults.scales.radialLinear.ticks.backdropColor = "transparent"
-
-        if (window.gradient) window.Chart3.register(window.gradient)
-    }
-}
-
-/**
- * Entities Data Class
- */
-class Entities {
-    constructor(entities) {
-        this.items = entities || {}
-    }
-    addEntity(entity) {
-        this.items[entity.entity] = entity
-    }
-    setData(entity, data) {
-        this.items[entity] = data
-    }
-    setDataField(name, field, value) {
-        this.items[name][field] = value
-    }
-    getSize() {
-        return this.getEntityIds().length
-    }
-    isValid() {
-        return this.getSize() != 0
-    }
-    useAliasFields() {
-        let count = 0
-        this.getEntityIds().forEach((id) => {
-            const _entity = this.items[id]
-            count += this.items[id].attribute ? 1 : 0
-        })
-        return count != 0
-    }
-    hasChanged(hassEntities) {
-        let hasChanged = false
-        if (hassEntities && hassEntities.length) {
-            const _entityList = this.getEntitieslist()
-            for (let entity of _entityList) {
-                const h = hassEntities.find((x) => x.entity_id === entity.entity)
-                entity.laststate = entity.state
-                entity.update = false
-                if (h && entity.last_changed !== h.last_changed && entity.state !== h.state) {
-                    entity.last_changed = h.last_changed
-                    entity.state = h.state
-                    entity.update = true
-                    hasChanged = true
-                }
-            }
-        }
-        return hasChanged
-    }
-    getEntity(index) {
-        if (Number.isInteger(index)) {
-            return this.getEntitieslist()[index]
-        }
-        return this.items[index]
-    }
-    getNames() {
-        return this.getAttribute("name")
-    }
-    getAttribute(name) {
-        let d = this.items
-        return Object.keys(d)
-            .map(function (index) {
-                return d[index][name]
-            })
-            .filter((notUndefined) => notUndefined !== undefined)
-    }
-    getOptions(index, name) {
-        const d = this.getEntity(index)
-        if (d && d.style && !name) return d.style
-        if (d && d.style && d.style[name] !== undefined) return d.style[name]
-        return {}
-    }
-    getDataScales(index) {
-        const d = this.getEntity(index)
-        if (d) {
-            return d.datascales
-        }
-        return { range: 24, unit: "day", format: "MMM d", factor: 1.0, ignoreZero: true, aggregate: "last" }
-    }
-    getStyle(index) {
-        return this.getEntity(index).style
-    }
-    getColors() {
-        const d = this.items
-        return Object.keys(d)
-            .map(function (index) {
-                if (
-                    (d[index].style && d[index].style.color) !== undefined ||
-                    (d[index].style && d[index].style.backgroundColor) !== undefined
-                )
-                    return d[index].style.color || d[index].style.backgroundColor
-            })
-            .filter((notUndefined) => notUndefined !== undefined)
-    }
-    getData(name = null) {
-        if (!name) {
-            return this.getAttribute("state")
-        }
-        return this.items[name].state
-    }
-    getEntityIds() {
-        return Object.keys(this.items)
-    }
-    getEntityIdsAsString() {
-        const d = Object.keys(this.items).map((x) => this.items[x].entity)
-        return [...new Set(d)].join(",")
-        // return Object.keys(this.items).join(",")
-    }
-    getEntities() {
-        return Object.entries(this.items)
-    }
-    getEntitieslist() {
-        const d = this.items
-        return Object.keys(d).map(function (field) {
-            return d[field]
-        })
-    }
-    getItemLabels(index) {
-        this.getEntity(index).labels
-    }
-    getItemData(index) {
-        this.getEntity(index).seriesdata.data
-    }
-    getDataset(name) {
-        if (this.items[name].seriesdata && this.items[name].seriesdata.data) {
-            const _seriesdata = this.items[name].seriesdata.data
-            let labels = []
-            let data = []
-            _seriesdata.forEach((item) => {
-                labels.push(item.localedate)
-                data.push(item.y)
-            })
-            return { labels: labels, data: data }
-        }
-        return { labels: [], data: [] }
-    }
-    getSeriesData() {
-        let _seriesData = []
-        const _itmList = this.getEntityIds()
-        for (const id of _itmList) {
-            const _entity = this.items[id]
-            if (_entity.seriesdata) _seriesData.push(_entity.seriesdata)
-        }
-        return _seriesData
-        // this.getEntityIds().forEach((id) => {
-        //     const _entity = this.items[id]
-        //     if (_entity.seriesdata) {
-        //         _seriesData.push(_entity.seriesdata)
-        //     }
-        // })
-        // return _seriesData
-    }
-}
 
 /**
  * lovelace card chart graph
@@ -503,7 +269,7 @@ class ChartCard extends HTMLElement {
             zeroLineColor: "#333333",
             tooltipsBackground: "#ecf0f1",
             tooltipsFontColor: "#647687",
-            showGridLines: ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || false,
+            showGridLines: CT_CHARTGRIDLINES.includes(this.chart_type.toLowerCase()) || false,
             secondaryAxis: false,
             gridLineWidth: 1.0,
             borderDash: [1, 1],
@@ -551,7 +317,7 @@ class ChartCard extends HTMLElement {
                 (this.chart_themesettings && this.chart_themesettings.tooltipsfontcolor) ||
                 this._evaluateCssVariable("--chartjs-text-fontcolor") ||
                 this.themeSettings.tooltipsFontColor
-            this.themeSettings.showGridLines = ["bar", "line", "bubble", "scatter"].includes(this.chart_type.toLowerCase()) || false
+            this.themeSettings.showGridLines = CT_CHARTGRIDLINES.includes(this.chart_type.toLowerCase()) || false
             this.themeSettings.secondaryAxis = false
             this.themeSettings.themecolorused = this._evaluateCssVariable("--chartjs-theme") || false
 
@@ -601,9 +367,8 @@ class ChartCard extends HTMLElement {
             let settings = {
                 ctx: this.ctx,
                 canvasId: this.canvasId,
-                card_config: this._config,
                 entity_items: this.entity_items,
-                chart_locale: this.chart_locale,
+                datascales: this.datascales,
                 chart_type: this.chart_type,
                 chartconfig: this.chartconfig,
                 loader: this.loader,
@@ -728,11 +493,12 @@ class ChartCard extends HTMLElement {
         if (this.chart_showstate && this.currentData) {
             card.appendChild(this.currentData)
         }
+
         if (this.card_timestamp) {
             this.timestampLayer = document.createElement("div")
             this.timestampLayer.setAttribute("class", "card-timestamp")
             this.timestampLayer.id = this.id + "detail-footertext"
-            this.timestampLayer.innerHTML = localDatetime(new Date().toISOString())
+            this._renderCardTimestamp()
             card.appendChild(this.timestampLayer)
         }
         this.card = card
@@ -822,7 +588,7 @@ class ChartCard extends HTMLElement {
              * get the config from the lovelace
              */
             this._config = Object.assign({}, config)
-
+            this._config.chart = this._config.chart || "bar"
             /**
              * debugger settings
              * default is no debug mode
@@ -852,43 +618,39 @@ class ChartCard extends HTMLElement {
             this.chart_showstate = this._config.showstate || false
             this.chart_showstate = this.chart_showstate === true ? "right" : this.chart_showstate
             if (this.chart_showstate) {
-                if (!["left", "right", "center"].includes(this.chart_showstate.toLowerCase())) {
+                if (!STATE_POS.includes(this.chart_showstate.toLowerCase())) {
                     this.chart_showstate = false
                 }
             }
 
             /**
-             * detail settings and loader
+             * detail settings
+             */
+            this.chart_showdetails = this._config.showdetails || false
+            this.chart_showdetails =
+                (this.chart_showdetails.title_mean ||
+                    "" + this.chart_showdetails.title_min ||
+                    "" + this.chart_showdetails.title_max ||
+                    "") != ""
+
+            /**
+             * detail optional theme and loader
              * default is spinning-circles, lovelace config can overwrite the default
              */
             this.chart_showdetails = this._config.showdetails
             this.chart_themesettings = this._config.theme || null
             this.loaderart = this._config.loader || "three-dots"
-            const loaderFiles = [
-                "audio",
-                "ball-triangle",
-                "bars",
-                "circles",
-                "grid",
-                "hearts",
-                "oval",
-                "pfuff",
-                "rings",
-                "spinning-circles",
-                "tail-spin",
-                "three-dots"
-            ]
-            if (!loaderFiles.includes(this.loaderart)) {
+
+            if (!LOADERFILES.includes(this.loaderart)) {
                 this.loaderart = "spinning-circles"
             }
 
             /**
              * check chart type
              */
-            const availableTypes = ["line", "radar", "bar", "horizontalBar", "pie", "doughnut", "polarArea", "bubble", "scatter"]
             if (!this.chart_type) {
                 throw new Error("You need to define type of chart")
-            } else if (!availableTypes.includes(this.chart_type)) {
+            } else if (!CT_AVIABLETYPES.includes(this.chart_type)) {
                 throw new Error(
                     "Invalid config for 'chart:'" + this.chart_type + ". Available options are: " + availableTypes.join(", ")
                 )
@@ -918,17 +680,28 @@ class ChartCard extends HTMLElement {
              * line charts allway set as timeseries charts
              */
             this.datascales = Object.assign({}, this._config.datascales)
-            this.datascales.useTimeSeries = this.datascales.unit != undefined ? true : false
+
+            if (typeof this.datascales.useTimeSeries == "undefined") {
+                this.datascales.useTimeSeries = this.datascales.unit != undefined ? true : false
+            }
             this.datascales.range = this.datascales.range || 0
             if (this.chart_type === "line" && this.datascales.range === 0) {
-                this.datascales.range = 144
+                this.datascales.range = 24
+                this.datascales.unit = "hour"
             }
-            this.datascales.unit = this.datascales.unit || "day"
-            this.datascales.format = this.datascales.format || "MM d"
+            if (this.datascales.range) {
+                this.datascales.unit = this.datascales.unit || "day"
+                this.datascales.ignoreZero = this.datascales.ignoreZero || true
+                this.datascales.aggregate = this.datascales.aggregate || "last"
+            }
+            if (this.datascales.unit && DSC_UNITS.includes(this.datascales.unit.toLowerCase()) == false) {
+                this.datascales.unit = "day"
+                this.datascales.range = 24
+            }
+            if (this.datascales.aggregate && DSC_RANGES.includes(this.datascales.aggregate.toLowerCase()) == false) {
+                this.datascales.aggregate = "last"
+            }
             this.datascales.factor = this.datascales.factor || 1.0
-            this.datascales.ignoreZero = this.datascales.ignoreZero || true
-            this.datascales.aggregate = this.datascales.aggregate || "last"
-
             /**
              * set the update_intervall
              * default is every minute (60 * 1000)
@@ -941,7 +714,7 @@ class ChartCard extends HTMLElement {
              * showstate not possible for bubble and scatter or
              * on simple state charts
              */
-            if (["bubble", "scatter"].includes(this.chart_type.toLocaleLowerCase())) {
+            if (CT_NOSHOWSTATES.includes(this.chart_type.toLocaleLowerCase())) {
                 this.chart_showstate = false
             } else {
                 if (this.datascales.range === 0 && this.chart_showstate) {
@@ -1155,7 +928,7 @@ class ChartCard extends HTMLElement {
             this.graphChart.entityData = this.entity_items.getData()
             this.chart_update = doUpdate
             this._getHistory()
-            if (this.card_timestamp) this.timestampLayer.innerHTML = localDatetime(new Date().toISOString())
+            this._renderCardTimestamp()
         }
 
         this.updating = false
@@ -1190,22 +963,29 @@ class ChartCard extends HTMLElement {
      * Call an API on the Home Assistant server.
      */
     _getHistory() {
+        if (this.dataInfo.loading == true) return
         /**
          * check if the card is visible
          */
-        if (this.card.getClientRects().length == 0) return
-        this.APISTART = performance.now()
-        this.DEBUGDATA.PROFILER.APICALL = {
-            start: performance.now()
-        }
+        if (this.card && this.card.getClientRects().length == 0) return
+        this.ready = this.entity_items.isValid()
         if (this.ready) {
-            if (this.datascales.range > 0 && this.entity_items.getSize()) {
+            if (this.datascales.range > 0) {
+                this.APISTART = performance.now()
+                this.DEBUGDATA.PROFILER.APICALL = {
+                    start: performance.now()
+                }
                 /**
                  * start date, time and end date
                  */
                 this.dataInfo.time = new Date().getTime()
                 this.dataInfo.starttime = new Date()
-                this.dataInfo.starttime.setHours(-this.datascales.range, 1, 0, 0)
+
+                if (this.datascales.range < 1.0) {
+                    this.dataInfo.starttime.setMinutes(this.dataInfo.starttime.getMinutes() - this.datascales.range * 60)
+                } else {
+                    this.dataInfo.starttime.setHours(this.dataInfo.starttime.getHours() - this.datascales.range)
+                }
                 this.dataInfo.endtime = new Date()
                 this.dataInfo.entities = this.entity_items.getEntityIdsAsString()
                 this.dataInfo.entity_items = this.entity_items.items
@@ -1243,7 +1023,7 @@ class ChartCard extends HTMLElement {
                      */
                     this.dataInfo.loading = true
                     const prom = this._hass.callApi("GET", this.dataInfo.url).then(
-                        (stateHistory) => this._buildGraphData(stateHistory, 1),
+                        (stateHistory) => this._buildGraphData(stateHistory, API_DATAMODE.history),
                         () => null
                     )
                     this.dataInfo.prev_url = this.dataInfo.url
@@ -1252,9 +1032,8 @@ class ChartCard extends HTMLElement {
                 /**
                  * build the current for the sensor(s)
                  */
-                this._buildGraphData(null, 2)
+                this._buildGraphData(null, API_DATAMODE.statemode)
             }
-            this.lastUpdate = new Date().toISOString()
         }
     }
 
@@ -1292,18 +1071,29 @@ class ChartCard extends HTMLElement {
          * SHOW DETAIL DATA
          */
         if (this.currentData && this.detailData && data) {
-            if (this.detailData) {
+            const _statdata = this.entity_items.getStatisticData()
+            if (_statdata) {
                 _html = []
-                if (this.chart_showdetails.title) _html.push("<h2>" + this.chart_showdetails.title + "</h2>")
+                _html.push(`<hr color="${this.themeSettings.gridlineColor}" size="0.25"/>`)
+                if (this.chart_showdetails.title) _html.push(`<h2>${this.chart_showdetails.title}</h2>`)
                 _html.push('<div><table class="card-detail-table">')
-                _html.push("<tbody><tr>")
-                _html.push('<th width="20%"><b>Statistics</b></th>')
-                _html.push('<th align="right">Min</th>')
-                _html.push('<th align="right">Max</th>')
-                _html.push('<th align="right">Current</th>')
-                _html.push("<th>Date</th>")
+                _html.push("<tr>")
+                _html.push(`<th width="20%"><b>${this.chart_showdetails.title_sensor || "Statitics"}</b></th>`)
+
+                if (this.chart_showdetails.title_min && this.chart_showdetails.title_mean != "")
+                    _html.push(`<th align="right">${this.chart_showdetails.title_mean}</th>`)
+
+                if (this.chart_showdetails.title_min && this.chart_showdetails.title_min != "")
+                    _html.push(`<th align="right">${this.chart_showdetails.title_min}</th>`)
+
+                if (this.chart_showdetails.title_min && this.chart_showdetails.title_max != "")
+                    _html.push(`<th align="right">${this.chart_showdetails.title_max}</th>`)
+
+                _html.push(`<th align="right">${this.chart_showdetails.title_current}</th>`)
+
+                _html.push(`<th>${this.chart_showdetails.title_timestamp || "Timestamp"}</th>`)
                 _html.push("</tr>")
-                for (const item of data) {
+                _statdata.forEach((item) => {
                     _html.push("<tr>")
                     _html.push(
                         '<td><span style="font-size:4em;color:' +
@@ -1312,20 +1102,38 @@ class ChartCard extends HTMLElement {
                             item.name +
                             "</td>"
                     )
-                    _html.push("<td align='right'>" + _formatNumber(this.chart_locale, item.min || 0.0) + " " + item.unit + "</td>")
-                    _html.push("<td align='right'>" + _formatNumber(this.chart_locale, item.max || 0.0) + " " + item.unit + "</td>")
+                    if (this.chart_showdetails.title_min && this.chart_showdetails.title_mean != "")
+                        _html.push(
+                            "<td align='right'>" + _formatNumber(this.chart_locale, item.mean || 0.0) + " " + item.unit + "</td>"
+                        )
+                    if (this.chart_showdetails.title_min && this.chart_showdetails.title_min != "")
+                        _html.push(
+                            "<td align='right'>" + _formatNumber(this.chart_locale, item.min || 0.0) + " " + item.unit + "</td>"
+                        )
+                    if (this.chart_showdetails.title_min && this.chart_showdetails.title_max != "")
+                        _html.push(
+                            "<td align='right'>" + _formatNumber(this.chart_locale, item.max || 0.0) + " " + item.unit + "</td>"
+                        )
                     _html.push(
                         "<td align='right'>" + _formatNumber(this.chart_locale, item.current || 0.0) + " " + item.unit + "</td>"
                     )
                     _html.push("<td>" + localDatetime(item.timestamp, this.chart_locale) + "</span>")
-                    _html.push("</tr></tbody>")
-                }
+                    _html.push("</tr>")
+                })
                 _html.push("</table></div><br/>")
                 if (_html.length) this.detailData.innerHTML = _html.join("")
             }
         }
     }
 
+    /**
+     * render the card timestamp
+     */
+    _renderCardTimestamp() {
+        if (this.card_timestamp && this.timestampLayer) {
+            this.timestampLayer.innerHTML = localDatetime(new Date().toISOString())
+        }
+    }
     /**
      * for developers show the debugdata if enabled
      */
@@ -1338,8 +1146,10 @@ class ChartCard extends HTMLElement {
             this.DEBUGDATA.DATA_ENTITIES = this.entity_items.items
             this.DEBUGDATA.LOVELACE_CONFIG = this._config
             this.DEBUGDATA.LOCALEINFO = window.localeNames
-            delete this.DEBUGDATA.PROFILER.APICALL.start
-            delete this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
+            if (this.DEBUGDATA.API.datamode == API_DATAMODE.history && this.DEBUGDATA.PROFILER) {
+                delete this.DEBUGDATA.PROFILER.APICALL.start
+                delete this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
+            }
             console.info(
                 `%cDEBUGDATA ${this.chart_type.toUpperCase()} ${appinfo.name} ${appinfo.version}:`,
                 "color:white;background:#cc283a;padding:4px",
@@ -1357,16 +1167,18 @@ class ChartCard extends HTMLElement {
      */
     _buildGraphData(stateHistories, mode) {
         if (this.DEBUGMODE) {
-            this.DEBUGDATA.API.datamode = mode == 1 ? "History" : "Current"
-            this.DEBUGDATA.PROFILER.APICALL.elapsed = msToTime(performance.now() - this.DEBUGDATA.PROFILER.APICALL.start)
-            this.DEBUGDATA.PROFILER.GETBUCKETDATA = {
-                start: performance.now()
+            this.DEBUGDATA.API.datamode = mode == API_DATAMODE.history ? "History" : "Current"
+            if (this.DEBUGDATA.API.datamode == API_DATAMODE.history) {
+                this.DEBUGDATA.PROFILER.APICALL.elapsed = msToTime(performance.now() - this.DEBUGDATA.PROFILER.APICALL.start)
+                this.DEBUGDATA.PROFILER.GETBUCKETDATA = {
+                    start: performance.now()
+                }
             }
         }
         /**
          * check historydata
          */
-        if ((mode === 1 && !stateHistories) || (stateHistories && !stateHistories.length)) {
+        if ((mode === API_DATAMODE.history && !stateHistories) || (stateHistories && !stateHistories.length)) {
             if (this.DEBUGMODE) {
                 this.DEBUGDATA.API.ERROR = "No Historydata found!"
                 this._renderDebugInfo()
@@ -1388,7 +1200,7 @@ class ChartCard extends HTMLElement {
             return null
         }
 
-        if (mode == 1) {
+        if (mode == API_DATAMODE.history) {
             const dataprovider = new DataProvider({
                 datainfo: this.dataInfo,
                 datascales: this.datascales,
@@ -1414,17 +1226,22 @@ class ChartCard extends HTMLElement {
          */
         const _chartData = new chartData({
             chart_type: this.chart_type,
-            card_config: this._config,
-            entityOptions: this.entity_options,
+            card_config: {
+                title: this.cardTitle,
+                chartOptions: this.chartconfig.options
+            },
             entity_items: this.entity_items,
-            //settings: this._config,
+            entityOptions: this.entity_options,
             debugmode: this.DEBUGMODE,
             debugdata: this.DEBUGDATA
         })
-        if (mode === 1) {
+
+        if (mode === API_DATAMODE.history) {
             this.graphData = _chartData.getHistoryGraphData()
+            this.lastUpdate = new Date().toISOString()
         } else {
             this.graphData = _chartData.getCurrentGraphData()
+            this.lastUpdate = new Date().toISOString()
         }
 
         if (this.graphData === null) {
@@ -1452,8 +1269,8 @@ class ChartCard extends HTMLElement {
                 this.graphChart.renderGraph(false)
             }
         }
-
-        if (mode === 1 && this.chart_showstate) {
+        this._renderCardTimestamp()
+        if (mode === API_DATAMODE.history && this.chart_showstate) {
             let _data = this.graphData.data.datasets.map(function (item) {
                 return {
                     name: item.label || "",
@@ -1469,9 +1286,11 @@ class ChartCard extends HTMLElement {
             })
             if (_data) this.renderStateData(_data)
             if (this.DEBUGMODE) {
-                this.DEBUGDATA.PROFILER.GETBUCKETDATA.elapsed = msToTime(
-                    performance.now() - this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
-                )
+                if (this.DEBUGDATA.API.datamode == API_DATAMODE.history) {
+                    this.DEBUGDATA.PROFILER.GETBUCKETDATA.elapsed = msToTime(
+                        performance.now() - this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
+                    )
+                }
                 this._renderDebugInfo()
             }
             this.dataInfo.loading = false
@@ -1479,9 +1298,6 @@ class ChartCard extends HTMLElement {
         }
 
         if (this.DEBUGMODE) {
-            this.DEBUGDATA.PROFILER.GETBUCKETDATA.elapsed = msToTime(
-                performance.now() - this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
-            )
             this._renderDebugInfo()
         }
 

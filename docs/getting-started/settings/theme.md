@@ -1,6 +1,10 @@
 ## Lovelace - graph-chartjs-card
 ### Theme settings
 
+In the standard case, if no settings are made, the settings are adopted from the current theme. These can be overwritten with entries in the theme or in the current card configuration.
+
+<br>
+
 
 ![theme_mode](theme_mode.png)
 
@@ -80,7 +84,10 @@ Another possibility is that the theme settings for a chart are set in the card d
 ```
 <br>
 <hr>
+
+
 ## Colors Helpers
+
 
 [Colors Wall](https://colorswall.com) - Place to store your color Palettes
 

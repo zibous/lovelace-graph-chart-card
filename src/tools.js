@@ -197,12 +197,14 @@ var formatdate = (function () {
             s = date[_ + "Seconds"](),
             L = date[_ + "Milliseconds"](),
             o = utc ? 0 : date.getTimezoneOffset(),
+            daynum = D == 0 ? 6 : D - 1,
             flags = {
                 // day
                 d: d,
                 dd: pad(d),
-                ddd: window.localeNames.days_short[D],
-                dddd: window.localeNames.days_long[D],
+                ddd: window.localeNames.days_short[daynum],
+                dddd: window.localeNames.days_long[daynum],
+                n: daynum,
                 // week
                 W: date.getWeek(1),
                 w: date.getWeek(0),
@@ -249,9 +251,9 @@ var formatdate = (function () {
  * Some common format strings
  */
 formatdate.masks = {
-    default: "ddd, d mmmm yyyy HH:MM:ss.l",
+    default: "ddd, dd mmm yyyy HH:MM:ss",
     shortDate: "m.d.yy",
-    mediumDate: "d.m.yyyy",
+    mediumDate: "d mmm yyyy",
     longDate: "d mmmm yyyy",
     fullDate: "dddd, d mmmm yyyy",
     shortTime: "H:MM",
@@ -265,9 +267,9 @@ formatdate.masks = {
     quater: "Q",
     datetime: "ddd, d mmmm yyyy HH:MM:ss",
     millisecond: "HH:MM:ss l",
-    second: "HH:mm:ss l",
-    minute: "HH:mm l",
-    hour: "HH:mm",
+    second: "HH:MM:ss",
+    minute: "HH:MM",
+    hour: "HH",
     day: "ddd, d.mmm",
     month: "mmm yyyy",
     year: "yyyy"

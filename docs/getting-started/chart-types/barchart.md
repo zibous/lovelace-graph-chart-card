@@ -1,11 +1,14 @@
 ## Lovelace - graph-chartjs-card
 ### Bar charts
 
-A bar chart provides a way of showing data values represented as vertical bars, is sometimes used to show trend data, and the comparison of 
-multiple data sets side by side.
+A bar chart provides a way of showing data values represented as vertical bars, is sometimes used to show trend data, and the comparison of  multiple data sets side by side.
 
 #### Minimal Bar chart
 ![barchart_simple](img/simplebar1.png)
+
+<br>
+
+### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -22,6 +25,10 @@ multiple data sets side by side.
 
 #### Advanced - Bar Chart (segmented)
 ![barchartfilled](img/barchartfilled.png)
+
+<br>
+
+### Example
 
 ```yaml
   - type: 'custom:chart-card'
@@ -57,6 +64,11 @@ multiple data sets side by side.
 
 #### Advanced - Bar Timeseries Chart 
 ![barchartseries](img/barchartseries.png)
+
+<br>
+
+### Example
+
 ```yaml
 - type: 'custom:chart-card'
   title: Energieproduktion Photovoltaik
@@ -97,6 +109,10 @@ multiple data sets side by side.
 Bar charts can be configured into stacked bar charts by changing the settings on the X and Y axes to enable stacking. Stacked bar charts can be used to show how one data series is made up of a number of smaller pieces.
 
 ![barchartstacked](img/barchartstacked.png)
+
+<br>
+
+### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -150,6 +166,10 @@ Bar charts can be configured into stacked bar charts by changing the settings on
 #### Advanced - Bar Timeseries Chart stacked 
 ![barchartstacked1](img/barchartstacked1.png)
 
+<br>
+
+### Example
+
 ```yaml
   - type: 'custom:chart-card'
     title: 'Änderungen Körperwerte'
@@ -185,7 +205,7 @@ Bar charts can be configured into stacked bar charts by changing the settings on
         aggregate: max
 ```
 
-
 <hr>
-##Chart Options `chartOptions`
+**Chart Options `chartOptions`**
 see: https://www.chartjs.org/docs/latest/charts/bar.html#dataset-properties
+

@@ -15,7 +15,7 @@
  */
 function xAxisFormat(tickValue, index, ticks) {
     if (this && this.options.time && this.options.time.unit) {
-        const dateFormatPattern = this.options.time.unit
+        const dateFormatPattern = this.options.time.format || this.options.time.unit
         if (dateFormatPattern && Number.isInteger(tickValue)) {
             return formatdate(+tickValue, dateFormatPattern)
         }
@@ -79,18 +79,22 @@ class graphChart {
      * @param {*} config
      */
     constructor(config) {
-        // settings
+        /**
+         * settings
+         */
         this.ctx = config.ctx || null // the chart canvas element
         this.canvasId = config.canvasId // canvas container id
-        this.card_config = config.card_config // current card settings
         this.entity_items = config.entity_items // all entities
-        this.chart_locale = config.locale || "de-DE" // the locale for number(s) and date(s)
+        this.datascales = config.datascales // current datascales settings
         this.chart_type = config.chart_type || "bar" // the chart type
         this.chartconfig = config.chartconfig || {} // the chart config from the template
         this.loader = config.loader // the loading animation
         this.DEBUGMODE = config.debugmode || 0 // internal debugging enabled
         this.DEBUGDATA = config.debugdata
-        // all class based
+
+        /**
+         * all class based properties
+         */
         this.chart = null // current chart
         this.graphData = {} // the graph data
         this.graphDataSets = [] // current graph settings
@@ -110,9 +114,13 @@ class graphChart {
      * @called: from rendergraph and updategraph
      */
     _setChartOptions() {
-        // the animated loader
+        /**
+         * the animated loader
+         */
         const _loader = this.loader
-        // chart default options
+        /**
+         * chart default options
+         */
         let _options = {
             unit: "",
             hoverOffset: 8,
@@ -130,7 +138,7 @@ class graphChart {
                 title: {},
                 tooltip: {},
                 legend: {
-                    display: ["pie", "doughnut", "polararea", "line"].includes(this.chart_type.toLowerCase()) || false
+                    display: CT_SHOWLEGEND.includes(this.chart_type.toLowerCase()) || false
                 }
             },
             animation: {
@@ -142,14 +150,18 @@ class graphChart {
         }
 
         if (this.graphData.config.gradient === true && this.graphData.config.mode === "simple") {
-            //enable gradient colors for state charts
+            /**
+             * enable gradient colors for state charts
+             */
             _options.gradientcolor = {
                 color: true,
                 type: this.chart_type
             }
         }
         if (gradient && this.graphData.config.gradient) {
-            // enable gradient colors for data series chart
+            /**
+             * enable gradient colors for data series chart
+             */
             _options.plugins = {
                 gradient
             }
@@ -218,7 +230,9 @@ class graphChart {
                     }
                 }
             }
-            // scale bubble (optional)
+            /**
+             * scale bubble (optional)
+             */
             if (this.graphData.config.bubbleScale) {
                 _options.elements = {
                     point: {
@@ -234,14 +248,16 @@ class graphChart {
         /**
          * special case for timescales to translate the date format
          */
-        if (this.graphData.config.timescale && this.card_config.datascales) {
+        if (this.graphData.config.timescale && this.datascales) {
             _options.scales = _options.scales || {}
             _options.scales.x = _options.scales.x || {}
+            _options.scales.x.major = true
             _options.scales.x.type = "time"
             _options.scales.x.time = {
-                unit: this.card_config.datascales.unit,
+                unit: this.datascales.unit,
+                format: this.datascales.format,
                 displayFormats: {}
-                //tooltipFormat: "EEEEEE, dd.MMM.yyyy H:ss" //this.card_config.datascales.format
+                //tooltipFormat: "EEEEEE, dd.MMM.yyyy H:ss" //this.datascales.format
             }
             _options.scales.x.ticks = {
                 callback: xAxisFormat
@@ -256,8 +272,8 @@ class graphChart {
             // _options.scales.y.ticks = {
             //     callback: yAxisFormat
             // }
-            // _options.scales.x.time.displayFormats[_options.scales.x.time.unit] = this.card_config.datascales.format
-        }else{
+            // _options.scales.x.time.displayFormats[_options.scales.x.time.unit] = this.datascales.format
+        } else {
             /**
              * callbacks for tooltip
              */
@@ -337,7 +353,6 @@ class graphChart {
     sendJSON(url, chartdata) {
         // Creating a XHR object
         let xhr = new XMLHttpRequest()
-        // let url = "http://dev.siebler.at/test/getdata.php?file="+this.card_config.id+'.json';
 
         // open a connection
         xhr.open("POST", url, true)
@@ -375,11 +390,15 @@ class graphChart {
                     this.graphDataSets.length &&
                     JSON.stringify(this.graphDataSets) === JSON.stringify(this.graphData.data.datasets)
                 ) {
-                    // same data as before, skip redraw...
+                    /**
+                     * same data as before, we have nothing to do.
+                     */
                     return
                 }
 
-                // append the data for the current chart settings
+                /**
+                 * append the data for the current chart settings
+                 */
                 let graphOptions = this._setChartOptions()
                 graphOptions.data = {
                     datasets: this.graphData.data.datasets
@@ -388,11 +407,15 @@ class graphChart {
                     graphOptions.data.labels = this.graphData.data.labels
                 }
 
-                // Chart declaration
+                /**
+                 * Chart declaration
+                 */
                 if (this.ctx && graphOptions.data && graphOptions.options) {
                     if (doUpdate && this.chart && this.chart.data) {
-                        // redraw the chart with the current options
-                        // and updated data series
+                        /**
+                         * redraw the chart with the current options
+                         * and updated data series
+                         */
                         this.chart.data = graphOptions.data
                         this.chart.update({
                             duration: 0,
@@ -407,10 +430,14 @@ class graphChart {
                             }
                         }
                     } else {
-                        // set the chart options
+                        /**
+                         * set the chart options
+                         */
                         if (this.chart_ready === false && this.ChartControl.register) {
-                            // create and draw the new chart with the current settings
-                            // and the dataseries. Register all plugins
+                            /**
+                             * create and draw the new chart with the current settings
+                             * and the dataseries. Register all plugins
+                             */
                             if (this.graphData.config.gradient) {
                                 this.ChartControl.register(gradient)
                             }
@@ -442,12 +469,10 @@ class graphChart {
                             }
                         }
 
-                        // just for developer
-                        // console.log(this.chart_type, graphOptions)
-                        // if (this.card_config.testcase) this.sendJSON(this.card_config.testcase, graphOptions)
-
                         if (this.chart) {
-                            // be shure that no chart exits before create..
+                            /**
+                             * be shure that no chart exits before create..
+                             */
                             this.chart.destroy()
                             this.chart = null
                         }

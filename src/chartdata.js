@@ -19,7 +19,6 @@ class chartData {
         this.card_config = config.card_config
         this.entity_options = config.entityOptions
         this.entity_items = config.entity_items
-        // this.settings = config.settings
         this.DEBUGMODE = config.debugmode
         this.data_pointStyles = [
             "circle",
@@ -250,7 +249,7 @@ class chartData {
         /**
          * case horizontal bar
          */
-        if (this.card_config.chart.toLowerCase() === "horizontalbar") {
+        if (this.chart_type.toLowerCase() === "horizontalbar") {
             _graphData.data.datasets[0].indexAxis = "y"
         }
 
@@ -291,7 +290,7 @@ class chartData {
         /**
          * add the data series and return the new graph data
          */
-        if (this.chart_type === "bar" && this.card_config.options && this.card_config.options.segmented) {
+        if (this.chart_type === "bar" && this.card_config.chartOptions && this.card_config.chartOptions.segmented) {
             const newData = this.createSimpleBarSegmentedData(_graphData.data.datasets[0])
             if (newData) {
                 _graphData.data.datasets[1] = {}
@@ -481,11 +480,11 @@ class chartData {
                 mode: "history"
             }
 
-            if (this.card_config.chart.toLowerCase() === "horizontalbar") {
+            if (this.chart_type.toLowerCase() === "horizontalbar") {
                 _options.indexAxis = "y"
             }
 
-            if (this.card_config.chart.toLowerCase() === "radar") {
+            if (this.chart_type.toLowerCase() === "radar") {
                 _options.pointRadius = 12
                 _options.hoverRadius = 18
                 _options.hitRadius = 22
@@ -501,7 +500,7 @@ class chartData {
              */
             _options = { ..._options, ..._entityOptions }
             _graphData.config.options.fill =
-                _entityOptions.fill || ["bar", "horizontalbar"].includes(this.card_config.chart.toLowerCase())
+                _entityOptions.fill || ["bar", "horizontalbar"].includes(this.chart_type.toLowerCase())
 
             if (_entityOptions.fill && _entityOptions.gradient && _entityOptions.gradient.colors) {
                 const _axis = _options.indexAxis === "y" ? "x" : "y"
@@ -517,7 +516,7 @@ class chartData {
             } else {
                 if (_entityOptions.backgroundColor === undefined) {
                     _options.backgroundColor = DEFAULT_COLORS[_graphData.config.series]
-                    _options.borderColor = DEFAULT_COLORS[_graphData.config.series]
+                    _options.borderColor = DEFAULT_COLORS[_graphData.config.series]                    
                 }
             }
 
@@ -539,7 +538,7 @@ class chartData {
                 const _seriesdata = this.entity_items.getDataset(id)
                 if(_seriesdata){
                     _graphData.data.labels = _seriesdata.labels
-                    _options.data = _seriesdata.data
+                    _options.data = _seriesdata.data                    
                 }                
             }
 
