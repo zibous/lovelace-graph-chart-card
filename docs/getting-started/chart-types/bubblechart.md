@@ -1,15 +1,15 @@
-## Lovelace - graph-chartjs-card
-### Bubble Charts
+# Lovelace - graph-chartjs-card
+## Bubble Charts
 
 A bubble chart is used to display three dimensions of data at the same time. The location of the bubble is determined by the first two dimensions and the corresponding horizontal and vertical axes. The third dimension is represented by the size of the individual bubbles.
 
 
-#### Minimal Bubble Chart
+### Minimal Bubble Chart
 ![barchart_simple](img/simplebubblechart.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -33,7 +33,7 @@ A bubble chart is used to display three dimensions of data at the same time. The
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -87,7 +87,7 @@ A bubble chart is used to display three dimensions of data at the same time. The
 ```
 
 <hr>
-**Chart Options `chartOptions`**
 
+**Chart Options `chartOptions`**
 see: https://www.chartjs.org/docs/latest/charts/bubble.html#dataset-properties
 

@@ -1,5 +1,5 @@
-## Lovelace - graph-chartjs-card
-### Chart Detaildata
+# Lovelace - graph-chartjs-card
+## Chart Detaildata
 
 
 ![simpleradar1](img/detaildata.png)

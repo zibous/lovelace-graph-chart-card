@@ -1,14 +1,14 @@
-## Lovelace - graph-chartjs-card
-### Bar charts
+# Lovelace - graph-chartjs-card
+## Bar charts
 
 A bar chart provides a way of showing data values represented as vertical bars, is sometimes used to show trend data, and the comparison of  multiple data sets side by side.
 
-#### Minimal Bar chart
+### Minimal Bar chart
 ![barchart_simple](img/simplebar1.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -23,51 +23,51 @@ A bar chart provides a way of showing data values represented as vertical bars, 
 ```
 <br>
 
-#### Advanced - Bar Chart (segmented)
+### Advanced - Bar Chart (segmented)
 ![barchartfilled](img/barchartfilled.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
-  - type: 'custom:chart-card'
-    title: 'Makro Nährstoffe'
-    icon: 'mdi:nutrition'
-    height: 320
-    chart: 'bar'
-    units: 'kal'
-    testcase: 'http://10.1.1.98:8000/?file=macro_bar.json'
-    chartOptions:
-      segmented: true
-      plugins:
-        title:
-          display: true
-          text: 'Aufteilung Nährstoffe (kal) pro Tag'
-    entities:
-      - entity: sensor.peter_eiweis_makronahrstoff
-        name: Eiweis
-        style:
-          backgroundColor: '#f1c40f'
-      - entity: sensor.peter_fett_makronahrstoff
-        name: Fett
-        style:
-          backgroundColor: '#e74c3c'
-      - entity: sensor.peter_kohlenhydrate_makronahrstoff
-        name: Kohlenhydrate
-        style:
-          backgroundColor: '#009688'
+ - type: 'custom:chart-card'
+   title: 'Makro Nährstoffe'
+   icon: 'mdi:nutrition'
+   chart: 'bar'
+   height: 320
+   chartOptions:
+     segmented: true
+   plugins:
+     title:
+      display: true
+      text: 'Aufteilung Nährstoffe (kal) pro Tag'
+   entities:
+     - options:
+       unit: 'kal'
+     - entity: sensor.peter_eiweis_makronahrstoff
+       name: Eiweis
+      style:
+        backgroundColor: '#f1c40f'
+     - entity: sensor.peter_fett_makronahrstoff
+       name: Fett
+       style:
+         backgroundColor: '#e74c3c'
+     - entity: sensor.peter_kohlenhydrate_makronahrstoff
+       name: Kohlenhydrate
+       style:
+         backgroundColor: '#009688'
 ```
 
 
 <br>
 
-#### Advanced - Bar Timeseries Chart 
+### Advanced - Bar Timeseries Chart 
 ![barchartseries](img/barchartseries.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -81,6 +81,7 @@ A bar chart provides a way of showing data values represented as vertical bars, 
   datascales:
     range: 24
     unit: hour
+    mode: time
   chartOptions:
     plugins:
       legend:
@@ -104,7 +105,7 @@ A bar chart provides a way of showing data values represented as vertical bars, 
 ```
 <br>
 
-#### Advanced - Bar Timeseries Chart stacked
+### Advanced - Bar Timeseries Chart stacked
 
 Bar charts can be configured into stacked bar charts by changing the settings on the X and Y axes to enable stacking. Stacked bar charts can be used to show how one data series is made up of a number of smaller pieces.
 
@@ -112,17 +113,20 @@ Bar charts can be configured into stacked bar charts by changing the settings on
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
   title: Verbrauch vs. Produktion
   icon: 'mdi:counter'
-  height: 320
+  height: 480
   chart: bar
+  showstate: false
+  debug: true
   datascales:
-    range: 120
+    range: 288
     unit: day
+    format: 'ddd, dd.mmmm'
   chartOptions:
     plugins:
       legend:
@@ -136,7 +140,7 @@ Bar charts can be configured into stacked bar charts by changing the settings on
         title:
           display: true
           text: Zeitraum
-      y:
+      'y':
         alignToPixels: true
         stacked: true
         title:
@@ -163,12 +167,12 @@ Bar charts can be configured into stacked bar charts by changing the settings on
 ```
 <br>
 
-#### Advanced - Bar Timeseries Chart stacked 
+### Advanced - Bar Timeseries Chart stacked 
 ![barchartstacked1](img/barchartstacked1.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
   - type: 'custom:chart-card'
@@ -206,6 +210,7 @@ Bar charts can be configured into stacked bar charts by changing the settings on
 ```
 
 <hr>
+
 **Chart Options `chartOptions`**
 see: https://www.chartjs.org/docs/latest/charts/bar.html#dataset-properties
 

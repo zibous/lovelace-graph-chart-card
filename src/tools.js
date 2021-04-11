@@ -141,13 +141,13 @@ function getLocaleText(locale = "DE") {
 
 /**
  * Get week number in the year.
- * @param  {Integer} [weekStart=0]  First day of the week. 0-based. 0 for Sunday, 6 for Saturday.
+ * @param  {Integer} [isoWeekday=0]  First day of the week. 0-based. 0 for Sunday, 6 for Saturday.
  * @return {Integer}                0-based number of week.
  */
-Date.prototype.getWeek = function (weekStart = 1) {
+Date.prototype.getWeek = function (isoWeekday = 0) {
     var januaryFirst = new Date(this.getFullYear(), 0, 1)
-    weekStart = weekStart || 0
-    return Math.floor(((this - januaryFirst) / 86400000 + januaryFirst.getDay() - weekStart) / 7)
+    isoWeekday = isoWeekday || 0
+    return Math.floor(((this - januaryFirst) / 86400000 + januaryFirst.getDay() - isoWeekday) / 7)
 }
 
 /*
@@ -268,9 +268,9 @@ formatdate.masks = {
     datetime: "ddd, d mmmm yyyy HH:MM:ss",
     millisecond: "HH:MM:ss l",
     second: "HH:MM:ss",
-    minute: "HH:MM",
-    hour: "HH",
-    day: "ddd, d.mmm",
+    minute: "HH:MM:ss",
+    hour: "ddd, HH:MM",
+    day: "ddd, d.mmm.yy",
     month: "mmm yyyy",
     year: "yyyy"
 }

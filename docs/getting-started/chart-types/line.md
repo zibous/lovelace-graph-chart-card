@@ -1,15 +1,15 @@
-## Lovelace - graph-chartjs-card
+# Lovelace - graph-chartjs-card
 
-### Line Charts
+## Line Charts
 
 A line chart is a way of plotting data points on a line. Often, it is used to show trend data, or the comparison of two data sets.
 
-#### Minimal Line Chart
+### Minimal Line Chart
 ![simpeline1](img/simpeline1.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -29,7 +29,7 @@ A line chart is a way of plotting data points on a line. Often, it is used to sh
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -80,7 +80,7 @@ A line chart is a way of plotting data points on a line. Often, it is used to sh
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -119,7 +119,7 @@ A line chart is a way of plotting data points on a line. Often, it is used to sh
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -167,7 +167,7 @@ A line chart is a way of plotting data points on a line. Often, it is used to sh
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -212,6 +212,6 @@ A line chart is a way of plotting data points on a line. Often, it is used to sh
 ```
 
 <hr>
-**Chart Options `chartOptions`**
 
+**Chart Options `chartOptions`**
 see: https://www.chartjs.org/docs/latest/charts/line.html#dataset-properties

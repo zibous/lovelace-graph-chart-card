@@ -15,22 +15,11 @@ class chartData {
      * @param {*} config
      */
     constructor(config) {
-        this.chart_type = config.chart_type
         this.card_config = config.card_config
         this.entity_options = config.entityOptions
         this.entity_items = config.entity_items
         this.DEBUGMODE = config.debugmode
-        this.data_pointStyles = [
-            "circle",
-            "triangle",
-            "rectRounded",
-            "rect",
-            "rectRot",
-            "cross",
-            "star",
-            "line",
-            "dash"
-        ]
+        this.data_pointStyles = CT_DATAPOINTSTYLE
         this.indicators = {
             up: "▲",
             down: "▼",
@@ -54,7 +43,6 @@ class chartData {
                 series: 0,
                 gradient: false,
                 options: {},
-                statistics: {},
                 segmentbar: false,
                 timescale: false
             }
@@ -205,17 +193,15 @@ class chartData {
      * because we do not need time series - only the current state values.
      */
     createChartData() {
-        
         /**
          * entities      : all entities data and options
          * entityOptions : global entities options
          */
         if (!this.entity_items.isValid) return null
-
-        let _data = this.entity_items.getData()
+        const _data = this.entity_items.getData()
 
         if (_data.length === 0) {
-            console.error("No Data present !")
+            console.error("Create Chart Data, no Data present !")
             return null
         }
 
@@ -239,17 +225,25 @@ class chartData {
 
         /**
          * merge dataset_config
+         * all entity labels
+         * add dataset entities
          */
         _graphData.data.labels = this.entity_items.getNames()
         _graphData.data.datasets[0] = _defaultDatasetConfig
         _graphData.data.datasets[0].label = this.card_config.title || ""
-        if (this.entity_options && this.entity_options.unit)
+        /**
+         * add the unit
+         */
+        if (this.entity_options && this.entity_options.unit) {
             _graphData.data.datasets[0].unit = this.entity_options.unit || ""
+        } else {
+            _graphData.data.datasets[0].units = this.entity_items.getEntitieslist().map((item) => item.unit)
+        }
 
         /**
          * case horizontal bar
          */
-        if (this.chart_type.toLowerCase() === "horizontalbar") {
+        if (this.card_config.chart === "horizontalbar") {
             _graphData.data.datasets[0].indexAxis = "y"
         }
 
@@ -266,7 +260,7 @@ class chartData {
             _graphData.data.datasets[0].backgroundColor = entityColors
             _graphData.data.datasets[0].showLine = false
         } else {
-            if (this.chart_type === "radar") {
+            if (this.card_config.chart === "radar") {
                 _graphData.data.datasets[0].backgroundColor = COLOR_RADARCHART
                 _graphData.data.datasets[0].borderColor = COLOR_RADARCHART
                 _graphData.data.datasets[0].borderWidth = 1
@@ -290,7 +284,7 @@ class chartData {
         /**
          * add the data series and return the new graph data
          */
-        if (this.chart_type === "bar" && this.card_config.chartOptions && this.card_config.chartOptions.segmented) {
+        if (this.card_config.chart === "bar" && this.card_config.chartOptions && this.card_config.chartOptions.segmented) {
             const newData = this.createSimpleBarSegmentedData(_graphData.data.datasets[0])
             if (newData) {
                 _graphData.data.datasets[1] = {}
@@ -311,7 +305,7 @@ class chartData {
      */
     getCurrentGraphData() {
         try {
-            switch (this.chart_type.toLowerCase()) {
+            switch (this.card_config.chart) {
                 case "bubble":
                     this.graphData = this.createBubbleChartData()
                     break
@@ -470,21 +464,17 @@ class chartData {
             let _options = {
                 label: _entity.name || "unkonwn",
                 unit: _entity.unit || "",
-                minval: 0.0,
-                maxval: 0.0,
-                sumval: 0.0,
-                avgval: 0.0,
                 pointRadius: 0,
                 current: _entity.state || 0.0,
                 last_changed: _entity.last_changed || new Date(),
                 mode: "history"
             }
 
-            if (this.chart_type.toLowerCase() === "horizontalbar") {
+            if (this.card_config.chart === "horizontalbar") {
                 _options.indexAxis = "y"
             }
 
-            if (this.chart_type.toLowerCase() === "radar") {
+            if (this.card_config.chart === "radar") {
                 _options.pointRadius = 12
                 _options.hoverRadius = 18
                 _options.hitRadius = 22
@@ -499,8 +489,7 @@ class chartData {
              * add all options from style settings
              */
             _options = { ..._options, ..._entityOptions }
-            _graphData.config.options.fill =
-                _entityOptions.fill || ["bar", "horizontalbar"].includes(this.chart_type.toLowerCase())
+            _graphData.config.options.fill = _entityOptions.fill || CT_BARCHARTS.includes(this.card_config.chart)
 
             if (_entityOptions.fill && _entityOptions.gradient && _entityOptions.gradient.colors) {
                 const _axis = _options.indexAxis === "y" ? "x" : "y"
@@ -516,7 +505,7 @@ class chartData {
             } else {
                 if (_entityOptions.backgroundColor === undefined) {
                     _options.backgroundColor = DEFAULT_COLORS[_graphData.config.series]
-                    _options.borderColor = DEFAULT_COLORS[_graphData.config.series]                    
+                    _options.borderColor = DEFAULT_COLORS[_graphData.config.series]
                 }
             }
 
@@ -524,22 +513,36 @@ class chartData {
              * check secondary axis
              */
             if (!_graphData.config.secondaryAxis) {
-                _graphData.config.secondaryAxis =
-                    _entityOptions.yAxisID != undefined || _entityOptions.xAxisID != undefined
+                _graphData.config.secondaryAxis = _entityOptions.yAxisID != undefined || _entityOptions.xAxisID != undefined
             }
 
             /**
              * add the options, labels and data series
              */
-            _graphData.config.timescale = _entity.datascales.useTimeSeries
-            if (_entity.datascales.useTimeSeries && _entity.seriesdata && _entity.seriesdata.data) {
-                _options.data = _entity.seriesdata.data
-            } else {
+            if (_graphData.config.options.mode.timeaxis == false) {
+                /**
+                 * category based datasets
+                 */
                 const _seriesdata = this.entity_items.getDataset(id)
-                if(_seriesdata){
+                _graphData.config.multiseries = false
+                if (_seriesdata && _seriesdata.data) {
                     _graphData.data.labels = _seriesdata.labels
-                    _options.data = _seriesdata.data                    
-                }                
+                    if (this.card_config.chart == "pie" || this.card_config.chart == "doughnut") {
+                        _graphData.data.labels = this.entity_items.getNames()
+                        _graphData.config.multiseries = true
+                    }
+                    _options.data = _seriesdata.data
+                    _graphData.config.useTimeSeries = _graphData.config.options.mode.timescale
+                }
+            } else {
+                /**
+                 *  time axis based datasets
+                 */
+                if (_entity.seriesdata && _entity.seriesdata.data) {
+                    _options.data = _entity.seriesdata.data
+                    _graphData.config.datascales = _entity.datascales
+                    _graphData.config.timescale = _graphData.config.options.mode.timescale
+                }
             }
 
             _graphData.data.datasets.push(_options)
@@ -550,23 +553,48 @@ class chartData {
 
     /**
      * build the graph cart data and datasets for the
-     * defined graph chart. Uses the history data
-     * for each entity
+     * defined graph chart. Uses the history data for each entity
      */
     getHistoryGraphData() {
         try {
-            switch (this.chart_type.toLowerCase()) {
+            switch (this.card_config.chart) {
                 case "bubble":
+                    this.entity_options.mode = CT_DATASCALEMODES[this.card_config.chart]
                     this.graphData = this.createHistoryBubbleData()
                     break
                 case "scatter":
+                    this.entity_options.mode = CT_DATASCALEMODES[this.card_config.chart]
                     this.graphData = this.createHistoryScatterData()
+                    break
+                case "bar":
+                case "horizontalbar_":
+                    if (this.entity_options && this.entity_options.mode && this.entity_options.mode.history) {
+                        this.graphData = this.createHistoryChartData()
+                    } else {
+                        this.graphData = this.createChartData()
+                    }
+                    break
+                case "pie":
+                    if (this.entity_options && this.entity_options.mode && this.entity_options.mode.history) {
+                        this.graphData = this.createHistoryChartData()
+                    } else {
+                        this.entity_options.mode = CT_DATASCALEMODES[this.card_config.chart]
+                        this.graphData = this.createChartData()
+                    }
+                    break
+                case "doughnut":
+                    this.entity_options.mode = CT_DATASCALEMODES[this.card_config.chart]
+                    this.graphData = this.createChartData()
                     break
                 default:
                     this.graphData = this.createHistoryChartData()
                     break
             }
-            return this.graphData
+            if (this.graphData) {
+                return this.graphData
+            } else {
+                console.error("Error getHistoryGraphData, no data present!")
+            }
         } catch (err) {
             console.error("Build History GraphData", err.message, err)
         }

@@ -65,9 +65,11 @@ If you find any information on this page useful, feel free to buy me a coffee:
   datascales:
     range: {integer}
     unit: '{text: millisecond|datetime|secund|minute|hour|day|month|year}'
+    format: '{text: dateformat pattern}'
     factor: {number: factor}
     ignoreZero: {boolean: true|false}
     aggregate: '{text: first|last|sum|mean|max|min}'
+    mode: '{text: category|time}'
     
   ## optional chart.js options (see chart.js documentation) 
   chartOptions:
@@ -183,7 +185,14 @@ You can see all the ways to use `Lovelace - graph-chartjs-card` in the [usage do
 ## Credits
 
 - [Evert Timberg](https://github.com/etimberg) - Maintainer of @chartjs
+
 - [Jukka Kurkela](https://github.com/kurkle) - Maintainer of @chartjs & Plugins for chartjs
+
+- [sdelliot](https://github.com/sdelliot/pie-chart-card) - Lovelace Pie Chart Card
+
+- [cheelio](https://github.com/cheelio/power-usage-card) - Lovelace power usage graph card
+
+  
 
 
 ## License

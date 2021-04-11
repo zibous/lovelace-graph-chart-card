@@ -38,33 +38,35 @@ function yAxisFormat(tickValue, index, ticks) {
  * format the tooltip title
  * if attribute localedate is present, this is returned
  * as label otherwise the data.label will be used.
- * @param {*} context
+ * @param {object} context
  * @returns string
  */
 function formatToolTipTitle(context) {
-    const data = context[0].raw
-    if (context[0].label && data && data.localedate) {
-        return data.localedate || context[0].label
+    const _ct = context[0].chart.config._config.type
+    if (_ct == "polarArea") return context[0].chart.config._config.data.labels[context[0].dataIndex] || ""
+    if (_ct == "scatter") return ""
+    if (context[0].label && context[0].raw && context[0].raw.localedate) {
+        return context[0].raw.localedate || context[0].label
     }
     return context[0].label || ""
 }
 
 /**
  * format the tooltip label
- * @param {*} context
+ * @param {object} context
  * @returns string
  */
 function formatToolTipLabel(context) {
-    if (context.dataset.tooltip === false || !context.dataset.label) {
+    if (context.dataset.tooltip === false) {
         return null
     }
-    let label = context.dataset.label || ""
-    const data = context.raw
-    const unit = context.dataset.unit ? ` ${context.dataset.unit}` : ""
-    label += ": " + context.formattedValue + unit
-    // if (context.raw.statistics) {
-    //   label = [label, "Statistics", context.raw.statistics]
-    // }
+    let label = context.dataset.label || context.label || context.chart.data.labels[context.dataIndex] || ""
+    const value = context.chart.config._config.type === "bubble" ? context.parsed._custom : context.formattedValue
+    if (context.dataset.units && context.dataset.units.length > context.dataIndex) {
+        label += `: ${value}  ${context.dataset.units[context.dataIndex] || ""}`
+    } else {
+        label += `: ${value}  ${context.dataset.unit || ""}`
+    }
     return label
 }
 
@@ -85,7 +87,6 @@ class graphChart {
         this.ctx = config.ctx || null // the chart canvas element
         this.canvasId = config.canvasId // canvas container id
         this.entity_items = config.entity_items // all entities
-        this.datascales = config.datascales // current datascales settings
         this.chart_type = config.chart_type || "bar" // the chart type
         this.chartconfig = config.chartconfig || {} // the chart config from the template
         this.loader = config.loader // the loading animation
@@ -96,7 +97,7 @@ class graphChart {
          * all class based properties
          */
         this.chart = null // current chart
-        this.graphData = {} // the graph data
+        this.graphData = {} // the graph data set by _buildGraphData...
         this.graphDataSets = [] // current graph settings
         this.chart_ready = false // boolean chart allready exits
         this.lastUpdate = null // timestamp last chart update
@@ -122,7 +123,6 @@ class graphChart {
          * chart default options
          */
         let _options = {
-            unit: "",
             hoverOffset: 8,
             layout: {},
             interaction: {
@@ -248,39 +248,30 @@ class graphChart {
         /**
          * special case for timescales to translate the date format
          */
-        if (this.graphData.config.timescale && this.datascales) {
-            _options.scales = _options.scales || {}
+        if (this.graphData.config.timescale && this.graphData.config.datascales) {
+            _options.scales = _options.scales || {}            
             _options.scales.x = _options.scales.x || {}
+            _options.scales.x.maxRotation = 0
+            _options.scales.x.autoSkip = true
             _options.scales.x.major = true
             _options.scales.x.type = "time"
             _options.scales.x.time = {
-                unit: this.datascales.unit,
-                format: this.datascales.format,
-                displayFormats: {}
-                //tooltipFormat: "EEEEEE, dd.MMM.yyyy H:ss" //this.datascales.format
+                unit: this.graphData.config.datascales.unit,
+                format: this.graphData.config.datascales.format,
+                isoWeekday: this.graphData.config.datascales.isoWeekday
             }
             _options.scales.x.ticks = {
                 callback: xAxisFormat
-            }
-            _options.plugins.tooltip = {
-                callbacks: {
-                    label: formatToolTipLabel,
-                    title: formatToolTipTitle
-                }
-            }
-            // _options.scales.y = _options.scales.y || {}
-            // _options.scales.y.ticks = {
-            //     callback: yAxisFormat
-            // }
-            // _options.scales.x.time.displayFormats[_options.scales.x.time.unit] = this.datascales.format
-        } else {
-            /**
-             * callbacks for tooltip
-             */
-            _options.plugins.tooltip = {
-                callbacks: {
-                    label: formatToolTipLabel
-                }
+            } 
+        }
+
+        /**
+         * callbacks for tooltip
+         */
+        _options.plugins.tooltip = {
+            callbacks: {
+                label: formatToolTipLabel,
+                title: formatToolTipTitle
             }
         }
 
@@ -317,6 +308,44 @@ class graphChart {
         if (this.chart_type.toLowerCase() === "bubble") {
             _options.plugins.legend = {
                 display: false
+            }
+        }
+
+        /**
+         * just for testing pi multiple series
+         */
+        if (this.graphData.config.multiseries === true) {
+            _options.plugins.legend = {
+                labels: {
+                    generateLabels: function (chart) {
+                        const original = Chart.overrides.pie.plugins.legend.labels.generateLabels
+                        const labelsOriginal = original.call(this, chart)
+                        var datasetColors = chart.data.datasets.map(function (e) {
+                            return e.backgroundColor
+                        })
+                        datasetColors = datasetColors.flat()
+                        labelsOriginal.forEach((label) => {
+                            label.datasetIndex = (label.index - (label.index % 2)) / 2
+                            label.hidden = !chart.isDatasetVisible(label.datasetIndex)
+                            label.fillStyle = datasetColors[label.index]
+                        })
+                        return labelsOriginal
+                    }
+                },
+                onClick: function (mouseEvent, legendItem, legend) {
+                    legend.chart.getDatasetMeta(legendItem.datasetIndex).hidden = legend.chart.isDatasetVisible(
+                        legendItem.datasetIndex
+                    )
+                    legend.chart.update()
+                }
+            }
+            _options.plugins.tooltip = {
+                callbacks: {
+                    label: function (context) {
+                        const labelIndex = context.datasetIndex + context.dataIndex
+                        return context.chart.data.labels[labelIndex] + ": " + context.formattedValue
+                    }
+                }
             }
         }
 
@@ -384,7 +413,7 @@ class graphChart {
      */
     renderGraph(doUpdate) {
         try {
-            if (this.graphData) {
+            if (this.graphData && this.graphData.data && this.graphData.config) {
                 if (
                     this.graphDataSets &&
                     this.graphDataSets.length &&
@@ -478,7 +507,8 @@ class graphChart {
                         }
 
                         if (this.DEBUGMODE) {
-                            console.log(graphOptions)
+                            this.DEBUGDATA.CHARD = {}
+                            this.DEBUGDATA.CHARD.cart3Options = graphOptions
                         }
 
                         this.chart = new window.Chart3(this.ctx, graphOptions)
@@ -500,10 +530,10 @@ class graphChart {
                     }
                 }
             } else {
-                console.error("Missing settings or data", graphOptions)
+                console.error("Fatal Error, missing graphdata", graphOptions)
             }
         } catch (err) {
-            console.error("Render Graph Error on ", this.chart_type, ": ", err, err.message)
+            console.error("Error Render Graph Error on ", this.chart_type, ": ", err, err.message)
         }
     }
 }

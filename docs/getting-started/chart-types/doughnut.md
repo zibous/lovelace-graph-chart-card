@@ -1,14 +1,14 @@
-## Lovelace - graph-chartjs-card
-### Doughnut Charts
+# Lovelace - graph-chartjs-card
+## Doughnut Charts
 
 Doughnut charts are probably the most commonly used charts. They are divided into segments, the arc of each segment shows the proportional value of each piece of data.
 
-#### Minimal Doughnut Chart
+### Minimal Doughnut Chart
 ![simpledoughnut1](img/simpledoughnut1.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -28,7 +28,7 @@ Doughnut charts are probably the most commonly used charts. They are divided int
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'

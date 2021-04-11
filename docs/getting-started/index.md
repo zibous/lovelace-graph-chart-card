@@ -8,7 +8,7 @@
 
 ### Minimal configuration
 
-In the "minimum configuration" application, the default settings are used. The information Lovelace Card Type, Chart Type and the entities to be evaluated are absolutely necessary.
+In the "minimum configuration" chart, the default settings are used. The properties Lovelace Card `type`, `chart` Type and the `entities`, `entity` to be evaluated are absolutely necessary.
 
 <br>
 
@@ -24,7 +24,7 @@ In the "minimum configuration" application, the default settings are used. The i
 
 ### Card options - using the card
 
-Additional settings are optional. They are theme-, datascale-, chart- and entity options.
+Additional settings are optional. They are `theme`-, `datascale`-, `chartOptions` and entity `options`.
 
 
 ```yaml
@@ -81,7 +81,7 @@ If Datascales are used, the data from the history is determined as time series d
     factor: 1.00
     ignoreZero: false
     aggregate: 'last'
-    useTimeSeries: true
+    mode: 'category'
   ...
 ```
 
@@ -95,11 +95,93 @@ If Datascales are used, the data from the history is determined as time series d
 | factor         | number   | 1.00 | **Optional**, Caclulate your entity data in any way you like: `state.value * factor` |
 | ignoreZero     | boolean   | false | **Optional**, true: Values with Null or 0.00 values will be ignored |
 | aggregate     | boolean   | last | **Optional**, Aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min` |
-| useTimeSeries | boolean | true | **Optional**, default `true`if `range` and `unit` is used. If `true` renders axis as `Time Cartesian Axis`otherwise as Category Axis. |
+| mode | String | Optional | Default based on Chart Type, **optional** `category` (category axis ), `time` (Time Cartesian Axis) |
+
+
+
+#### `Mode` - Chart Default setting
+
+```javascript
+{
+    // mode settings
+    disabled: { history: false, timescale: false, timeaxis: false },
+    category: { history: true, timescale: true, timeaxis: false },
+    time: { history: true, timescale: true, timeaxis: true },
+    // chart defaults
+    bar: { history: false, timescale: false, timeaxis: false },
+    horizontalbar: { history: false, timescale: false, timeaxis: false },
+    line: { history: true, timescale: true, timeaxis: true },
+    pie: { history: false, timescale: false, timeaxis: false },
+    doughnut: { history: false, timescale: false, timeaxis: false },
+    // simple charts
+    polararea: { history: false, timescale: false, timeaxis: false },
+    scatter: { history: false, timescale: false, timeaxis: false },
+    radar: { history: false, timescale: false, timeaxis: false },
+    bubble: { history: false, timescale: false, timeaxis: false }
+}
+```
+
+
 
 <br>
 
+### Sample **Category Axis** (default)
+
+![datascale_category](settings/datascale_category.png)
+
+<br>
+
+```yaml
+- type: 'custom:chart-card'
+  title: Energie Produktion
+  icon: 'mdi:counter'
+  height: 320
+  chart: bar
+  debug: true
+  datascales:
+    range: 24
+    unit: hour
+    format: hour
+    aggregate: last
+    mode: category
+  entities:
+    - entity: sensor.solarpower_current_power
+      name: Energieproduktion
+      unit: kWh
+      ignoreZero: true
+      factor: 0.001
+```
+
  **Category Axis** see: https://www.chartjs.org/docs/latest/axes/cartesian/category.html
+
+<br>
+
+### Sample **Time Cartesian Axis**
+
+![datascale_time](settings/datascale_time.png)
+
+<br>
+
+```yaml
+- type: 'custom:chart-card'
+  title: Energie Produktion
+  icon: 'mdi:counter'
+  height: 320
+  chart: bar
+  debug: true
+  datascales:
+    range: 24
+    unit: hour
+    format: hour
+    aggregate: last
+    mode: time
+  entities:
+    - entity: sensor.solarpower_current_power
+      name: Energieproduktion
+      unit: kWh
+      ignoreZero: true
+      factor: 0.001
+```
 
 **Time Cartesian Axis** see: https://www.chartjs.org/docs/latest/axes/cartesian/time.html
 
@@ -113,9 +195,9 @@ The chart option can be used to set the display of the chart graph. The permitte
 
 | Property   | Type     | Default     | Description |
 | -------------- | -------- | ----------- |------------ |
-| plugins          | object | None | **Optional**, - see: [Chart.js documentation](https://www.chartjs.org/docs/latest/). |
-| scales          | object | None | **Optional**,  - see: [Chart.js documentation](https://www.chartjs.org/docs/latest/). |
-| .... |  |  |  |
+| plugins  | object | None    | **Optional**,  - see: [Chart.js documentation](https://www.chartjs.org/docs/latest/). |
+| scales   | object | None    | **Optional**,  - see: [Chart.js documentation](https://www.chartjs.org/docs/latest/). |
+|          |        |         |                                                              |
 
 <br>
 
@@ -132,6 +214,7 @@ Entities Section contains all sensors and the settings (optional) for the data t
 | factor         | number   | 1.00 | **Optional**, Caclulate your entity data in any way you like: `state.value * factor` |
 | ignoreZero     | boolean   | false | **Optional**, true: Values with Null or 0.00 values will be ignored |
 | aggregate     | string | last | **Optional**, Aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min` |
+|            |         |                           |                                                              |
 
 <br>
 

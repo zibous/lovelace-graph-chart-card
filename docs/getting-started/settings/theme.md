@@ -1,5 +1,5 @@
-## Lovelace - graph-chartjs-card
-### Theme settings
+# Lovelace - graph-chartjs-card
+## Theme settings
 
 In the standard case, if no settings are made, the settings are adopted from the current theme. These can be overwritten with entries in the theme or in the current card configuration.
 

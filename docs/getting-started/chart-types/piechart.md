@@ -1,14 +1,14 @@
-## Lovelace - graph-chartjs-card
-### PIE Charts
+# Lovelace - graph-chartjs-card
+## PIE Charts
 
 Pie charts are probably the most commonly used charts. They are divided into segments, the arc of each segment shows the proportional value of each piece of data.
 
-#### Minimal Pie Chart
+### Minimal Pie Chart
 ![simplepie1](img/simplepie1.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -23,12 +23,12 @@ Pie charts are probably the most commonly used charts. They are divided into seg
 ```
 <br>
 
-#### Advanced Pie Chart
+### Advanced Pie Chart
 ![piechart](img/piechart.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -50,10 +50,10 @@ Pie charts are probably the most commonly used charts. They are divided into seg
     - entity: sensor.peter_kohlenhydrate_makronahrstoff
       name: Kohlenhydrate
 ```
+
 <hr>
 
 
 **Chart Options `chartOptions`**
-
 see: https://www.chartjs.org/docs/latest/charts/doughnut.html#dataset-properties
 

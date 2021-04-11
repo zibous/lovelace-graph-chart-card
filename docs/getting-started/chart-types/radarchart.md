@@ -1,14 +1,14 @@
-## Lovelace - graph-chartjs-card
-### Radar Chart
+# Lovelace - graph-chartjs-card
+## Radar Chart
 
 A radar chart is a way of showing multiple data points and the variation between them. They are often useful for comparing the points of two or more different data sets.
 
-#### Minimal Radar Chart
+### Minimal Radar Chart
 ![simpleradar1](img/simpleradar1.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -29,5 +29,4 @@ A radar chart is a way of showing multiple data points and the variation between
 
 
 **Chart Options `chartOptions`**
-
 see: https://www.chartjs.org/docs/latest/charts/radar.html#dataset-properties

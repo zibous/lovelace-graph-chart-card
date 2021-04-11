@@ -241,7 +241,7 @@ class ChartCard extends HTMLElement {
             API: {}
         }
         this.APISTART = performance.now()
-        this.DEBUGDATA.API.elapsed = 0
+        this.DEBUGDATA.API.elapsed_total = 0
         this.DEBUGDATA.PROFILER = {}
     }
 
@@ -275,9 +275,9 @@ class ChartCard extends HTMLElement {
             borderDash: [1, 1],
             padding: {
                 top: 20,
-                right: 12,
+                right: 24,
                 bottom: 12,
-                left: 12
+                left: 24
             },
             useAnimations: true,
             locale: this.chart_locale
@@ -368,7 +368,6 @@ class ChartCard extends HTMLElement {
                 ctx: this.ctx,
                 canvasId: this.canvasId,
                 entity_items: this.entity_items,
-                datascales: this.datascales,
                 chart_type: this.chart_type,
                 chartconfig: this.chartconfig,
                 loader: this.loader,
@@ -549,6 +548,53 @@ class ChartCard extends HTMLElement {
     }
 
     /**
+     * check the yaml based datascale settings
+     */
+    _checkDatascales() {
+        this.datascales = Object.assign({}, this._config.datascales)
+
+        this.datascales.chart = this.chart_type.toLowerCase()
+        this.datascales.cardtitle = this.card_title
+        this.datascales.range = this.datascales.range || 0
+
+        if (typeof this.datascales.mode == "undefined") {
+            this.datascales.mode = CT_DATASCALEMODES[this.datascales.chart]
+        } else {
+            this.datascales.mode = CT_DATASCALEMODES[this.datascales.mode] || CT_DATASCALEMODES[this.datascales.chart]
+        }
+
+        if (this.datascales.range !== 0 && !this.datascales.mode.history) {
+            this.datascales.mode.history = true
+        }
+
+        if (this.chart_type === "line" && this.datascales.range === 0) {
+            this.datascales.range = 24
+            this.datascales.unit = "hour"
+            this.datascales.format = this.datascales.format || this.datascales.unit
+        }
+
+        if (this.datascales.range) {
+            this.datascales.unit = this.datascales.unit || "day"
+            this.datascales.format = this.datascales.format || "day"
+            this.datascales.ignoreZero = this.datascales.ignoreZero || true
+            this.datascales.aggregate = this.datascales.aggregate || "last"
+        }
+
+        if (this.datascales.unit && DSC_UNITS.includes(this.datascales.unit.toLowerCase()) == false) {
+            this.datascales.range = 24
+            this.datascales.unit = "day"
+            this.datascales.format = this.datascales.format || this.datascales.unit
+        }
+
+        if (this.datascales.aggregate && DSC_RANGES.includes(this.datascales.aggregate.toLowerCase()) == false) {
+            this.datascales.aggregate = "last"
+        }
+
+        this.datascales.factor = this.datascales.factor || 1.0
+        this.datascales.isoWeekday = this.datascales.isoWeekday || 1
+    }
+
+    /**
      * Home Assistant will call setConfig(config) when the configuration changes (rare).
      * If you throw an exception if the configuration is invalid,
      * Lovelace will render an error card to notify the user.
@@ -676,32 +722,10 @@ class ChartCard extends HTMLElement {
             this._checkLocale()
 
             /**
-             * all setting for history charts (timeseries charts)
-             * line charts allway set as timeseries charts
+             * data scale settings
              */
-            this.datascales = Object.assign({}, this._config.datascales)
+            this._checkDatascales()
 
-            if (typeof this.datascales.useTimeSeries == "undefined") {
-                this.datascales.useTimeSeries = this.datascales.unit != undefined ? true : false
-            }
-            this.datascales.range = this.datascales.range || 0
-            if (this.chart_type === "line" && this.datascales.range === 0) {
-                this.datascales.range = 24
-                this.datascales.unit = "hour"
-            }
-            if (this.datascales.range) {
-                this.datascales.unit = this.datascales.unit || "day"
-                this.datascales.ignoreZero = this.datascales.ignoreZero || true
-                this.datascales.aggregate = this.datascales.aggregate || "last"
-            }
-            if (this.datascales.unit && DSC_UNITS.includes(this.datascales.unit.toLowerCase()) == false) {
-                this.datascales.unit = "day"
-                this.datascales.range = 24
-            }
-            if (this.datascales.aggregate && DSC_RANGES.includes(this.datascales.aggregate.toLowerCase()) == false) {
-                this.datascales.aggregate = "last"
-            }
-            this.datascales.factor = this.datascales.factor || 1.0
             /**
              * set the update_intervall
              * default is every minute (60 * 1000)
@@ -751,7 +775,7 @@ class ChartCard extends HTMLElement {
                     /**
                      * all global entity options
                      */
-                    this.entity_options = entity.options
+                    this.entity_options = Object.assign({}, entity.options)
                 } else {
                     /**
                      * hass entity
@@ -780,10 +804,9 @@ class ChartCard extends HTMLElement {
                              * item data scales
                              */
                             item.datascales = this.datascales
-                            item.datascales.ignoreZero = item.ignoreZero || this.datascales.ignoreZero
-                            item.datascales.aggregate = item.aggregate || this.datascales.aggregate
+                            item.datascales.ignoreZero = item.ignoreZero || this.datascales.ignoreZero || false
+                            item.datascales.aggregate = item.aggregate || this.datascales.aggregate || "last"
                             item.datascales.factor = item.factor || this.datascales.factor
-                            item.datascales.useTimeSeries = this.datascales.useTimeSeries
                             item.datascales.useStatistics = this.chart_showdetails || false
                             item.state = item.state * item.datascales.factor
                             item.factor = item.datascales.factor
@@ -797,6 +820,14 @@ class ChartCard extends HTMLElement {
                             this.entity_items.addEntity(item)
                         }
                     }
+                }
+                if (this.entity_options === null) {
+                    this.entity_options = {
+                        settings: false,
+                        mode: this.datascales.mode || CT_DATASCALEMODES["disabled"]
+                    }
+                } else {
+                    this.entity_options.mode = this.entity_options.mode || this.datascales.mode || CT_DATASCALEMODES["disabled"]
                 }
             }
             return this.entity_items.isValid() || false
@@ -969,10 +1000,14 @@ class ChartCard extends HTMLElement {
          */
         if (this.card && this.card.getClientRects().length == 0) return
         this.ready = this.entity_items.isValid()
+
         if (this.ready) {
             if (this.datascales.range > 0) {
                 this.APISTART = performance.now()
-                this.DEBUGDATA.PROFILER.APICALL = {
+                /**
+                 * set the start time for the api call
+                 */
+                this.DEBUGDATA.PROFILER.GETHASSDATA = {
                     start: performance.now()
                 }
                 /**
@@ -1141,13 +1176,13 @@ class ChartCard extends HTMLElement {
         if (this.DEBUGMODE) {
             this.DEBUGDATA.CARD = this.card_title
             this.DEBUGDATA.API.updateIntervall = msToTime(this.update_interval)
-            this.DEBUGDATA.API.elapsed = msToTime(performance.now() - this.APISTART)
+            this.DEBUGDATA.API.elapsed_total = msToTime(performance.now() - this.APISTART)
             this.DEBUGDATA.API.datainfo = this.dataInfo
             this.DEBUGDATA.DATA_ENTITIES = this.entity_items.items
             this.DEBUGDATA.LOVELACE_CONFIG = this._config
             this.DEBUGDATA.LOCALEINFO = window.localeNames
-            if (this.DEBUGDATA.API.datamode == API_DATAMODE.history && this.DEBUGDATA.PROFILER) {
-                delete this.DEBUGDATA.PROFILER.APICALL.start
+            if (this.DEBUGDATA.API.datamode == "History" && this.DEBUGDATA.PROFILER) {
+                delete this.DEBUGDATA.PROFILER.GETHASSDATA.start
                 delete this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
             }
             console.info(
@@ -1168,8 +1203,16 @@ class ChartCard extends HTMLElement {
     _buildGraphData(stateHistories, mode) {
         if (this.DEBUGMODE) {
             this.DEBUGDATA.API.datamode = mode == API_DATAMODE.history ? "History" : "Current"
-            if (this.DEBUGDATA.API.datamode == API_DATAMODE.history) {
-                this.DEBUGDATA.PROFILER.APICALL.elapsed = msToTime(performance.now() - this.DEBUGDATA.PROFILER.APICALL.start)
+            if (mode == API_DATAMODE.history) {
+                /**
+                 * calculate the api elapsed time
+                 */
+                this.DEBUGDATA.PROFILER.GETHASSDATA.elapsed = msToTime(
+                    performance.now() - this.DEBUGDATA.PROFILER.GETHASSDATA.start
+                )
+                /**
+                 * set the start for the PROFILER.GETBUCKETDATA
+                 */
                 this.DEBUGDATA.PROFILER.GETBUCKETDATA = {
                     start: performance.now()
                 }
@@ -1210,7 +1253,7 @@ class ChartCard extends HTMLElement {
             /**
              * create the seriesdata
              */
-            if (dataprovider.getSeriesdata(stateHistories) == false) {
+            if (dataprovider.getSeriesdata(stateHistories, this.chart_type) == false) {
                 if (this.DEBUGMODE) {
                     this.DEBUGDATA.API.DATA = stateHistories
                     this.DEBUGDATA.API.ERROR = "Transform Historydata failed!"
@@ -1225,9 +1268,9 @@ class ChartCard extends HTMLElement {
          * get the chart data
          */
         const _chartData = new chartData({
-            chart_type: this.chart_type,
             card_config: {
                 title: this.cardTitle,
+                chart: this._config.chart.toLowerCase(),
                 chartOptions: this.chartconfig.options
             },
             entity_items: this.entity_items,
@@ -1269,28 +1312,31 @@ class ChartCard extends HTMLElement {
                 this.graphChart.renderGraph(false)
             }
         }
+
         this._renderCardTimestamp()
-        if (mode === API_DATAMODE.history && this.chart_showstate) {
-            let _data = this.graphData.data.datasets.map(function (item) {
-                return {
-                    name: item.label || "",
-                    min: item.minval,
-                    max: item.maxval,
-                    avg: null,
-                    sum: null,
-                    current: item.current,
-                    unit: item.unit || "",
-                    color: item.labelcolor || item.backgroundColor,
-                    timestamp: item.last_changed || ""
-                }
-            })
-            if (_data) this.renderStateData(_data)
+
+        if (mode === API_DATAMODE.history) {
+            if (this.chart_showstate) {
+                let _data = this.graphData.data.datasets.map(function (item) {
+                    return {
+                        name: item.label || "",
+                        min: item.minval,
+                        max: item.maxval,
+                        avg: null,
+                        sum: null,
+                        current: item.current,
+                        unit: item.unit || "",
+                        color: item.labelcolor || item.backgroundColor,
+                        timestamp: item.last_changed || ""
+                    }
+                })
+                if (_data) this.renderStateData(_data)
+            }
+
             if (this.DEBUGMODE) {
-                if (this.DEBUGDATA.API.datamode == API_DATAMODE.history) {
-                    this.DEBUGDATA.PROFILER.GETBUCKETDATA.elapsed = msToTime(
-                        performance.now() - this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
-                    )
-                }
+                this.DEBUGDATA.PROFILER.GETBUCKETDATA.elapsed = msToTime(
+                    performance.now() - this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
+                )
                 this._renderDebugInfo()
             }
             this.dataInfo.loading = false

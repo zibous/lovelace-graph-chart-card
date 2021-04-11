@@ -1,17 +1,17 @@
-## Lovelace - graph-chartjs-card
-### Polar Area Charts
+# Lovelace - graph-chartjs-card
+## Polar Area Charts
 
 Polar area charts are similar to pie charts, but each segment has the same angle - the radius of the segment differs depending on the value.
 This type of chart is often useful when we want to show a comparison data similar to a pie chart, but also show a scale of values for context.
 
 
 
-#### Minimal Polar Area Chart
+### Minimal Polar Area Chart
 ![barchart_simple](img/simpleploararea.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -34,7 +34,7 @@ This type of chart is often useful when we want to show a comparison data simila
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -75,9 +75,9 @@ This type of chart is often useful when we want to show a comparison data simila
       name: Viszerales Fett  
 ```
 <br>
+
 <hr>
 
 
 **Chart Options `chartOptions`**
-
 see: https://www.chartjs.org/docs/latest/charts/polar.html#dataset-properties

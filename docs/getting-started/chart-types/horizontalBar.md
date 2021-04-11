@@ -1,14 +1,14 @@
-## Lovelace - graph-chartjs-card
-### Horizontal Bar Charts
+# Lovelace - graph-chartjs-card
+## Horizontal Bar Charts
 
 A horizontal bar chart is a variation on a vertical bar chart. It is sometimes used to show trend data, and the comparison of multiple data sets side by side. To achieve this you will have to set the `chart` property to `horizontalBar` and thus will show vertical bars.
 
-#### Minimal Horizontal Bar Chart
+### Minimal Horizontal Bar Chart
 ![simpehorizontalBar1](img/simpehorizontalBar1.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -23,10 +23,10 @@ A horizontal bar chart is a variation on a vertical bar chart. It is sometimes u
 ```
 <br>
 
-#### Advanced Horizontal Bar Chart
+### Advanced Horizontal Bar Chart
 ![horizontalBar1](img/horizontalBar1.png)<br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -59,8 +59,8 @@ A horizontal bar chart is a variation on a vertical bar chart. It is sometimes u
 ```
 
 <hr>
-**Chart Options `chartOptions`**
 
+**Chart Options `chartOptions`**
 see: https://www.chartjs.org/docs/latest/charts/bar.html#horizontal-bar-chart
 
 

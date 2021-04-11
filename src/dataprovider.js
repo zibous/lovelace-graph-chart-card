@@ -38,7 +38,16 @@ class DataProvider {
         }
         return false
     }
-
+    /**
+     * all servicedata information
+     * @param {*} _entity
+     */
+    _setEntityServiceDataInformation(_entity) {
+        if (_entity) {
+            _entity.datascales.data_count = 0
+            _entity.datascales.servicemode = TRANSFORM_MODE.seriesdata
+        }
+    }
     /**
      * build the seriesdata based on the grouped data
      * @param {*} id
@@ -70,8 +79,50 @@ class DataProvider {
                 return _itemdata
             }
         })
-        _entity.service.data_count = _entity.seriesdata.data.length
-        return _entity.service.data_count
+        _entity.datascales.data_count = _entity.seriesdata.data.length
+        return _entity.datascales.data_count
+    }
+    /**
+     * get simple data for the entities
+     * calculates the state data from the history devicestates
+     * based on the aggreation methode.
+     * @param {*} deviceStates
+     */
+    getSimpleData(deviceStates) {
+        function validItem(item, ignoreZero = false) {
+            return ignoreZero
+                ? item != 0 && item != "unavailable" && item != "undefined" && item != "unknown"
+                : item != "unavailable" && item != "undefined" && item != "unknown"
+        }
+        if (deviceStates && deviceStates.length) {
+            deviceStates.forEach((states) => {
+                const _entityId = states[0].entity_id
+                const _entity = this.dataInfo.entity_items[_entityId]
+                this._setEntityServiceDataInformation(_entity)
+                if (_entityId) {
+                    const _fld = _entity.attribute
+                    const _factor = _entity.factor || 1.0
+                    states = _fld
+                        ? states.filter((item) => validItem(item.attributes[_fld], _entity.ignoreZero))
+                        : states.filter((item) => validItem(item.state, _entity.ignoreZero))
+                    const _values = states.map((item) => (_fld ? item.attributes[_fld] * _factor : item.state * _factor))
+                    if (_entity.datascales.useStatistics) {
+                        _itemdata.statistics = {
+                            current: _entity.state,
+                            first: _values[0],
+                            last: _values[_values.length - 1],
+                            max: arrStatistics.max(_values),
+                            min: arrStatistics.min(_values),
+                            sum: arrStatistics.sum(_values),
+                            avg: arrStatistics.mean(_values)
+                        }
+                    }
+                    _entity.datascales.data_count = _values.length
+                    _entity.state = arrStatistics[_entity.datascales.aggregate](_values)
+                }
+            })
+        }
+        return true
     }
 
     /**
@@ -79,7 +130,20 @@ class DataProvider {
      * @param {array} deviceStates from hass API call
      * @returns boolean
      */
-    getSeriesdata(deviceStates) {
+    getSeriesdata(deviceStates, chart_type) {
+        /**
+         * first check the mode
+         * bar, pie and doghunut can use simple data mode
+         */
+        if (this.datascales.mode.history == false) {
+            return this.getSimpleData(deviceStates)
+        }
+        /**
+         * validate the item state
+         * @param {*} item
+         * @param {*} ignoreZero
+         * @returns
+         */
         function validItem(item, ignoreZero = false) {
             return ignoreZero
                 ? item != 0 && item != "unavailable" && item != "undefined" && item != "unknown"
@@ -123,19 +187,7 @@ class DataProvider {
                 if (_entityId) {
                     const _fld = _entity.attribute
                     const _factor = _entity.factor || 1.0
-                    /**
-                     * all servicedata information
-                     */
-                    _entity.service = {}
-                    _entity.service.dataprovider = this.version
-                    _entity.service.data_mode = TRANSFORM_MODE.seriesdata
-                    _entity.service.hass_start = this.dataInfo.starttime
-                    _entity.service.hass_end = this.dataInfo.endtime
-                    _entity.service.hass_url = this.dataInfo.url
-                    _entity.service.data_range = this.datascales.range
-                    _entity.service.data_group = _entity.datascales.unit
-                    _entity.service.data_aggregate = _entity.datascales.aggregate
-                    _entity.service.data_count = 0
+                    this._setEntityServiceDataInformation(_entity)
                     if (!_entity.hasOwnProperty("ignoreZero")) _entity.ignoreZero = false
                     /**
                      * first build the group and returns the series data
@@ -165,7 +217,7 @@ class DataProvider {
                     /**
                      * build the series data based on the grouped data series
                      */
-                    _entity.service.data_count = this._createTimeSeriesData(_entity, _data)
+                    _entity.datascales.data_count = this._createTimeSeriesData(_entity, _data)
                 }
             })
             return true

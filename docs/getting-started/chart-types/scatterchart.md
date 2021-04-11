@@ -1,14 +1,14 @@
-## Lovelace - graph-chartjs-card
-### Scatter Charts
+# Lovelace - graph-chartjs-card
+## Scatter Charts
 
 Scatter charts are based on basic line charts with the x axis changed to a linear axis. To use a scatter chart, data must be passed as objects containing X and Y properties. The example below creates a scatter chart with 4 points.
 
-#### Minimal Scatter Chart
+### Minimal Scatter Chart
 ![simplescatter1](img/simplescatter1.png)
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -30,7 +30,7 @@ Scatter charts are based on basic line charts with the x axis changed to a linea
 
 <br>
 
-### Example
+#### Example
 
 ```yaml
 - type: 'custom:chart-card'
@@ -69,11 +69,11 @@ Scatter charts are based on basic line charts with the x axis changed to a linea
 
 ```
 <br>
+
 <hr>
 
 
 **Chart Options `chartOptions`**
-
 see: https://www.chartjs.org/docs/latest/charts/scatter.html#dataset-properties
 
 
