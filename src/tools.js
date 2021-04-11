@@ -46,12 +46,13 @@ const _safeParseFloat = function (value) {
 }
 
 /**
- * convert time to readable string
+ * convert duration millisecundes to readable string
  * @param {*} duration
  * @returns
  */
 function msToTime(duration) {
-    return Number(parseFloat(duration).toFixed(4))
+    if (duration > 1000) return Number(parseFloat(duration / 1000).toFixed(2)) + " s"
+    return Number(parseFloat(duration).toFixed(4)) + " ms"
 }
 
 /**

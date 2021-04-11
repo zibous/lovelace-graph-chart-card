@@ -1479,8 +1479,7 @@ class ChartCard extends HTMLElement {
             if (mode === API_DATAMODE.statemode) {
                 this.DEBUGDATA.PROFILER.GETSTATEDATA.elapsed = msToTime(
                     performance.now() - this.DEBUGDATA.PROFILER.GETSTATEDATA.start
-                )
-                console.log(performance.now() - this.DEBUGDATA.PROFILER.GETSTATEDATA.start)
+                )                
             }
             this.DEBUGDATA.PROFILER.CHART = {
                 start: performance.now()
@@ -1790,12 +1789,14 @@ const _safeParseFloat = function (value) {
 }
 
 /**
- * convert time to readable string
+ * convert duration millisecundes to readable string
  * @param {*} duration
  * @returns
  */
 function msToTime(duration) {
-    return Number(parseFloat(duration).toFixed(4))
+    if(duration>1000)
+        return Number(parseFloat(duration / 1000).toFixed(2)) + " s"
+    return Number(parseFloat(duration).toFixed(4)) + " ms"    
 }
 
 /**

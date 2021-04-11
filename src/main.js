@@ -1320,8 +1320,7 @@ class ChartCard extends HTMLElement {
             if (mode === API_DATAMODE.statemode) {
                 this.DEBUGDATA.PROFILER.GETSTATEDATA.elapsed = msToTime(
                     performance.now() - this.DEBUGDATA.PROFILER.GETSTATEDATA.start
-                )
-                console.log(performance.now() - this.DEBUGDATA.PROFILER.GETSTATEDATA.start)
+                )                
             }
             this.DEBUGDATA.PROFILER.CHART = {
                 start: performance.now()
