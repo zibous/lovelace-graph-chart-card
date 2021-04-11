@@ -5,7 +5,7 @@ With graph-chartjs-card, it is possible to create mixed charts that are a combin
 
 ### Advanced Mixed Chart (Bar and Lines)
 
-![mixedchart1](img/mixedchart1.png)<br>
+![mixedchart](img/mixedchart.png)<br>
 
 #### Example
 

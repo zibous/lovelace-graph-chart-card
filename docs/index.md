@@ -54,7 +54,7 @@ It is based on [chart.js](https://chartjs.org) and offers most of the features o
 
 ## 5. Mixed Charts
 
-| <img src="getting-started/chart-types/img/mixedchart1.png" alt="Mixed Chart" style="zoom:60%;" /> |
+| <img src="getting-started/chart-types/img/mixedchart.png" alt="Mixed Chart" style="zoom:60%;" /> |
 | ------------------------------------------------------------ |
 | **Mixed Chart (Bar and Lines)  Timeseries**                  |
 
