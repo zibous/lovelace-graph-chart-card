@@ -289,11 +289,12 @@ class chartData {
             if (newData) {
                 _graphData.data.datasets[1] = {}
                 _graphData.data.datasets[1].data = newData.data
-                _graphData.data.datasets[1].tooltip = false
+                _graphData.data.datasets[1].tooltip = false                
                 _graphData.data.datasets[1].backgroundColor = newData.backgroundColors
                 _graphData.data.datasets[1].borderWidth = 0
                 _graphData.data.datasets[1].showLine = false
                 _graphData.config.segmentbar = newData.data.length !== 0
+
             }
         }
         return _graphData

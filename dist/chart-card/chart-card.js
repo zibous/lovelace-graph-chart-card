@@ -1161,7 +1161,8 @@ class ChartCard extends HTMLElement {
         this.ready = this.entity_items.isValid()
 
         if (this.ready) {
-            if (this.datascales.range > 0) {
+            
+            if (this.DEBUGMODE) {
                 this.APISTART = performance.now()
                 /**
                  * set the start time for the api call
@@ -1169,6 +1170,15 @@ class ChartCard extends HTMLElement {
                 this.DEBUGDATA.PROFILER.GETHASSDATA = {
                     start: performance.now()
                 }
+                this.DEBUGDATA.PROFILER.GETBUCKETDATA = {
+                    start: performance.now()
+                }
+                this.DEBUGDATA.PROFILER.GETSTATEDATA = {
+                    start: performance.now()
+                }
+            }
+
+            if (this.datascales.range > 0) {
                 /**
                  * start date, time and end date
                  */
@@ -1340,9 +1350,11 @@ class ChartCard extends HTMLElement {
             this.DEBUGDATA.DATA_ENTITIES = this.entity_items.items
             this.DEBUGDATA.LOVELACE_CONFIG = this._config
             this.DEBUGDATA.LOCALEINFO = window.localeNames
-            if (this.DEBUGDATA.API.datamode == "History" && this.DEBUGDATA.PROFILER) {
+            if (this.DEBUGDATA.PROFILER) {
                 delete this.DEBUGDATA.PROFILER.GETHASSDATA.start
                 delete this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
+                delete this.DEBUGDATA.PROFILER.GETSTATEDATA.start
+                delete this.DEBUGDATA.PROFILER.CHART.start
             }
             console.info(
                 `%cDEBUGDATA ${this.chart_type.toUpperCase()} ${appinfo.name} ${appinfo.version}:`,
@@ -1369,14 +1381,17 @@ class ChartCard extends HTMLElement {
                 this.DEBUGDATA.PROFILER.GETHASSDATA.elapsed = msToTime(
                     performance.now() - this.DEBUGDATA.PROFILER.GETHASSDATA.start
                 )
+
                 /**
                  * set the start for the PROFILER.GETBUCKETDATA
                  */
+
                 this.DEBUGDATA.PROFILER.GETBUCKETDATA = {
                     start: performance.now()
                 }
             }
         }
+
         /**
          * check historydata
          */
@@ -1428,7 +1443,7 @@ class ChartCard extends HTMLElement {
          */
         const _chartData = new chartData({
             card_config: {
-                title: this.cardTitle,
+                title: this.card_title,
                 chart: this._config.chart.toLowerCase(),
                 chartOptions: this.chartconfig.options
             },
@@ -1460,6 +1475,17 @@ class ChartCard extends HTMLElement {
             }
         }
 
+        if (this.DEBUGMODE) {
+            if (mode === API_DATAMODE.statemode) {
+                this.DEBUGDATA.PROFILER.GETSTATEDATA.elapsed = msToTime(
+                    performance.now() - this.DEBUGDATA.PROFILER.GETSTATEDATA.start
+                )
+                console.log(performance.now() - this.DEBUGDATA.PROFILER.GETSTATEDATA.start)
+            }
+            this.DEBUGDATA.PROFILER.CHART = {
+                start: performance.now()
+            }
+        }
         if (this.chart_update) {
             if (this.graphChart && this.graphData) {
                 this.graphChart.graphData = this.graphData
@@ -1470,6 +1496,9 @@ class ChartCard extends HTMLElement {
                 this.graphChart.graphData = this.graphData
                 this.graphChart.renderGraph(false)
             }
+        }
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.PROFILER.CHART.elapsed = msToTime(performance.now() - this.DEBUGDATA.PROFILER.CHART.start)
         }
 
         this._renderCardTimestamp()
@@ -1766,15 +1795,7 @@ const _safeParseFloat = function (value) {
  * @returns
  */
 function msToTime(duration) {
-    var milliseconds = parseInt(duration % 1000),
-        seconds = parseInt((duration / 1000) % 60),
-        minutes = parseInt((duration / (1000 * 60)) % 60),
-        hours = parseInt((duration / (1000 * 60 * 60)) % 24)
-    hours = hours < 10 ? "0" + hours : hours
-    minutes = minutes < 10 ? "0" + minutes : minutes
-    seconds = seconds < 10 ? "0" + seconds : seconds
-
-    return hours + ":" + minutes + ":" + seconds + "." + milliseconds
+    return Number(parseFloat(duration).toFixed(4))
 }
 
 /**
@@ -2755,11 +2776,12 @@ class chartData {
             if (newData) {
                 _graphData.data.datasets[1] = {}
                 _graphData.data.datasets[1].data = newData.data
-                _graphData.data.datasets[1].tooltip = false
+                _graphData.data.datasets[1].tooltip = false                
                 _graphData.data.datasets[1].backgroundColor = newData.backgroundColors
                 _graphData.data.datasets[1].borderWidth = 0
                 _graphData.data.datasets[1].showLine = false
                 _graphData.config.segmentbar = newData.data.length !== 0
+
             }
         }
         return _graphData
@@ -3195,10 +3217,10 @@ class graphChart {
         let _options = {
             hoverOffset: 8,
             layout: {},
-            interaction: {
-                mode: "nearest",
-                intersect: false
-            },
+            // interaction: {
+            //     mode: "nearest",
+            //     intersect: false
+            // },
             chartArea: {
                 backgroundColor: "transparent"
             },
@@ -3215,8 +3237,7 @@ class graphChart {
                 onComplete: function () {
                     if (_loader) _loader.style.display = "none"
                 }
-            },
-            onResize: null
+            }
         }
 
         if (this.graphData.config.gradient === true && this.graphData.config.mode === "simple") {
@@ -3319,7 +3340,7 @@ class graphChart {
          * special case for timescales to translate the date format
          */
         if (this.graphData.config.timescale && this.graphData.config.datascales) {
-            _options.scales = _options.scales || {}            
+            _options.scales = _options.scales || {}
             _options.scales.x = _options.scales.x || {}
             _options.scales.x.maxRotation = 0
             _options.scales.x.autoSkip = true
@@ -3332,16 +3353,6 @@ class graphChart {
             }
             _options.scales.x.ticks = {
                 callback: xAxisFormat
-            } 
-        }
-
-        /**
-         * callbacks for tooltip
-         */
-        _options.plugins.tooltip = {
-            callbacks: {
-                label: formatToolTipLabel,
-                title: formatToolTipTitle
             }
         }
 
@@ -3363,11 +3374,28 @@ class graphChart {
                 }
             }
             _options.plugins.legend = {
-                display: false,
                 labels: {
                     filter: (legendItem, data) => {
                         return data.datasets[legendItem.datasetIndex].tooltip !== false
                     }
+                }
+            }
+            _options.plugins.tooltip.callbacks = {
+                label: (chart) => {
+                    if (chart.dataset.tooltip === false || !chart.dataset.label) {
+                        return null
+                    }
+                    return `${chart.formattedValue} ${chart.dataset.unit || ""}`
+                }
+            }
+        } else {
+            /**
+             * callbacks for tooltip
+             */
+            _options.plugins.tooltip = {
+                callbacks: {
+                    label: formatToolTipLabel,
+                    title: formatToolTipTitle
                 }
             }
         }

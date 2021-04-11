@@ -1002,7 +1002,8 @@ class ChartCard extends HTMLElement {
         this.ready = this.entity_items.isValid()
 
         if (this.ready) {
-            if (this.datascales.range > 0) {
+            
+            if (this.DEBUGMODE) {
                 this.APISTART = performance.now()
                 /**
                  * set the start time for the api call
@@ -1010,6 +1011,15 @@ class ChartCard extends HTMLElement {
                 this.DEBUGDATA.PROFILER.GETHASSDATA = {
                     start: performance.now()
                 }
+                this.DEBUGDATA.PROFILER.GETBUCKETDATA = {
+                    start: performance.now()
+                }
+                this.DEBUGDATA.PROFILER.GETSTATEDATA = {
+                    start: performance.now()
+                }
+            }
+
+            if (this.datascales.range > 0) {
                 /**
                  * start date, time and end date
                  */
@@ -1181,9 +1191,11 @@ class ChartCard extends HTMLElement {
             this.DEBUGDATA.DATA_ENTITIES = this.entity_items.items
             this.DEBUGDATA.LOVELACE_CONFIG = this._config
             this.DEBUGDATA.LOCALEINFO = window.localeNames
-            if (this.DEBUGDATA.API.datamode == "History" && this.DEBUGDATA.PROFILER) {
+            if (this.DEBUGDATA.PROFILER) {
                 delete this.DEBUGDATA.PROFILER.GETHASSDATA.start
                 delete this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
+                delete this.DEBUGDATA.PROFILER.GETSTATEDATA.start
+                delete this.DEBUGDATA.PROFILER.CHART.start
             }
             console.info(
                 `%cDEBUGDATA ${this.chart_type.toUpperCase()} ${appinfo.name} ${appinfo.version}:`,
@@ -1210,14 +1222,17 @@ class ChartCard extends HTMLElement {
                 this.DEBUGDATA.PROFILER.GETHASSDATA.elapsed = msToTime(
                     performance.now() - this.DEBUGDATA.PROFILER.GETHASSDATA.start
                 )
+
                 /**
                  * set the start for the PROFILER.GETBUCKETDATA
                  */
+
                 this.DEBUGDATA.PROFILER.GETBUCKETDATA = {
                     start: performance.now()
                 }
             }
         }
+
         /**
          * check historydata
          */
@@ -1269,7 +1284,7 @@ class ChartCard extends HTMLElement {
          */
         const _chartData = new chartData({
             card_config: {
-                title: this.cardTitle,
+                title: this.card_title,
                 chart: this._config.chart.toLowerCase(),
                 chartOptions: this.chartconfig.options
             },
@@ -1301,6 +1316,17 @@ class ChartCard extends HTMLElement {
             }
         }
 
+        if (this.DEBUGMODE) {
+            if (mode === API_DATAMODE.statemode) {
+                this.DEBUGDATA.PROFILER.GETSTATEDATA.elapsed = msToTime(
+                    performance.now() - this.DEBUGDATA.PROFILER.GETSTATEDATA.start
+                )
+                console.log(performance.now() - this.DEBUGDATA.PROFILER.GETSTATEDATA.start)
+            }
+            this.DEBUGDATA.PROFILER.CHART = {
+                start: performance.now()
+            }
+        }
         if (this.chart_update) {
             if (this.graphChart && this.graphData) {
                 this.graphChart.graphData = this.graphData
@@ -1311,6 +1337,9 @@ class ChartCard extends HTMLElement {
                 this.graphChart.graphData = this.graphData
                 this.graphChart.renderGraph(false)
             }
+        }
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.PROFILER.CHART.elapsed = msToTime(performance.now() - this.DEBUGDATA.PROFILER.CHART.start)
         }
 
         this._renderCardTimestamp()

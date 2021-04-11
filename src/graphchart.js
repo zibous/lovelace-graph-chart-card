@@ -125,10 +125,10 @@ class graphChart {
         let _options = {
             hoverOffset: 8,
             layout: {},
-            interaction: {
-                mode: "nearest",
-                intersect: false
-            },
+            // interaction: {
+            //     mode: "nearest",
+            //     intersect: false
+            // },
             chartArea: {
                 backgroundColor: "transparent"
             },
@@ -145,8 +145,7 @@ class graphChart {
                 onComplete: function () {
                     if (_loader) _loader.style.display = "none"
                 }
-            },
-            onResize: null
+            }
         }
 
         if (this.graphData.config.gradient === true && this.graphData.config.mode === "simple") {
@@ -249,7 +248,7 @@ class graphChart {
          * special case for timescales to translate the date format
          */
         if (this.graphData.config.timescale && this.graphData.config.datascales) {
-            _options.scales = _options.scales || {}            
+            _options.scales = _options.scales || {}
             _options.scales.x = _options.scales.x || {}
             _options.scales.x.maxRotation = 0
             _options.scales.x.autoSkip = true
@@ -262,16 +261,6 @@ class graphChart {
             }
             _options.scales.x.ticks = {
                 callback: xAxisFormat
-            } 
-        }
-
-        /**
-         * callbacks for tooltip
-         */
-        _options.plugins.tooltip = {
-            callbacks: {
-                label: formatToolTipLabel,
-                title: formatToolTipTitle
             }
         }
 
@@ -293,11 +282,28 @@ class graphChart {
                 }
             }
             _options.plugins.legend = {
-                display: false,
                 labels: {
                     filter: (legendItem, data) => {
                         return data.datasets[legendItem.datasetIndex].tooltip !== false
                     }
+                }
+            }
+            _options.plugins.tooltip.callbacks = {
+                label: (chart) => {
+                    if (chart.dataset.tooltip === false || !chart.dataset.label) {
+                        return null
+                    }
+                    return `${chart.formattedValue} ${chart.dataset.unit || ""}`
+                }
+            }
+        } else {
+            /**
+             * callbacks for tooltip
+             */
+            _options.plugins.tooltip = {
+                callbacks: {
+                    label: formatToolTipLabel,
+                    title: formatToolTipTitle
                 }
             }
         }
