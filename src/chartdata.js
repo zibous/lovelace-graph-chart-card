@@ -60,7 +60,7 @@ class chartData {
      * @param {*} _entities
      */
     createScatterChartData() {
-        if (!this.entity_items.isValid) return null
+        if (!this.entity_items.isValid()) return null
         let _graphData = null
 
         let numEntyties = this.entity_items.getSize()
@@ -115,7 +115,7 @@ class chartData {
      * that is drawn on the canvas.
      */
     createBubbleChartData() {
-        if (!this.entity_items.isValid) return null
+        if (!this.entity_items.isValid()) return null
         let _graphData = null
 
         let numEntyties = this.entity_items.getSize()
@@ -185,6 +185,7 @@ class chartData {
                 backgroundColors: dataset.backgroundColor.map((color) => _helpers.color(color).alpha(0.25).rgbString())
             }
         }
+        return null
     }
 
     /**
@@ -197,7 +198,7 @@ class chartData {
          * entities      : all entities data and options
          * entityOptions : global entities options
          */
-        if (!this.entity_items.isValid) return null
+        if (!this.entity_items.isValid()) return null
         const _data = this.entity_items.getData()
 
         if (_data.length === 0) {
@@ -243,7 +244,8 @@ class chartData {
         /**
          * case horizontal bar
          */
-        if (this.card_config.chart === "horizontalbar") {
+
+        if (this.card_config.chart.isChartType("horizontalbar")) {
             _graphData.data.datasets[0].indexAxis = "y"
         }
 
@@ -260,7 +262,7 @@ class chartData {
             _graphData.data.datasets[0].backgroundColor = entityColors
             _graphData.data.datasets[0].showLine = false
         } else {
-            if (this.card_config.chart === "radar") {
+            if (this.card_config.chart.isChartType("radar")) {
                 _graphData.data.datasets[0].backgroundColor = COLOR_RADARCHART
                 _graphData.data.datasets[0].borderColor = COLOR_RADARCHART
                 _graphData.data.datasets[0].borderWidth = 1
@@ -284,17 +286,16 @@ class chartData {
         /**
          * add the data series and return the new graph data
          */
-        if (this.card_config.chart === "bar" && this.card_config.chartOptions && this.card_config.chartOptions.segmented) {
+        if (this.card_config.chart.isChartType("bar") && this.card_config.chartOptions && this.card_config.chartOptions.segmented) {
             const newData = this.createSimpleBarSegmentedData(_graphData.data.datasets[0])
             if (newData) {
                 _graphData.data.datasets[1] = {}
                 _graphData.data.datasets[1].data = newData.data
-                _graphData.data.datasets[1].tooltip = false                
+                _graphData.data.datasets[1].tooltip = false
                 _graphData.data.datasets[1].backgroundColor = newData.backgroundColors
                 _graphData.data.datasets[1].borderWidth = 0
                 _graphData.data.datasets[1].showLine = false
                 _graphData.config.segmentbar = newData.data.length !== 0
-
             }
         }
         return _graphData
@@ -334,7 +335,7 @@ class chartData {
      * get the history bubble chart data
      */
     createHistoryBubbleData() {
-        if (!this.entity_items.isValid) return null
+        if (!this.entity_items.isValid()) return null
 
         let _seriesData = this.entity_items.getSeriesData()
 
@@ -388,7 +389,7 @@ class chartData {
      * get the history scatter chart data
      */
     createHistoryScatterData() {
-        if (!this.entity_items.isValid) return null
+        if (!this.entity_items.isValid()) return null
 
         let _seriesData = this.entity_items.getSeriesData()
 
@@ -470,12 +471,11 @@ class chartData {
                 last_changed: _entity.last_changed || new Date(),
                 mode: "history"
             }
-
-            if (this.card_config.chart === "horizontalbar") {
+            if (this.card_config.chart.isChartType("horizontalbar")) {
                 _options.indexAxis = "y"
             }
 
-            if (this.card_config.chart === "radar") {
+            if (this.card_config.chart.isChartType("radar")) {
                 _options.pointRadius = 12
                 _options.hoverRadius = 18
                 _options.hitRadius = 22
@@ -528,7 +528,7 @@ class chartData {
                 _graphData.config.multiseries = false
                 if (_seriesdata && _seriesdata.data) {
                     _graphData.data.labels = _seriesdata.labels
-                    if (this.card_config.chart == "pie" || this.card_config.chart == "doughnut") {
+                    if (this.card_config.chart.isChartType("pie") || this.card_config.chart.isChartType("doughnut")) {
                         _graphData.data.labels = this.entity_items.getNames()
                         _graphData.config.multiseries = true
                     }

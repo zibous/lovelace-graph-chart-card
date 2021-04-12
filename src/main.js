@@ -221,10 +221,12 @@ class ChartCard extends HTMLElement {
          */
         this.dataInfo = {
             starttime: new Date(),
+            ISO_startime: new Date().toISOString(),            
             endtime: new Date(),
+            ISO_endtime: new Date().toISOString(),
             entity_items: null,
             entities: "",
-            group_by: "1h",
+            useAlias: false,
             time: new Date().getTime(),
             loading: false,
             url: "",
@@ -567,7 +569,7 @@ class ChartCard extends HTMLElement {
             this.datascales.mode.history = true
         }
 
-        if (this.chart_type === "line" && this.datascales.range === 0) {
+        if (this.chart_type.isChartType('line') && this.datascales.range === 0) {
             this.datascales.range = 24
             this.datascales.unit = "hour"
             this.datascales.format = this.datascales.format || this.datascales.unit
@@ -696,7 +698,7 @@ class ChartCard extends HTMLElement {
              */
             if (!this.chart_type) {
                 throw new Error("You need to define type of chart")
-            } else if (!CT_AVIABLETYPES.includes(this.chart_type)) {
+            } else if (!CT_AVIABLETYPES.includes(this.chart_type.toLowerCase())) {
                 throw new Error(
                     "Invalid config for 'chart:'" + this.chart_type + ". Available options are: " + availableTypes.join(", ")
                 )
@@ -1248,7 +1250,7 @@ class ChartCard extends HTMLElement {
         /**
          * checke all entity data values
          */
-        if (!this.entity_items.isValid) {
+        if (!this.entity_items.isValid()) {
             if (this.DEBUGMODE) {
                 this.DEBUGDATA.API.ERROR = "No valid Entities found!"
                 this.DEBUGDATA.API.DATA = stateHistories
@@ -1285,7 +1287,7 @@ class ChartCard extends HTMLElement {
         const _chartData = new chartData({
             card_config: {
                 title: this.card_title,
-                chart: this._config.chart.toLowerCase(),
+                chart: this._config.chart,
                 chartOptions: this.chartconfig.options
             },
             entity_items: this.entity_items,
@@ -1347,11 +1349,7 @@ class ChartCard extends HTMLElement {
             if (this.chart_showstate) {
                 let _data = this.graphData.data.datasets.map(function (item) {
                     return {
-                        name: item.label || "",
-                        min: item.minval,
-                        max: item.maxval,
-                        avg: null,
-                        sum: null,
+                        name: item.label || "",                        
                         current: item.current,
                         unit: item.unit || "",
                         color: item.labelcolor || item.backgroundColor,

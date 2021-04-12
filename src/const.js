@@ -41,7 +41,7 @@ const CT_CHARTGRIDLINES = ["bar", "line", "bubble", "scatter"]
 const CT_NOSHOWSTATES = ["bubble", "scatter"]
 const CT_BARCHARTS = ["bar", "horizontalbar"]
 const CT_SHOWLEGEND = ["pie", "doughnut", "polararea", "line"]
-const CT_AVIABLETYPES = ["line", "radar", "bar", "horizontalBar", "pie", "doughnut", "polarArea", "bubble", "scatter"]
+const CT_AVIABLETYPES = ["line", "radar", "bar", "horizontalbar", "pie", "doughnut", "polararea", "bubble", "scatter"]
 const CT_DATASCALEMODES = {
     disabled: { history: false, timescale: false, timeaxis: false },
     category: { history: true, timescale: true, timeaxis: false },
@@ -58,6 +58,7 @@ const CT_DATASCALEMODES = {
     radar: { history: false, timescale: false, timeaxis: false },
     bubble: { history: false, timescale: false, timeaxis: false }
 }
+
 const STATE_POS = ["left", "right", "center"]
 const LOADERFILES = [
     "audio",

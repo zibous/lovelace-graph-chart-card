@@ -210,8 +210,7 @@ class DataProvider {
                             row.last_changed,
                             "label",
                             _entity.datascales.format || _entity.datascales.unit
-                        )
-                        //_data[_index]["localedate"] = formatDateLabel(row.last_changed, "label", _entity.datascales.unit)
+                        )                        
                         _data[_index]["data"].push(_safeParseFloat(_val))
                     })
                     /**

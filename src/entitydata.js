@@ -2,24 +2,55 @@
  * Entities Data Class
  */
 class Entities {
+    /**
+     * constructor entities class
+     * @param {object} entities
+     */
     constructor(entities) {
         this.items = entities || {}
     }
+    /**
+     * add a entity to the collection
+     * @param {objec} entity
+     */
     addEntity(entity) {
         this.items[entity.entity] = entity
     }
+    /**
+     * set the data for the selected entity
+     * @param {*} entity
+     * @param {*} data
+     */
     setData(entity, data) {
         this.items[entity] = data
     }
+    /**
+     * set data fields for the selected entity
+     * @param {*} name
+     * @param {*} field
+     * @param {*} value
+     */
     setDataField(name, field, value) {
         this.items[name][field] = value
     }
+    /**
+     * get the number of registrated entities
+     * @returns number
+     */
     getSize() {
         return this.getEntityIds().length
     }
+    /**
+     * simple check if entities are registrated
+     * @returns boolean
+     */
     isValid() {
         return this.getSize() != 0
     }
+    /**
+     * get the number of used attribute fields
+     * @returns number
+     */
     useAliasFields() {
         let count = 0
         this.getEntityIds().forEach((id) => {
@@ -28,6 +59,11 @@ class Entities {
         })
         return count != 0
     }
+    /**
+     * check if we get new data from Homeassistant
+     * @param {*} hassEntities
+     * @returns boolean
+     */
     hasChanged(hassEntities) {
         let hasChanged = false
         if (hassEntities && hassEntities.length) {
@@ -46,15 +82,29 @@ class Entities {
         }
         return hasChanged
     }
+    /**
+     * get entity from the collection
+     * @param {*} index
+     * @returns object
+     */
     getEntity(index) {
         if (Number.isInteger(index)) {
             return this.getEntitieslist()[index]
         }
         return this.items[index]
     }
+    /**
+     * get the list of entities names
+     * @returns list
+     */
     getNames() {
         return this.getAttribute("name")
     }
+    /**
+     * get the attributes list
+     * @param {*} name
+     * @returns list
+     */
     getAttribute(name) {
         let d = this.items
         return Object.keys(d)
@@ -63,12 +113,23 @@ class Entities {
             })
             .filter((notUndefined) => notUndefined !== undefined)
     }
+    /**
+     * get the opitions for the selected entity
+     * @param {*} index
+     * @param {*} name
+     * @returns object
+     */
     getOptions(index, name) {
         const d = this.getEntity(index)
         if (d && d.style && !name) return d.style
         if (d && d.style && d.style[name] !== undefined) return d.style[name]
         return {}
     }
+    /**
+     * get the data scales for the selected entity
+     * @param {*} index
+     * @returns object
+     */
     getDataScales(index) {
         const d = this.getEntity(index)
         if (d) {
@@ -76,9 +137,18 @@ class Entities {
         }
         return { range: 24, unit: "day", format: "MMM d", factor: 1.0, ignoreZero: true, aggregate: "last" }
     }
+    /**
+     * get the style settings for the selected entity
+     * @param {*} index
+     * @returns object
+     */
     getStyle(index) {
         return this.getEntity(index).style
     }
+    /**
+     * get the color settings
+     * @returns object
+     */
     getColors() {
         const d = this.items
         return Object.keys(d)
@@ -91,35 +161,70 @@ class Entities {
             })
             .filter((notUndefined) => notUndefined !== undefined)
     }
+    /**
+     * get the data for the selected entity
+     * @param {*} name
+     * @returns list
+     */
     getData(name = null) {
         if (!name) {
             return this.getAttribute("state")
         }
         return this.items[name].state
     }
+    /**
+     * get all entity id's for the registrated entities
+     * @returns list
+     */
     getEntityIds() {
         return Object.keys(this.items)
     }
+    /**
+     * get entities id's as string
+     * @returns string
+     */
     getEntityIdsAsString() {
         const d = Object.keys(this.items).map((x) => this.items[x].entity)
         return [...new Set(d)].join(",")
-        // return Object.keys(this.items).join(",")
     }
+    /**
+     * get all entities
+     * @returns list
+     */
     getEntities() {
         return Object.entries(this.items)
     }
+    /**
+     * get entities as object list
+     * @returns objects
+     */
     getEntitieslist() {
         const d = this.items
         return Object.keys(d).map(function (field) {
             return d[field]
         })
     }
+    /**
+     * get all
+     * @param {*} index
+     * @returns labels
+     */
     getItemLabels(index) {
-        this.getEntity(index).labels
+        return this.getEntity(index).labels
     }
+    /**
+     * get all data for the selected entity
+     * @param {*} index
+     * @returns object
+     */
     getItemData(index) {
-        this.getEntity(index).seriesdata.data
+        return this.getEntity(index).seriesdata.data
     }
+    /**
+     * get the seriedata for the selected entity
+     * @param {*} name
+     * @returns list
+     */
     getDataset(name) {
         if (this.items[name].seriesdata && this.items[name].seriesdata.data) {
             const _seriesdata = this.items[name].seriesdata.data
@@ -133,6 +238,10 @@ class Entities {
         }
         return { labels: [], data: [] }
     }
+    /**
+     * get the statistics data for all entities
+     * @returns list
+     */
     getStatisticData() {
         let _data = []
         const _itmList = this.getEntitieslist()
@@ -159,6 +268,10 @@ class Entities {
         })
         return _data
     }
+    /**
+     * get all seriesdata for all entities
+     * @returns list
+     */
     getSeriesData() {
         let _seriesData = []
         const _itmList = this.getEntityIds()

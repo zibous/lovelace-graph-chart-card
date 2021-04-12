@@ -92,7 +92,7 @@ class graphChart {
         this.loader = config.loader // the loading animation
         this.DEBUGMODE = config.debugmode || 0 // internal debugging enabled
         this.DEBUGDATA = config.debugdata
-
+        
         /**
          * all class based properties
          */
@@ -138,7 +138,7 @@ class graphChart {
                 title: {},
                 tooltip: {},
                 legend: {
-                    display: CT_SHOWLEGEND.includes(this.chart_type.toLowerCase()) || false
+                    display: CT_SHOWLEGEND.includes(this.chart_type) || false
                 }
             },
             animation: {
@@ -206,8 +206,9 @@ class graphChart {
 
         /**
          * bubble axis label based on the data settings
+         *
          */
-        if (this.chart_type.toLowerCase() === "bubble") {
+        if (this.chart_type.isChartType("bubble")) {
             const _itemlist = this.entity_items.getEntitieslist()
             let labelX = _itemlist[0].name
             labelX += _itemlist[0].unit ? " (" + _itemlist[0].unit + ")" : ""
@@ -311,9 +312,30 @@ class graphChart {
         /**
          * disable bubble legend
          */
-        if (this.chart_type.toLowerCase() === "bubble") {
+        if (this.chart_type.isChartType("bubble")) {            
             _options.plugins.legend = {
                 display: false
+            }
+        }
+
+        
+        if (this.chart_type.isChartType("polararea")) {    
+            _options.elements = {
+                arc: {
+                    backgroundColor: function (context) {
+                        let c = colors[context.dataIndex]
+                        if (!c) {
+                            return
+                        }
+                        if (context.active) {
+                            c = helpers.getHoverColor(c)
+                        }
+                        const mid = helpers.color(c).desaturate(0.2).darken(0.2).rgbString()
+                        const start = helpers.color(c).lighten(0.2).rotate(270).rgbString()
+                        const end = helpers.color(c).lighten(0.1).rgbString()
+                        return createRadialGradient3(context, start, mid, end)
+                    }
+                }
             }
         }
 

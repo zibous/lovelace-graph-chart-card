@@ -28,6 +28,14 @@ function logInfo(enabled, ...args) {
     }
 }
 /**
+ * string helpers
+ * @param {sting} ct 
+ * @returns 
+ */
+String.prototype.isChartType = function (ct) {
+    return this.toString().toLowerCase() === ct.toLowerCase()
+}
+/**
  * css helper
  * @param {string} v
  * @returns
@@ -454,3 +462,4 @@ function filter(list, filters) {
     })
     return entities
 }
+

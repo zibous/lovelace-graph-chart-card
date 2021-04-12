@@ -50,7 +50,7 @@ const CT_CHARTGRIDLINES = ["bar", "line", "bubble", "scatter"]
 const CT_NOSHOWSTATES = ["bubble", "scatter"]
 const CT_BARCHARTS = ["bar", "horizontalbar"]
 const CT_SHOWLEGEND = ["pie", "doughnut", "polararea", "line"]
-const CT_AVIABLETYPES = ["line", "radar", "bar", "horizontalBar", "pie", "doughnut", "polarArea", "bubble", "scatter"]
+const CT_AVIABLETYPES = ["line", "radar", "bar", "horizontalbar", "pie", "doughnut", "polararea", "bubble", "scatter"]
 const CT_DATASCALEMODES = {
     disabled: { history: false, timescale: false, timeaxis: false },
     category: { history: true, timescale: true, timeaxis: false },
@@ -67,6 +67,7 @@ const CT_DATASCALEMODES = {
     radar: { history: false, timescale: false, timeaxis: false },
     bubble: { history: false, timescale: false, timeaxis: false }
 }
+
 const STATE_POS = ["left", "right", "center"]
 const LOADERFILES = [
     "audio",
@@ -380,10 +381,12 @@ class ChartCard extends HTMLElement {
          */
         this.dataInfo = {
             starttime: new Date(),
+            ISO_startime: new Date().toISOString(),            
             endtime: new Date(),
+            ISO_endtime: new Date().toISOString(),
             entity_items: null,
             entities: "",
-            group_by: "1h",
+            useAlias: false,
             time: new Date().getTime(),
             loading: false,
             url: "",
@@ -726,7 +729,7 @@ class ChartCard extends HTMLElement {
             this.datascales.mode.history = true
         }
 
-        if (this.chart_type === "line" && this.datascales.range === 0) {
+        if (this.chart_type.isChartType('line') && this.datascales.range === 0) {
             this.datascales.range = 24
             this.datascales.unit = "hour"
             this.datascales.format = this.datascales.format || this.datascales.unit
@@ -855,7 +858,7 @@ class ChartCard extends HTMLElement {
              */
             if (!this.chart_type) {
                 throw new Error("You need to define type of chart")
-            } else if (!CT_AVIABLETYPES.includes(this.chart_type)) {
+            } else if (!CT_AVIABLETYPES.includes(this.chart_type.toLowerCase())) {
                 throw new Error(
                     "Invalid config for 'chart:'" + this.chart_type + ". Available options are: " + availableTypes.join(", ")
                 )
@@ -1407,7 +1410,7 @@ class ChartCard extends HTMLElement {
         /**
          * checke all entity data values
          */
-        if (!this.entity_items.isValid) {
+        if (!this.entity_items.isValid()) {
             if (this.DEBUGMODE) {
                 this.DEBUGDATA.API.ERROR = "No valid Entities found!"
                 this.DEBUGDATA.API.DATA = stateHistories
@@ -1444,7 +1447,7 @@ class ChartCard extends HTMLElement {
         const _chartData = new chartData({
             card_config: {
                 title: this.card_title,
-                chart: this._config.chart.toLowerCase(),
+                chart: this._config.chart,
                 chartOptions: this.chartconfig.options
             },
             entity_items: this.entity_items,
@@ -1506,11 +1509,7 @@ class ChartCard extends HTMLElement {
             if (this.chart_showstate) {
                 let _data = this.graphData.data.datasets.map(function (item) {
                     return {
-                        name: item.label || "",
-                        min: item.minval,
-                        max: item.maxval,
-                        avg: null,
-                        sum: null,
+                        name: item.label || "",                        
                         current: item.current,
                         unit: item.unit || "",
                         color: item.labelcolor || item.backgroundColor,
@@ -1573,24 +1572,55 @@ customElements.define("chart-card", ChartCard)
  * Entities Data Class
  */
 class Entities {
+    /**
+     * constructor entities class
+     * @param {object} entities
+     */
     constructor(entities) {
         this.items = entities || {}
     }
+    /**
+     * add a entity to the collection
+     * @param {objec} entity
+     */
     addEntity(entity) {
         this.items[entity.entity] = entity
     }
+    /**
+     * set the data for the selected entity
+     * @param {*} entity
+     * @param {*} data
+     */
     setData(entity, data) {
         this.items[entity] = data
     }
+    /**
+     * set data fields for the selected entity
+     * @param {*} name
+     * @param {*} field
+     * @param {*} value
+     */
     setDataField(name, field, value) {
         this.items[name][field] = value
     }
+    /**
+     * get the number of registrated entities
+     * @returns number
+     */
     getSize() {
         return this.getEntityIds().length
     }
+    /**
+     * simple check if entities are registrated
+     * @returns boolean
+     */
     isValid() {
         return this.getSize() != 0
     }
+    /**
+     * get the number of used attribute fields
+     * @returns number
+     */
     useAliasFields() {
         let count = 0
         this.getEntityIds().forEach((id) => {
@@ -1599,6 +1629,11 @@ class Entities {
         })
         return count != 0
     }
+    /**
+     * check if we get new data from Homeassistant
+     * @param {*} hassEntities
+     * @returns boolean
+     */
     hasChanged(hassEntities) {
         let hasChanged = false
         if (hassEntities && hassEntities.length) {
@@ -1617,15 +1652,29 @@ class Entities {
         }
         return hasChanged
     }
+    /**
+     * get entity from the collection
+     * @param {*} index
+     * @returns object
+     */
     getEntity(index) {
         if (Number.isInteger(index)) {
             return this.getEntitieslist()[index]
         }
         return this.items[index]
     }
+    /**
+     * get the list of entities names
+     * @returns list
+     */
     getNames() {
         return this.getAttribute("name")
     }
+    /**
+     * get the attributes list
+     * @param {*} name
+     * @returns list
+     */
     getAttribute(name) {
         let d = this.items
         return Object.keys(d)
@@ -1634,12 +1683,23 @@ class Entities {
             })
             .filter((notUndefined) => notUndefined !== undefined)
     }
+    /**
+     * get the opitions for the selected entity
+     * @param {*} index
+     * @param {*} name
+     * @returns object
+     */
     getOptions(index, name) {
         const d = this.getEntity(index)
         if (d && d.style && !name) return d.style
         if (d && d.style && d.style[name] !== undefined) return d.style[name]
         return {}
     }
+    /**
+     * get the data scales for the selected entity
+     * @param {*} index
+     * @returns object
+     */
     getDataScales(index) {
         const d = this.getEntity(index)
         if (d) {
@@ -1647,9 +1707,18 @@ class Entities {
         }
         return { range: 24, unit: "day", format: "MMM d", factor: 1.0, ignoreZero: true, aggregate: "last" }
     }
+    /**
+     * get the style settings for the selected entity
+     * @param {*} index
+     * @returns object
+     */
     getStyle(index) {
         return this.getEntity(index).style
     }
+    /**
+     * get the color settings
+     * @returns object
+     */
     getColors() {
         const d = this.items
         return Object.keys(d)
@@ -1662,35 +1731,70 @@ class Entities {
             })
             .filter((notUndefined) => notUndefined !== undefined)
     }
+    /**
+     * get the data for the selected entity
+     * @param {*} name
+     * @returns list
+     */
     getData(name = null) {
         if (!name) {
             return this.getAttribute("state")
         }
         return this.items[name].state
     }
+    /**
+     * get all entity id's for the registrated entities
+     * @returns list
+     */
     getEntityIds() {
         return Object.keys(this.items)
     }
+    /**
+     * get entities id's as string
+     * @returns string
+     */
     getEntityIdsAsString() {
         const d = Object.keys(this.items).map((x) => this.items[x].entity)
         return [...new Set(d)].join(",")
-        // return Object.keys(this.items).join(",")
     }
+    /**
+     * get all entities
+     * @returns list
+     */
     getEntities() {
         return Object.entries(this.items)
     }
+    /**
+     * get entities as object list
+     * @returns objects
+     */
     getEntitieslist() {
         const d = this.items
         return Object.keys(d).map(function (field) {
             return d[field]
         })
     }
+    /**
+     * get all
+     * @param {*} index
+     * @returns labels
+     */
     getItemLabels(index) {
-        this.getEntity(index).labels
+        return this.getEntity(index).labels
     }
+    /**
+     * get all data for the selected entity
+     * @param {*} index
+     * @returns object
+     */
     getItemData(index) {
-        this.getEntity(index).seriesdata.data
+        return this.getEntity(index).seriesdata.data
     }
+    /**
+     * get the seriedata for the selected entity
+     * @param {*} name
+     * @returns list
+     */
     getDataset(name) {
         if (this.items[name].seriesdata && this.items[name].seriesdata.data) {
             const _seriesdata = this.items[name].seriesdata.data
@@ -1704,6 +1808,10 @@ class Entities {
         }
         return { labels: [], data: [] }
     }
+    /**
+     * get the statistics data for all entities
+     * @returns list
+     */
     getStatisticData() {
         let _data = []
         const _itmList = this.getEntitieslist()
@@ -1730,6 +1838,10 @@ class Entities {
         })
         return _data
     }
+    /**
+     * get all seriesdata for all entities
+     * @returns list
+     */
     getSeriesData() {
         let _seriesData = []
         const _itmList = this.getEntityIds()
@@ -1771,6 +1883,14 @@ function logInfo(enabled, ...args) {
     }
 }
 /**
+ * string helpers
+ * @param {sting} ct 
+ * @returns 
+ */
+String.prototype.isChartType = function (ct) {
+    return this.toString().toLowerCase() === ct.toLowerCase()
+}
+/**
  * css helper
  * @param {string} v
  * @returns
@@ -1794,9 +1914,8 @@ const _safeParseFloat = function (value) {
  * @returns
  */
 function msToTime(duration) {
-    if(duration>1000)
-        return Number(parseFloat(duration / 1000).toFixed(2)) + " s"
-    return Number(parseFloat(duration).toFixed(4)) + " ms"    
+    if (duration > 1000) return Number(parseFloat(duration / 1000).toFixed(2)) + " s"
+    return Number(parseFloat(duration).toFixed(4)) + " ms"
 }
 
 /**
@@ -2199,6 +2318,7 @@ function filter(list, filters) {
     return entities
 }
 
+
 /** ----------------------------------------------------------
  
 	Lovelaces chartjs
@@ -2411,8 +2531,7 @@ class DataProvider {
                             row.last_changed,
                             "label",
                             _entity.datascales.format || _entity.datascales.unit
-                        )
-                        //_data[_index]["localedate"] = formatDateLabel(row.last_changed, "label", _entity.datascales.unit)
+                        )                        
                         _data[_index]["data"].push(_safeParseFloat(_val))
                     })
                     /**
@@ -2486,6 +2605,47 @@ const COLOR_BUBBLECHAT = "rgba(255, 152, 0, 0.685)"
 // var randomColor = DEFAULT_COLORS[Math.floor(Math.random()*DEFAULT_COLORS.length)];
 const randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16)
 
+
+/**
+ * radar gratient
+ * @param {*} context
+ * @param {*} c1
+ * @param {*} c2
+ * @param {*} c3
+ * @returns
+ */
+ function createRadialGradient3(context, c1, c2, c3) {
+    const chartArea = context.chart.chartArea
+    if (!chartArea) {
+        // This case happens on initial chart load
+        return null
+    }
+
+    const chartWidth = chartArea.right - chartArea.left
+    const chartHeight = chartArea.bottom - chartArea.top
+    if (width !== chartWidth || height !== chartHeight) {
+        cache.clear()
+    }
+    var gradient = cache.get(c1 + c2 + c3)
+    if (!gradient) {
+        // Create the gradient because this is either the first render
+        // or the size of the chart has changed
+        width = chartWidth
+        height = chartHeight
+        const centerX = (chartArea.left + chartArea.right) / 2
+        const centerY = (chartArea.top + chartArea.bottom) / 2
+        const r = Math.min((chartArea.right - chartArea.left) / 2, (chartArea.bottom - chartArea.top) / 2)
+        var ctx = context.chart.ctx
+        gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, r)
+        gradient.addColorStop(0, c1)
+        gradient.addColorStop(0.5, c2)
+        gradient.addColorStop(1, c3)
+        cache.set(c1 + c2 + c3, gradient)
+    }
+
+    return gradient
+}
+
 /** ----------------------------------------------------------
 
   	chart data builder
@@ -2548,7 +2708,7 @@ class chartData {
      * @param {*} _entities
      */
     createScatterChartData() {
-        if (!this.entity_items.isValid) return null
+        if (!this.entity_items.isValid()) return null
         let _graphData = null
 
         let numEntyties = this.entity_items.getSize()
@@ -2603,7 +2763,7 @@ class chartData {
      * that is drawn on the canvas.
      */
     createBubbleChartData() {
-        if (!this.entity_items.isValid) return null
+        if (!this.entity_items.isValid()) return null
         let _graphData = null
 
         let numEntyties = this.entity_items.getSize()
@@ -2673,6 +2833,7 @@ class chartData {
                 backgroundColors: dataset.backgroundColor.map((color) => _helpers.color(color).alpha(0.25).rgbString())
             }
         }
+        return null
     }
 
     /**
@@ -2685,7 +2846,7 @@ class chartData {
          * entities      : all entities data and options
          * entityOptions : global entities options
          */
-        if (!this.entity_items.isValid) return null
+        if (!this.entity_items.isValid()) return null
         const _data = this.entity_items.getData()
 
         if (_data.length === 0) {
@@ -2731,7 +2892,8 @@ class chartData {
         /**
          * case horizontal bar
          */
-        if (this.card_config.chart === "horizontalbar") {
+
+        if (this.card_config.chart.isChartType("horizontalbar")) {
             _graphData.data.datasets[0].indexAxis = "y"
         }
 
@@ -2748,7 +2910,7 @@ class chartData {
             _graphData.data.datasets[0].backgroundColor = entityColors
             _graphData.data.datasets[0].showLine = false
         } else {
-            if (this.card_config.chart === "radar") {
+            if (this.card_config.chart.isChartType("radar")) {
                 _graphData.data.datasets[0].backgroundColor = COLOR_RADARCHART
                 _graphData.data.datasets[0].borderColor = COLOR_RADARCHART
                 _graphData.data.datasets[0].borderWidth = 1
@@ -2772,17 +2934,16 @@ class chartData {
         /**
          * add the data series and return the new graph data
          */
-        if (this.card_config.chart === "bar" && this.card_config.chartOptions && this.card_config.chartOptions.segmented) {
+        if (this.card_config.chart.isChartType("bar") && this.card_config.chartOptions && this.card_config.chartOptions.segmented) {
             const newData = this.createSimpleBarSegmentedData(_graphData.data.datasets[0])
             if (newData) {
                 _graphData.data.datasets[1] = {}
                 _graphData.data.datasets[1].data = newData.data
-                _graphData.data.datasets[1].tooltip = false                
+                _graphData.data.datasets[1].tooltip = false
                 _graphData.data.datasets[1].backgroundColor = newData.backgroundColors
                 _graphData.data.datasets[1].borderWidth = 0
                 _graphData.data.datasets[1].showLine = false
                 _graphData.config.segmentbar = newData.data.length !== 0
-
             }
         }
         return _graphData
@@ -2822,7 +2983,7 @@ class chartData {
      * get the history bubble chart data
      */
     createHistoryBubbleData() {
-        if (!this.entity_items.isValid) return null
+        if (!this.entity_items.isValid()) return null
 
         let _seriesData = this.entity_items.getSeriesData()
 
@@ -2876,7 +3037,7 @@ class chartData {
      * get the history scatter chart data
      */
     createHistoryScatterData() {
-        if (!this.entity_items.isValid) return null
+        if (!this.entity_items.isValid()) return null
 
         let _seriesData = this.entity_items.getSeriesData()
 
@@ -2958,12 +3119,11 @@ class chartData {
                 last_changed: _entity.last_changed || new Date(),
                 mode: "history"
             }
-
-            if (this.card_config.chart === "horizontalbar") {
+            if (this.card_config.chart.isChartType("horizontalbar")) {
                 _options.indexAxis = "y"
             }
 
-            if (this.card_config.chart === "radar") {
+            if (this.card_config.chart.isChartType("radar")) {
                 _options.pointRadius = 12
                 _options.hoverRadius = 18
                 _options.hitRadius = 22
@@ -3016,7 +3176,7 @@ class chartData {
                 _graphData.config.multiseries = false
                 if (_seriesdata && _seriesdata.data) {
                     _graphData.data.labels = _seriesdata.labels
-                    if (this.card_config.chart == "pie" || this.card_config.chart == "doughnut") {
+                    if (this.card_config.chart.isChartType("pie") || this.card_config.chart.isChartType("doughnut")) {
                         _graphData.data.labels = this.entity_items.getNames()
                         _graphData.config.multiseries = true
                     }
@@ -3185,7 +3345,7 @@ class graphChart {
         this.loader = config.loader // the loading animation
         this.DEBUGMODE = config.debugmode || 0 // internal debugging enabled
         this.DEBUGDATA = config.debugdata
-
+        
         /**
          * all class based properties
          */
@@ -3231,7 +3391,7 @@ class graphChart {
                 title: {},
                 tooltip: {},
                 legend: {
-                    display: CT_SHOWLEGEND.includes(this.chart_type.toLowerCase()) || false
+                    display: CT_SHOWLEGEND.includes(this.chart_type) || false
                 }
             },
             animation: {
@@ -3299,8 +3459,9 @@ class graphChart {
 
         /**
          * bubble axis label based on the data settings
+         *
          */
-        if (this.chart_type.toLowerCase() === "bubble") {
+        if (this.chart_type.isChartType("bubble")) {
             const _itemlist = this.entity_items.getEntitieslist()
             let labelX = _itemlist[0].name
             labelX += _itemlist[0].unit ? " (" + _itemlist[0].unit + ")" : ""
@@ -3404,9 +3565,30 @@ class graphChart {
         /**
          * disable bubble legend
          */
-        if (this.chart_type.toLowerCase() === "bubble") {
+        if (this.chart_type.isChartType("bubble")) {            
             _options.plugins.legend = {
                 display: false
+            }
+        }
+
+        
+        if (this.chart_type.isChartType("polararea")) {    
+            _options.elements = {
+                arc: {
+                    backgroundColor: function (context) {
+                        let c = colors[context.dataIndex]
+                        if (!c) {
+                            return
+                        }
+                        if (context.active) {
+                            c = helpers.getHoverColor(c)
+                        }
+                        const mid = helpers.color(c).desaturate(0.2).darken(0.2).rgbString()
+                        const start = helpers.color(c).lighten(0.2).rotate(270).rgbString()
+                        const end = helpers.color(c).lighten(0.1).rgbString()
+                        return createRadialGradient3(context, start, mid, end)
+                    }
+                }
             }
         }
 
