@@ -380,10 +380,10 @@ class ChartCard extends HTMLElement {
          * all for the dataprovider
          */
         this.dataInfo = {
-            starttime: new Date(),
-            ISO_startime: new Date().toISOString(),            
-            endtime: new Date(),
-            ISO_endtime: new Date().toISOString(),
+            time_start: new Date(),
+            ISO_time_start: new Date().toISOString(),
+            time_end: new Date(),
+            ISO_time_end: new Date().toISOString(),
             entity_items: null,
             entities: "",
             useAlias: false,
@@ -718,6 +718,7 @@ class ChartCard extends HTMLElement {
         this.datascales.chart = this.chart_type.toLowerCase()
         this.datascales.cardtitle = this.card_title
         this.datascales.range = this.datascales.range || 0
+        if (this.datascales.unit) this.datascales.unit = this.datascales.unit.toLowerCase()
 
         if (typeof this.datascales.mode == "undefined") {
             this.datascales.mode = CT_DATASCALEMODES[this.datascales.chart]
@@ -729,7 +730,7 @@ class ChartCard extends HTMLElement {
             this.datascales.mode.history = true
         }
 
-        if (this.chart_type.isChartType('line') && this.datascales.range === 0) {
+        if (this.chart_type.isChartType("line") && this.datascales.range === 0) {
             this.datascales.range = 24
             this.datascales.unit = "hour"
             this.datascales.format = this.datascales.format || this.datascales.unit
@@ -742,7 +743,7 @@ class ChartCard extends HTMLElement {
             this.datascales.aggregate = this.datascales.aggregate || "last"
         }
 
-        if (this.datascales.unit && DSC_UNITS.includes(this.datascales.unit.toLowerCase()) == false) {
+        if (this.datascales.unit && DSC_UNITS.includes(this.datascales.unit) == false) {
             this.datascales.range = 24
             this.datascales.unit = "day"
             this.datascales.format = this.datascales.format || this.datascales.unit
@@ -966,12 +967,13 @@ class ChartCard extends HTMLElement {
                              * item data scales
                              */
                             item.datascales = this.datascales
-                            item.datascales.ignoreZero = item.ignoreZero || this.datascales.ignoreZero || false
+                            item.datascales.ignoreZero = this.datascales.ignoreZero || item.ignoreZero || false
                             item.datascales.aggregate = item.aggregate || this.datascales.aggregate || "last"
                             item.datascales.factor = item.factor || this.datascales.factor
                             item.datascales.useStatistics = this.chart_showdetails || false
                             item.state = item.state * item.datascales.factor
                             item.factor = item.datascales.factor
+                            item.ignoreZero = item.ignoreZero || this.datascales.ignoreZero
                             if (item.attribute) {
                                 item.state = (h.attributes[item.attribute] || 0.0) * item.factor
                             }
@@ -1164,7 +1166,6 @@ class ChartCard extends HTMLElement {
         this.ready = this.entity_items.isValid()
 
         if (this.ready) {
-            
             if (this.DEBUGMODE) {
                 this.APISTART = performance.now()
                 /**
@@ -1186,19 +1187,26 @@ class ChartCard extends HTMLElement {
                  * start date, time and end date
                  */
                 this.dataInfo.time = new Date().getTime()
-                this.dataInfo.starttime = new Date()
+                this.dataInfo.time_start = new Date()
 
                 if (this.datascales.range < 1.0) {
-                    this.dataInfo.starttime.setMinutes(this.dataInfo.starttime.getMinutes() - this.datascales.range * 60)
+                    this.dataInfo.time_start.setMinutes(this.dataInfo.time_start.getMinutes() - this.datascales.range * 60)
+                    this.dataInfo.range = `${this.datascales.range * 60} min`
                 } else {
-                    this.dataInfo.starttime.setHours(this.dataInfo.starttime.getHours() - this.datascales.range)
+                    if (["day", "month", "year"].includes(this.datascales.unit) == true) {
+                        this.dataInfo.time_start.setHours(-this.datascales.range, 0, 0, 0)
+                    } else {
+                        this.dataInfo.time_start.setHours(this.dataInfo.time_start.getHours() - this.datascales.range)
+                    }
+                    this.dataInfo.range = `unit: ${this.datascales.unit}, range: ${this.datascales.range} h`
                 }
-                this.dataInfo.endtime = new Date()
+
+                this.dataInfo.time_end = new Date()
                 this.dataInfo.entities = this.entity_items.getEntityIdsAsString()
                 this.dataInfo.entity_items = this.entity_items.items
                 this.dataInfo.useAlias = this.entity_items.useAliasFields()
-                this.dataInfo.ISO_startime = this.dataInfo.starttime.toISOString()
-                this.dataInfo.ISO_endtime = this.dataInfo.endtime.toISOString()
+                this.dataInfo.ISO_time_start = this.dataInfo.time_start.toISOString()
+                this.dataInfo.ISO_time_end = this.dataInfo.time_end.toISOString()
 
                 /**
                  * remove skip initial state when fetching not-cached data (slow)
@@ -1214,16 +1222,16 @@ class ChartCard extends HTMLElement {
                 /**
                  * simple param check
                  */
-                if (this.dataInfo.param == `${this.dataInfo.endtime}:${this.dataInfo.entities}`) {
+                if (this.dataInfo.param == `${this.dataInfo.time_end}:${this.dataInfo.entities}`) {
                     console.warn("Data allready loaded...")
                     return
                 }
-                this.dataInfo.param = `${this.dataInfo.endtime}:${this.dataInfo.entities}`
+                this.dataInfo.param = `${this.dataInfo.time_end}:${this.dataInfo.entities}`
 
                 /**
                  * build the api url
                  */
-                this.dataInfo.url = `history/period/${this.dataInfo.ISO_startime}?end_time=${this.dataInfo.ISO_endtime}&filter_entity_id=${this.dataInfo.entities}${this.dataInfo.options}`
+                this.dataInfo.url = `history/period/${this.dataInfo.ISO_time_start}?end_time=${this.dataInfo.ISO_time_end}&filter_entity_id=${this.dataInfo.entities}${this.dataInfo.options}`
                 if (this.dataInfo.url !== this.dataInfo.prev_url) {
                     /**
                      * get the history data
@@ -1354,10 +1362,11 @@ class ChartCard extends HTMLElement {
             this.DEBUGDATA.LOVELACE_CONFIG = this._config
             this.DEBUGDATA.LOCALEINFO = window.localeNames
             if (this.DEBUGDATA.PROFILER) {
-                delete this.DEBUGDATA.PROFILER.GETHASSDATA.start
-                delete this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
-                delete this.DEBUGDATA.PROFILER.GETSTATEDATA.start
-                delete this.DEBUGDATA.PROFILER.CHART.start
+                if (this.DEBUGDATA.PROFILER.GETHASSDATA) delete this.DEBUGDATA.PROFILER.GETHASSDATA.start
+                if (this.DEBUGDATA.PROFILER.GETBUCKETDATA) delete this.DEBUGDATA.PROFILER.GETBUCKETDATA.start
+                if (this.DEBUGDATA.PROFILER.GETSTATEDATA) delete this.DEBUGDATA.PROFILER.GETSTATEDATA.start
+                if (this.DEBUGDATA.PROFILER.CHART && this.DEBUGDATA.PROFILER.CHART.start) delete this.DEBUGDATA.PROFILER.CHART.start
+                if (this.DEBUGDATA.PROFILER.DATAPROVIDER) delete this.DEBUGDATA.PROFILER.DATAPROVIDER.start
             }
             console.info(
                 `%cDEBUGDATA ${this.chart_type.toUpperCase()} ${appinfo.name} ${appinfo.version}:`,
@@ -1482,7 +1491,7 @@ class ChartCard extends HTMLElement {
             if (mode === API_DATAMODE.statemode) {
                 this.DEBUGDATA.PROFILER.GETSTATEDATA.elapsed = msToTime(
                     performance.now() - this.DEBUGDATA.PROFILER.GETSTATEDATA.start
-                )                
+                )
             }
             this.DEBUGDATA.PROFILER.CHART = {
                 start: performance.now()
@@ -1509,7 +1518,7 @@ class ChartCard extends HTMLElement {
             if (this.chart_showstate) {
                 let _data = this.graphData.data.datasets.map(function (item) {
                     return {
-                        name: item.label || "",                        
+                        name: item.label || "",
                         current: item.current,
                         unit: item.unit || "",
                         color: item.labelcolor || item.backgroundColor,
@@ -1884,8 +1893,8 @@ function logInfo(enabled, ...args) {
 }
 /**
  * string helpers
- * @param {sting} ct 
- * @returns 
+ * @param {string} ct
+ * @returns
  */
 String.prototype.isChartType = function (ct) {
     return this.toString().toLowerCase() === ct.toLowerCase()
@@ -2318,7 +2327,6 @@ function filter(list, filters) {
     return entities
 }
 
-
 /** ----------------------------------------------------------
  
 	Lovelaces chartjs
@@ -2345,6 +2353,11 @@ class DataProvider {
         this.locale = window.Chart3.defaults.locale | "DE"
         this.ready = this._checkParam()
         this.version = "1.0.1"
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.PROFILER.DATAPROVIDER = {
+                start: performance.now()
+            }
+        }
     }
 
     /**
@@ -2443,6 +2456,9 @@ class DataProvider {
                 }
             })
         }
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.PROFILER.DATAPROVIDER.elapsed = msToTime(performance.now() - this.DEBUGDATA.PROFILER.DATAPROVIDER.start)
+        }
         return true
     }
 
@@ -2457,7 +2473,13 @@ class DataProvider {
          * bar, pie and doghunut can use simple data mode
          */
         if (this.datascales.mode.history == false) {
+            if (this.DEBUGMODE) {
+                this.DEBUGDATA.PROFILER.DATAPROVIDER.mode = "simpledata"
+            }
             return this.getSimpleData(deviceStates)
+        }
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.PROFILER.DATAPROVIDER.mode = "seriesdata"
         }
         /**
          * validate the item state
@@ -2502,6 +2524,9 @@ class DataProvider {
          * the result based on the settings (date format, aggregation)
          */
         if (deviceStates && deviceStates.length) {
+            /**
+             * all states for each entity
+             */
             deviceStates.forEach((states) => {
                 const _entityId = states[0].entity_id
                 const _entity = this.dataInfo.entity_items[_entityId]
@@ -2531,7 +2556,7 @@ class DataProvider {
                             row.last_changed,
                             "label",
                             _entity.datascales.format || _entity.datascales.unit
-                        )                        
+                        )
                         _data[_index]["data"].push(_safeParseFloat(_val))
                     })
                     /**
@@ -2540,6 +2565,11 @@ class DataProvider {
                     _entity.datascales.data_count = this._createTimeSeriesData(_entity, _data)
                 }
             })
+            if (this.DEBUGMODE) {
+                this.DEBUGDATA.PROFILER.DATAPROVIDER.elapsed = msToTime(
+                    performance.now() - this.DEBUGDATA.PROFILER.DATAPROVIDER.start
+                )
+            }
             return true
         }
     }

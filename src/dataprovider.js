@@ -24,6 +24,11 @@ class DataProvider {
         this.locale = window.Chart3.defaults.locale | "DE"
         this.ready = this._checkParam()
         this.version = "1.0.1"
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.PROFILER.DATAPROVIDER = {
+                start: performance.now()
+            }
+        }
     }
 
     /**
@@ -122,6 +127,9 @@ class DataProvider {
                 }
             })
         }
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.PROFILER.DATAPROVIDER.elapsed = msToTime(performance.now() - this.DEBUGDATA.PROFILER.DATAPROVIDER.start)
+        }
         return true
     }
 
@@ -136,7 +144,13 @@ class DataProvider {
          * bar, pie and doghunut can use simple data mode
          */
         if (this.datascales.mode.history == false) {
+            if (this.DEBUGMODE) {
+                this.DEBUGDATA.PROFILER.DATAPROVIDER.mode = "simpledata"
+            }
             return this.getSimpleData(deviceStates)
+        }
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.PROFILER.DATAPROVIDER.mode = "seriesdata"
         }
         /**
          * validate the item state
@@ -181,6 +195,9 @@ class DataProvider {
          * the result based on the settings (date format, aggregation)
          */
         if (deviceStates && deviceStates.length) {
+            /**
+             * all states for each entity
+             */
             deviceStates.forEach((states) => {
                 const _entityId = states[0].entity_id
                 const _entity = this.dataInfo.entity_items[_entityId]
@@ -210,7 +227,7 @@ class DataProvider {
                             row.last_changed,
                             "label",
                             _entity.datascales.format || _entity.datascales.unit
-                        )                        
+                        )
                         _data[_index]["data"].push(_safeParseFloat(_val))
                     })
                     /**
@@ -219,6 +236,11 @@ class DataProvider {
                     _entity.datascales.data_count = this._createTimeSeriesData(_entity, _data)
                 }
             })
+            if (this.DEBUGMODE) {
+                this.DEBUGDATA.PROFILER.DATAPROVIDER.elapsed = msToTime(
+                    performance.now() - this.DEBUGDATA.PROFILER.DATAPROVIDER.start
+                )
+            }
             return true
         }
     }

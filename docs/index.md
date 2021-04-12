@@ -146,7 +146,14 @@ YAML Structure for `custom:chart-card`
   showstate: {boolean: true|false}
   debug: {boolean: true|false}
   cardtimestamp: {boolean: true|false}
-  showdetails:{boolean: true|false}
+  showdetails:
+    title: '{text: table-title}'
+    title_sensor: '{text: table-header}'
+    title_mean: '{text: table-header}'
+    title_min: '{text: table-header}'
+    title_max: '{text: table-header}'
+    title_current: '{text: table-header}'
+    title_timestamp: '{text: table-header}'
   loader: '{text: audio|ball-triangle|bars|circles|grid|hearts|'
            'oval|pfuff|rings|spinning-circles|tail-spin|three-dots}'
   update_interval: {integer: secunds}  

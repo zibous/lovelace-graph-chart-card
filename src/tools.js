@@ -29,8 +29,8 @@ function logInfo(enabled, ...args) {
 }
 /**
  * string helpers
- * @param {sting} ct 
- * @returns 
+ * @param {string} ct
+ * @returns
  */
 String.prototype.isChartType = function (ct) {
     return this.toString().toLowerCase() === ct.toLowerCase()
@@ -462,4 +462,3 @@ function filter(list, filters) {
     })
     return entities
 }
-
