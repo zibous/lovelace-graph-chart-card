@@ -98,7 +98,6 @@
             gradient.addColorStop(1, c3);
             cache.set(c1 + c2 + c3, gradient);
         }
-
         return gradient;
     }
 

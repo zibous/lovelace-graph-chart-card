@@ -27,14 +27,42 @@ function logInfo(enabled, ...args) {
         console.info(`%cLOGINFO ${new Date().toISOString()}:`, "color:white;background:#0275d8;padding:4px", ...args)
     }
 }
+
 /**
  * string helpers
  * @param {string} ct
- * @returns
+ * @returns boolean
  */
 String.prototype.isChartType = function (ct) {
     return this.toString().toLowerCase() === ct.toLowerCase()
 }
+
+/**
+ * object helper
+ * @param {string} key
+ * @returns result
+ * @example: h.getValue("attributes.total.power_hour")
+ */
+// Object.prototype.getValue = function (key) {
+//     try {
+//         return key.split(".").reduce(function (result, key) {
+//             return result[key]
+//         }, this)
+//     } catch (e) {
+//         return null
+//     }
+// }
+
+function getAttributeValue(obj, key) {
+    try {
+        return key.split(".").reduce(function (result, key) {
+            return result[key]
+        }, obj)
+    } catch (e) {
+        return null
+    }
+}
+
 /**
  * css helper
  * @param {string} v
@@ -51,6 +79,18 @@ const _formatNumber = (locale, num) => new Intl.NumberFormat(locale).format(_par
 const _safeParseFloat = function (value) {
     value = parseFloat(value)
     return isFinite(value) ? +value.toFixed(3) : 0.0
+}
+function isNumeric(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n)
+}
+/**
+ * validate the item state
+ * @param {*} item
+ * @param {*} ignoreZero
+ * @returns boolean
+ */
+function validItem(item, ignoreZero = false) {
+    return ignoreZero ? item != 0 && isNumeric(item) : isNumeric(item)
 }
 
 /**
@@ -259,7 +299,7 @@ formatdate.masks = {
     fullDate: "dddd, d mmmm yyyy",
     shortTime: "H:MM",
     mediumTime: "HH:MM:ss",
-    longTime: "HH:MM:ss.L",
+    longTime: "HH:MM:ss.l",
     isoDate: "yyyy-mm-dd",
     isoTime: "HH:MM:ss",
     isoDateTime: "yyyy-mm-dd'T'HH:MM:ss",
@@ -282,16 +322,16 @@ formatdate.masks = {
  */
 const arrStatistics = {
     max: function (array) {
-        return Math.max.apply(null, array)
+        return _safeParseFloat(Math.max.apply(null, array))
     },
     min: function (array) {
-        return Math.min.apply(null, array)
+        return _safeParseFloat(Math.min.apply(null, array))
     },
     range: function (array) {
-        return arr.max(array) - arr.min(array)
+        return _safeParseFloat(arrStatistics.max(array) - arrStatistics.min(array))
     },
     midrange: function (array) {
-        return arr.range(array) / 2
+        return _safeParseFloat(arrStatistics.range(array) / 2)
     },
     mean: function (array) {
         return _safeParseFloat(arrStatistics.sum(array) / array.length)
@@ -302,10 +342,10 @@ const arrStatistics = {
         return _safeParseFloat(num)
     },
     last: function (array) {
-        return array[array.length - 1]
+        return _safeParseFloat(array[array.length - 1])
     },
     first: function (array) {
-        return array[0]
+        return _safeParseFloat(array[0])
     }
 }
 

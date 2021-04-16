@@ -52,49 +52,10 @@ const DEFAULT_COLORS = [
 
 const COLOR_RADARCHART = "rgba(41, 182, 246, 0.45)"
 const COLOR_BUBBLECHAT = "rgba(255, 152, 0, 0.685)"
+
 /**
  * get random color from DEFAULT_COLORS
  */
-// var randomColor = DEFAULT_COLORS[Math.floor(Math.random()*DEFAULT_COLORS.length)];
 const randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16)
+const randomColor2 = DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)]
 
-
-/**
- * radar gratient
- * @param {*} context
- * @param {*} c1
- * @param {*} c2
- * @param {*} c3
- * @returns
- */
- function createRadialGradient3(context, c1, c2, c3) {
-    const chartArea = context.chart.chartArea
-    if (!chartArea) {
-        // This case happens on initial chart load
-        return null
-    }
-
-    const chartWidth = chartArea.right - chartArea.left
-    const chartHeight = chartArea.bottom - chartArea.top
-    if (width !== chartWidth || height !== chartHeight) {
-        cache.clear()
-    }
-    var gradient = cache.get(c1 + c2 + c3)
-    if (!gradient) {
-        // Create the gradient because this is either the first render
-        // or the size of the chart has changed
-        width = chartWidth
-        height = chartHeight
-        const centerX = (chartArea.left + chartArea.right) / 2
-        const centerY = (chartArea.top + chartArea.bottom) / 2
-        const r = Math.min((chartArea.right - chartArea.left) / 2, (chartArea.bottom - chartArea.top) / 2)
-        var ctx = context.chart.ctx
-        gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, r)
-        gradient.addColorStop(0, c1)
-        gradient.addColorStop(0.5, c2)
-        gradient.addColorStop(1, c3)
-        cache.set(c1 + c2 + c3, gradient)
-    }
-
-    return gradient
-}

@@ -56,7 +56,15 @@ If you find any information on this page useful, feel free to buy me a coffee:
   showstate: {boolean: true|false}
   debug: {boolean: true|false}
   cardtimestamp: {boolean: true|false}
-  showdetails:{boolean: true|false}
+  showdetails:
+    title: '{text: titel}'
+    title_sensor: '{text: table-header sensor}'
+    title_mean: '{text: table-header mean value}'
+    title_min: '{text: table-header min value}'
+    title_max: '{text: table-header max value}'
+    title_current: '{text: table-header current value}'
+    title_timestamp: '{text: table-header timestamp}'
+    visible: {boolean: true|false}
   loader: '{text: audio|ball-triangle|bars|circles|grid|hearts|'
            'oval|pfuff|rings|spinning-circles|tail-spin|three-dots}'
   update_interval: {integer: secunds}     
@@ -64,11 +72,11 @@ If you find any information on this page useful, feel free to buy me a coffee:
   ## otional settings for data scales (time-series)
   datascales:
     range: {integer}
-    unit: '{text: millisecond|datetime|secund|minute|hour|day|month|year}'
+    unit: '{text: second|minute|hour|day|month|year}'
     format: '{text: dateformat pattern}'
     factor: {number: factor}
     ignoreZero: {boolean: true|false}
-    aggregate: '{text: first|last|sum|mean|max|min}'
+    aggregate: '{text: first|last|sum|mean|max|min|range|midrange}'
     mode: '{text: category|time}'
     
   ## optional chart.js options (see chart.js documentation) 

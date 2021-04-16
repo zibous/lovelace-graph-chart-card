@@ -14,7 +14,7 @@ class Entities {
      * @param {objec} entity
      */
     addEntity(entity) {
-        this.items[entity.entity] = entity
+        this.items[entity.id] = entity
     }
     /**
      * set the data for the selected entity
@@ -70,7 +70,7 @@ class Entities {
             const _entityList = this.getEntitieslist()
             for (let entity of _entityList) {
                 const h = hassEntities.find((x) => x.entity_id === entity.entity)
-                entity.laststate = entity.state
+                entity.laststate = entity.state || 0.00
                 entity.update = false
                 if (h && entity.last_changed !== h.last_changed && entity.state !== h.state) {
                     entity.last_changed = h.last_changed
@@ -154,8 +154,8 @@ class Entities {
         return Object.keys(d)
             .map(function (index) {
                 if (
-                    (d[index].style && d[index].style.color) !== undefined ||
-                    (d[index].style && d[index].style.backgroundColor) !== undefined
+                    (d[index].style && d[index].style.color !== undefined) ||
+                    (d[index].style && d[index].style.backgroundColor !== undefined)
                 )
                     return d[index].style.color || d[index].style.backgroundColor
             })
@@ -184,7 +184,7 @@ class Entities {
      * @returns string
      */
     getEntityIdsAsString() {
-        const d = Object.keys(this.items).map((x) => this.items[x].entity)
+        const d = Object.keys(this.items).map((x) => this.items[x].id)
         return [...new Set(d)].join(",")
     }
     /**
@@ -261,6 +261,9 @@ class Entities {
             _result.name = item.name
             _result.entity = item.entity
             _result.color = item.style.backgroundColor || item.style.color
+            if (item.style.gradient && item.style.gradient.colors) {
+                _result.color = _result.color || item.style.gradient.colors[0]
+            }
             _result.current = item.state
             _result.unit = item.unit || ""
             _result.timestamp = item.last_changed

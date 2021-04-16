@@ -1,601 +1,317 @@
-## ######################################################
-##
-##   CHART TESTCASES
-##
-## ######################################################
-icon: 'mdi:ab-testing'
-id: testcharts
-panel: true
-path: testcharts
-cards:
-  - type: 'custom:cards-layout'
-    toolbar:
-      backgroundcolor: '#5CD5FE'
-      iconcolor: '#047CD1'
-      visible: true
-    header:
-      title: Fitness
-      icon: 'mdi:nutrition'
-      iconcolor: '#FFFFFF'
-      style: >-
-        background-image: url('/hacsfiles/cards-layout/assets/ha-header-fitness2.png');
-        background-color: #5CD5FE !important;
-        color: #047CD1;
-    page:
-      title: Informationen über Körperwerte
-      icon: 'mdi:tape-measure'
-      icon_color: '#FFFFFF'
-      description: |
-        Verschiedene Grafiken über die Ernährung und Körperwerte
-        <ul>
-          <li>Makronährstoffe</>
-          <li>Körperwerte (Messung MI Bodyscale II</>
-          <li>Temperaturmessungen</>
-          <li>Stromverbrauch & Photovoltaikanlage</>
-        </ul>
-      style: >-
-        color:#FFFFFF;
-        background: linear-gradient(to top, #2A9CF2, #007ACF);
-      width: 90%
-
-    content:
-      - row:
-          - columns:
-            width: 50%
-            entities:
-              ## --------------------------------
-              ## PIE CHART
-              ## --------------------------------
-              - type: 'custom:chart-card'
-                title: 'Makro Nährstoffe'
-                icon: 'mdi:nutrition'
-                height: 320
-                chart: 'pie'
-                chartOptions:
-                  plugins:
-                    title:
-                      display: true
-                      text: 'Aufteilung Nährstoffe (kal) pro Tag'
-                      color: '#ff9500'
+views:
+  - id: testcharts
+    icon: 'mdi:ab-testing'
+    panel: true
+    path: testcharts
+    cards:
+      - type: 'custom:cards-layout'
+        toolbar:
+          backgroundcolor: '#5CD5FE'
+          iconcolor: '#047CD1'
+          visible: true
+        header:
+          title: Fitness
+          icon: 'mdi:nutrition'
+          iconcolor: '#FFFFFF'
+          style: >-
+            background-image:
+            url('/hacsfiles/cards-layout/assets/ha-header-fitness2.png');
+            background-color: #5CD5FE !important; color: #047CD1;
+        page:
+          title: Informationen über Körperwerte
+          icon: 'mdi:tape-measure'
+          icon_color: '#FFFFFF'
+          description: |
+            Verschiedene Grafiken über die Ernährung und Körperwerte
+            <ul>
+              <li>Makronährstoffe</li>
+              <li>Körperwerte (Messung MI Bodyscale II</li>
+              <li>Vergeichswert Ergebnisse</li> 
+            </ul>
+            <br/>
+          style: >-
+            color:#FFFFFF; background: linear-gradient(to top, #2A9CF2,
+            #007ACF);
+          width: 90%
+        content:
+          - row:
+              - column: null
+                width: 100%
                 entities:
-                  - entity: sensor.peter_eiweis_makronahrstoff
-                    name: Eiweis
-                    units: 'kal'
-                  - entity: sensor.peter_fett_makronahrstoff
-                    name: Fett
-                    units: 'kal'
-                  - entity: sensor.peter_kohlenhydrate_makronahrstoff
-                    name: Kohlenhydrate
-                    units: 'kal'
-
-                ## --------------------------------
-                ## chart: 'bar' simple
-                ## --------------------------------
-              - type: 'custom:chart-card'
-                title: 'Makro Nährstoffe'
-                icon: 'mdi:nutrition'
-                chart: 'bar'
-                height: 320
-                chartOptions:
-                  segmented: true
-                  plugins:
-                    title:
-                      display: true
-                      text: 'Aufteilung Nährstoffe (kal) pro Tag'
+                  - type: 'custom:chart-card'
+                    title: Zusammenfassung der Ergebnisse
+                    icon: 'mdi:scale'
+                    height: 360
+                    chart: line
+                    datascales:
+                      range: 144
+                      unit: day
+                      mode: time
+                      ignoreZero: true
+                    debug: true
+                    showstate: true
+                    showdetails:
+                      title: Zusammenfassung
+                      title_sensor: Ergebnis
+                      title_mean: Durchschnitt
+                      title_min: Kleinster Wert
+                      title_max: Größter Wert
+                      title_current: Aktuell
+                      title_timestamp: Aktualisiert am
+                    options:
+                      plugins:
+                        legend:
+                          position: top
+                          display: true
+                      scales:
+                        x:
+                          title:
+                            display: true
+                            text: Zeitraum
+                        left:
+                          title:
+                            display: true
+                            text: Gewicht / Muskeln
+                          ticks:
+                            autoSkip: true
+                            maxTicksLimit: 12
+                        right:
+                          title:
+                            display: true
+                            text: BMI
+                          gridLines:
+                            drawOnChartArea: false
+                          ticks:
+                            autoSkip: true
+                            maxTicksLimit: 16
+                    entities:
+                      - entity: sensor.peter_muskeln
+                        style:
+                          yAxisID: left
+                          type: line
+                          borderColor: rgba(241,196,15,0.85)
+                      - entity: sensor.peter_gewicht
+                        unit: kg
+                        style:
+                          yAxisID: left
+                          type: line
+                          backgroundColor: '#03a9f4'
+                          borderColor: '#03a9f4'
+                      - entity: sensor.peter_bmi
+                        unit: kg/m²
+                        style:
+                          yAxisID: right
+                          type: bar
+                          fill: true
+                          gradient:
+                            colors:
+                              - '#e74c3c'
+                              - '#ff5722'
+                              - '#ff9500'
+          - row:
+              - columns: null
+                width: 50%
                 entities:
-                  - options:
-                    units: 'kal'
-                  - entity: sensor.peter_eiweis_makronahrstoff
-                    name: Eiweis
-                    style:
-                      backgroundColor: '#f1c40f'
-                  - entity: sensor.peter_fett_makronahrstoff
-                    name: Fett
-                    style:
-                      backgroundColor: '#e74c3c'
-                  - entity: sensor.peter_kohlenhydrate_makronahrstoff
-                    name: Kohlenhydrate
-                    style:
-                      backgroundColor: '#009688'
-
-      - row:
-          - columns:
-            width: 50%
-            entities:
-              ## --------------------------------
-              ## chart: 'doughnut'
-              ## --------------------------------
-              - type: 'custom:chart-card'
-                title: 'Makro Nährstoffe'
-                icon: 'mdi:nutrition'
-                height: 320
-                chart: 'doughnut'
-                chartOptions:
-                  plugins:
-                    title:
-                      display: true
-                      text: 'Aufteilung Nährstoffe (kal) pro Tag'
+                  - type: 'custom:chart-card'
+                    title: Makro Nährstoffe
+                    icon: 'mdi:nutrition'
+                    chart: bar
+                    height: 320
+                    chartOptions:
+                      segmented: true
+                      plugins:
+                        title:
+                          display: true
+                          text: Aufteilung Nährstoffe (kal) pro Tag
+                      scales:
+                        'y':
+                          title:
+                            display: true
+                            text: Kalorien
+                    entities:
+                      - options:
+                          unit: kal
+                      - entity: sensor.peter_eiweis_makronahrstoff
+                        name: Eiweis
+                        style:
+                          backgroundColor: '#f1c40f'
+                      - entity: sensor.peter_fett_makronahrstoff
+                        name: Fett
+                        style:
+                          backgroundColor: '#e74c3c'
+                      - entity: sensor.peter_kohlenhydrate_makronahrstoff
+                        name: Kohlenhydrate
+                        style:
+                          backgroundColor: '#009688'
+                  - type: 'custom:chart-card'
+                    title: Aktuelle Körperwerte
+                    icon: 'mdi:weight-lifter'
+                    height: 320
+                    chart: radar
+                    chartOptions:
+                      plugins:
+                        title:
+                          text: Aktuelle Werte
+                      scales:
+                        r:
+                          grid:
+                            color:
+                              - '#03a9f4'
+                              - '#00bcd4'
+                              - '#8bc34a'
+                              - '#e51400'
+                              - '#cddc39'
+                              - '#ff9800'
+                              - '#ff5722'
+                          angleLines:
+                            display: true
+                            color: '#5ac8fa'
+                    entities:
+                      - entity: sensor.peter_koperfett
+                        name: Fett
+                        unit: '%'
+                      - entity: sensor.peter_korperwasser
+                        name: Wasser
+                        unit: '%'
+                      - entity: sensor.peter_muskeln
+                        name: Muskeln
+                        unit: '%'
+                      - entity: sensor.peter_fettfreie_korpermasse
+                        name: Fettfreie Masse
+                        unit: '%'
+                      - entity: sensor.peter_gewicht
+                        name: Gewicht
+                        unit: kg
+                      - entity: sensor.peter_viszerales_fett
+                        name: Viszerales Fett
+                        unit: '%'
+          - row:
+              - columns: null
+                width: 100%
                 entities:
-                  - entity: sensor.peter_eiweis_makronahrstoff
-                    name: Eiweis
-                    units: 'kal'
-                  - entity: sensor.peter_fett_makronahrstoff
-                    name: Fett
-                    units: 'kal'
-                  - entity: sensor.peter_kohlenhydrate_makronahrstoff
-                    name: Kohlenhydrate
-                    units: 'kal'
-
-              ## --------------------------------
-              ## chart: 'radar'
-              ## --------------------------------
-              - type: 'custom:chart-card'
-                title: 'Körperwerte'
-                icon: 'mdi:weight-lifter'
-                height: 320
-                chart: 'radar'
-                chartOptions:
-                  plugins:
-                    title:
-                      text: 'Aktuelle Werte'
-                  scales:
-                    r:
-                      grid:
-                        color:
-                          - '#03a9f4'
-                          - '#00bcd4'
-                          - '#8bc34a'
-                          - '#e51400'
-                          - '#cddc39'
-                          - '#ff9800'
-                          - '#ff5722'
-                      angleLines:
-                        display: true
-                        color: '#5ac8fa'
+                  - type: 'custom:chart-card'
+                    title: Änderungen zum Vortag
+                    icon: 'mdi:tape-measure'
+                    height: 360
+                    datascales:
+                      range: 200
+                      unit: day
+                      mode: time
+                      ignoreZero: true
+                    chart: bar
+                    options:
+                      plugins:
+                        title:
+                          text: Abweichungen zum Vortag
+                        legend:
+                          position: top
+                          display: true
+                      scales:
+                        x:
+                          stacked: true
+                        'y':
+                          stacked: true
+                          title:
+                            display: true
+                            text: Abweichung in %
+                    entities:
+                      - options:
+                          unit: '%'
+                      - entity: sensor.peter_trend_fett
+                        name: Fett
+                        aggregate: max
+                      - entity: sensor.peter_trend_gewicht
+                        name: Gewicht
+                        aggregate: max
+                      - entity: sensor.peter_trend_muskeln
+                        name: Muskeln
+                        aggregate: max
+                      - entity: sensor.peter_trend_wasser
+                        name: Wasser
+                        aggregate: max
+          - row:
+              - columns: null
+                width: 50%
                 entities:
-                  - entity: sensor.peter_koperfett
-                    name: Fett
-                  - entity: sensor.peter_korperwasser
-                    name: Wasser
-                  - entity: sensor.peter_muskeln
-                    name: Muskeln
-                  - entity: sensor.peter_fettfreie_korpermasse
-                    name: Fettfreie Masse
-                  - entity: sensor.peter_gewicht
-                    name: Gewicht
-                  - entity: sensor.peter_viszerales_fett
-                    name: Viszerales Fett
-      - row:
-          - columns:
-            width: 50%
-            entities:
-              ## --------------------------------
-              ## chart: 'horizontalBar'
-              ## --------------------------------
-              - type: 'custom:chart-card'
-                title: 'Körperwerte'
-                icon: 'mdi:human-pregnant'
-                height: 320
-                chart: 'horizontalBar'
-                chartOptions:
-                  plugins:
-                    title:
-                      text: 'Aktuelle Werte'
-                  chartArea:
-                    backgroundColor: 'rgba(255,255,255,0.15)'
-                entities:
-                  - entity: sensor.peter_koperfett
-                    name: Fett
-                  - entity: sensor.peter_korperwasser
-                    name: Wasser
-                  - entity: sensor.peter_muskeln
-                    name: Muskeln
-                  - entity: sensor.peter_fettfreie_korpermasse
-                    name: Fettfreie Masse
-                  - entity: sensor.peter_gewicht
-                    name: Gewicht
-                    style:
-                      gradient:
-                        colors:
-                          - '#03a9f4'
-                          - '#00bcd4'
-                          - '#8bc34a'
-                  - entity: sensor.peter_viszerales_fett
-                    name: Viszerales Fett
-
-              ## --------------------------------
-              ## chart: 'polarArea'
-              ## --------------------------------
-              - type: 'custom:chart-card'
-                title: 'Körperwerte'
-                icon: 'mdi:tape-measure'
-                height: 320
-                chart: 'polarArea'
-                options:
-                  plugins:
-                    title:
-                      text: 'Aktuelle Werte'
-                  scales:
-                    r:
-                      grid:
-                        color:
-                          - '#03a9f4'
-                          - '#00bcd4'
-                          - '#8bc34a'
-                          - '#e51400'
-                          - '#cddc39'
-                          - '#ff9800'
-                          - '#ff5722'
-                      angleLines:
-                        display: true
-                        color: '#ff9800'
-                entities:
-                  - entity: sensor.peter_koperfett
-                    name: Fett
-                  - entity: sensor.peter_korperwasser
-                    name: Wasser
-                  - entity: sensor.peter_muskeln
-                    name: Muskeln
-                  - entity: sensor.peter_fettfreie_korpermasse
-                    name: Fettfreie Masse
-                  - entity: sensor.peter_gewicht
-                    name: Gewicht
-                  - entity: sensor.peter_viszerales_fett
-                    name: Viszerales Fett
-
-      - row:
-          - columns:
-            width: 50%
-            entities:
-              ## --------------------------------
-              ## chart: 'bar' stacked
-              ## --------------------------------
-              - type: 'custom:chart-card'
-                title: 'Änderungen Körperwerte'
-                icon: 'mdi:tape-measure'
-                height: 360
-                datascales:
-                  range: 82
-                  unit: day
-                chart: 'bar'
-                options:
-                  plugins:
-                    title:
-                      text: 'Abweichungen zum Vortag'
-                    legend:
-                      position: top
-                  scales:
-                    x:
-                      stacked: true
-                    y:
-                      stacked: true
-                entities:
-                  - entity: sensor.peter_trend_fett
-                    name: Fett
-                    aggregate: max
-                  - entity: sensor.peter_trend_gewicht
-                    name: Gewicht
-                    aggregate: max
-                  - entity: sensor.peter_trend_muskeln
-                    name: Muskeln
-                    aggregate: max
-                  - entity: sensor.peter_trend_wasser
-                    name: Wasser
-                    aggregate: max
-
-              ## --------------------------------
-              ## chart: 'bubble'
-              ## --------------------------------
-              - type: 'custom:chart-card'
-                title: 'Körper-Typ'
-                icon: 'mdi:tape-measure'
-                height: 360
-                datascales:
-                  range: 120
-                  unit: day
-                chart: 'bubble'
-                options:
-                  plugins:
-                    title:
-                      text: 'Verhältnis BMI zu Muskeln/Fett'
-                    legend:
-                      position: top
-                      display: true
-                  scales:
-                    x:
-                      min: 8
-                      max: 18
-                    y:
-                      min: 30
-                      max: 70
-                entities:
-                  ## first bubble
-                  - entity: sensor.peter_koperfett ## x-axis
-                    name: Fett
-                    unit: '%'
-                  - entity: sensor.peter_muskeln ## y-axis
-                    name: Muskeln
-                    unit: '%'
-                  ## last holds all options for the bubble
-                  - entity: sensor.peter_bmi ## bubble
-                    name: BMI Peter
-                    scale: 0.5
-                    unit: 'kg'
-                    style:
-                      backgroundColor: 'rgb(52,152,219)'
-
-                  ## next bubble
-                  - entity: sensor.reni_koperfett ## x-axis
-                    name: Fett
-                    unit: '%'
-                  - entity: sensor.reni_muskeln ## y-axis
-                    name: Muskeln
-                    unit: '%'
-                  ## last holds all options for the bubble
-                  - entity: sensor.reni_bmi ## bubble
-                    name: BMI Reni
-                    scale: 0.5
-                    unit: 'kg'
-                    style:
-                      backgroundColor: 'rgb(255,152,219)'
-
-      - row:
-          - columns:
-            width: 50%
-            entities:
-              ## --------------------------------
-              ## chart: 'scatter'
-              ## --------------------------------
-              - type: 'custom:chart-card'
-                title: 'Körperfett % vs. BMI kg/m²'
-                icon: 'mdi:tape-measure'
-                height: 360
-                datascales:
-                  range: 120
-                  unit: day
-                chart: 'scatter'
-                options:
-                  plugins:
-                    legend:
-                      position: top
-                      display: true
-                  scales:
-                    x:
-                      title:
-                        display: true
-                        text: 'Fettgehalt (%)'
-                    y:
-                      title:
-                        display: true
-                        text: 'BMI kg/m²'
-
-                entities:
-                  ## first holds all options
-                  - entity: sensor.reni_koperfett ## x-axis
-                    name: 'Reni'
-                    aggregate: max
-                  - entity: sensor.reni_bmi ## y-axis
-                    aggregate: max
-                  ## first holds all options
-                  - entity: sensor.peter_koperfett ## x-axis
-                    name: 'Peter'
-                    aggregate: max
-                  - entity: sensor.peter_bmi ## y-axis
-                    aggregate: max
-
-              ## --------------------------------
-              ## MIXED CHART (LINE & BAR)
-              ## --------------------------------
-              - type: 'custom:chart-card'
-                title: 'Gewichtsverlauf'
-                icon: 'mdi:scale'
-                height: 360
-                chart: 'line'
-                locale: 'de-DE'
-                datascales:
-                  range: 120
-                  unit: day
-                showstate: true
-                options:
-                  plugins:
-                    legend:
-                      position: 'top'
-                      display: true
-                  scales:
-                    x:
-                      title:
-                        display: true
-                        text: 'Zeitraum'
-                    left:
-                      title:
-                        display: true
-                        text: 'Gewicht / Muskeln'
-                      ticks:
-                        autoSkip: true
-                        maxTicksLimit: 12
-                    right:
-                      title:
-                        display: true
-                        text: 'BMI'
-                      gridLines:
-                        drawOnChartArea: false
-                      ticks:
-                        autoSkip: true
-                        maxTicksLimit: 16
-                entities:
-                  - entity: sensor.peter_muskeln
-                    style:
-                      yAxisID: 'left'
-                      type: 'line'
-                  - entity: sensor.peter_gewicht
-                    style:
-                      yAxisID: 'left'
-                      type: 'line'
-                      backgroundColor: '#03a9f4'
-                      borderColor: '#03a9f4'
-                  - entity: sensor.peter_bmi
-                    style:
-                      yAxisID: 'right'
-                      type: 'bar'
-                      fill: true
-                      gradient:
-                        colors:
-                          - '#e74c3c'
-                          - '#ff5722'
-                          - '#ff9500'
-      - row:
-          - columns:
-            width: 100%
-            entities:
-              ## --------------------------------
-              ## LINE CHART
-              ## --------------------------------
-              - type: 'custom:chart-card'
-                title: 'Temperaturverlauf'
-                icon: 'mdi:fire'
-                height: 320
-                chart: 'line'
-                showstate: true
-                chartOptions:
-                  plugins:
-                    title:
-                      display: true
-                      fontStyle: normal
-                      text: 'Temperatur der letzten 3 Tage'
-                  layout:
-                    padding:
-                      right: 60
-                      left: 60
-                entities:
-                  - options:
-                      unit: '°C'
-                      borderWidth: 1
-
-                  - entity: sensor.temp_sensor_temperature_aussen
-                    name: Aussen
-                    style:
-                      fill: true
-                      ignoreZero: false
-                      gradient:
-                        colors:
-                          - '#03a9f4'
-                          - '#00bcd4'
-                          - '#8bc34a'
-                          - '#e51400'
-                          - '#cddc39'
-                          - '#ff9800'
-                          - '#ff5722'
-
-                  - entity: sensor.temp_sensor_temperature_eingang
-                    name: Eingang
-                    ignoreZero: true
-                    style:
-                      fill: true
-
-                  - entity: sensor.temp_sensor_temperature_kuche
-                    name: Küche
-                    ignoreZero: true
-                    style:
-                      fill: true
-                  - entity: sensor.temp_sensor_temperature_bad
-                    name: Bad
-                    ignoreZero: true
-                    style:
-                      fill: true
-
-      - row:
-          - columns:
-            width: 100%
-            entities:
-              ## --------------------------------
-              ## LINE CHART
-              ## --------------------------------
-              - type: 'custom:chart-card'
-                title: 'Energie Produktion / Verbrauch'
-                height: 540
-                chart: 'line'
-                units: 'kWh'
-                icon: 'mdi:home'
-                debug: true
-                datascales:
-                  range: 144
-                  unit: day
-                showstate: true
-                showdetails:
-                  title: 'Detaildaten Energie'
-                  title_sensor: 'Energie Sensor'
-                  title_mean: 'Durchschnitt'
-                  title_min: 'Kleinster Wert'
-                  title_max: 'Größter Wert'
-                  title_current: 'Aktuell'
-                  title_timestamp: 'Aktualisiert am'
-                chartOptions:
-                  plugins:
-                    title:
-                      text: 'Produktion vs. Verbrauch'
-                    legend:
-                      position: top
-                  chartArea:
-                    backgroundColor: 'rgba(0,0,0,0.5)'
-                  scales:
-                    x:
-                      title:
-                        display: true
-                        text: 'Zeitraum'
-                    left:
-                      title:
-                        display: true
-                        text: 'Verbrauch / Überschuss (kWh)'
-                    right:
-                      stacked: true
-                      title:
-                        display: true
-                        text: 'Produktion (kWh)'
-
-                entities:
-                  - options:
-                      unit: 'kWh'
-                      borderWidth: 1
-
-                  - entity: sensor.energy_consumption_day_ht
-                    name: Verbrauch HT
-                    unit: 'kWh'
-                    factor: -1.00
-                    style:
-                      yAxisID: 'right'
-                      backgroundColor: 'rgb(251, 60, 11)'
-                      borderColor: 'rgb(251, 60, 11)'
-                      borderWidth: 1
-                      type: 'bar'
-
-                  - entity: sensor.energy_consumption_day_nt
-                    name: Verbrauch NT
-                    unit: 'kWh'
-                    factor: -1.00
-                    style:
-                      yAxisID: 'right'
-                      backgroundColor: 'rgb(252, 108, 60)'
-                      borderColor: 'rgb(252, 108, 60)'
-                      borderWidth: 0.5
-
-                  - entity: sensor.energy_production_day_t1
-                    name: Produktion T1
-                    unit: 'kWh'
-                    factor: 1.00
-                    style:
-                      yAxisID: 'left'
-                      backgroundColor: '#f0dc15'
-                      borderColor: '#f0dc15'
-                      borderWidth: 0.5
-                      type: 'bar'
-
-                  - entity: sensor.energy_production_day_t2
-                    name: Produktion T2
-                    unit: 'kWh'
-                    factor: 1.00
-                    style:
-                      yAxisID: 'left'
-                      backgroundColor: 'rgb(237, 170, 24)'
-                      borderColor: 'rgb(237, 170, 24)'
-                      borderWidth: 0.5
-                      type: 'bar'
+                  - type: 'custom:chart-card'
+                    title: Vergleich Muskeln vs. Fett
+                    icon: 'mdi:tape-measure'
+                    height: 360
+                    datascales:
+                      range: 120
+                      unit: day
+                    chart: bubble
+                    options:
+                      plugins:
+                        title:
+                          text: Verhältnis BMI zu Muskeln/Fett
+                        legend:
+                          position: top
+                          display: true
+                      scales:
+                        x:
+                          min: 8
+                          max: 18
+                        'y':
+                          min: 30
+                          max: 70
+                    entities:
+                      - entity: sensor.peter_koperfett
+                        name: Fett
+                        unit: '%'
+                      - entity: sensor.peter_muskeln
+                        name: Muskeln
+                        unit: '%'
+                      - entity: sensor.peter_bmi
+                        name: BMI Peter
+                        scale: 0.5
+                        unit: kg
+                        style:
+                          backgroundColor: 'rgb(52,152,219)'
+                      - entity: sensor.reni_koperfett
+                        name: Fett
+                        unit: '%'
+                      - entity: sensor.reni_muskeln
+                        name: Muskeln
+                        unit: '%'
+                      - entity: sensor.reni_bmi
+                        name: BMI Reni
+                        scale: 0.5
+                        unit: kg
+                        style:
+                          backgroundColor: 'rgb(255,152,219)'
+                  - type: 'custom:chart-card'
+                    title: Vergleich Körperfett % vs. BMI kg/m²
+                    icon: 'mdi:tape-measure'
+                    height: 360
+                    datascales:
+                      range: 120
+                      unit: day
+                    chart: scatter
+                    options:
+                      plugins:
+                        legend:
+                          position: top
+                          display: true
+                      scales:
+                        x:
+                          title:
+                            display: true
+                            text: Fettgehalt (%)
+                        'y':
+                          title:
+                            display: true
+                            text: BMI kg/m²
+                    entities:
+                      - entity: sensor.reni_koperfett
+                        name: Reni
+                        aggregate: max
+                        unit: '%'
+                      - entity: sensor.reni_bmi
+                        aggregate: max
+                      - entity: sensor.peter_koperfett
+                        name: Peter
+                        aggregate: max
+                        unit: kg/m²
+                      - entity: sensor.peter_bmi
+                        aggregate: max

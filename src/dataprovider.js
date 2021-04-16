@@ -19,6 +19,7 @@ class DataProvider {
     constructor(settings) {
         this.dataInfo = settings.datainfo
         this.datascales = settings.datascales
+        this.datamode = TRANSFORM_MODE.seriesdata
         this.DEBUGMODE = settings.debugmode
         this.DEBUGDATA = settings.debugdata
         this.locale = window.Chart3.defaults.locale | "DE"
@@ -87,30 +88,29 @@ class DataProvider {
         _entity.datascales.data_count = _entity.seriesdata.data.length
         return _entity.datascales.data_count
     }
+
     /**
      * get simple data for the entities
      * calculates the state data from the history devicestates
      * based on the aggreation methode.
      * @param {*} deviceStates
      */
-    getSimpleData(deviceStates) {
-        function validItem(item, ignoreZero = false) {
-            return ignoreZero
-                ? item != 0 && item != "unavailable" && item != "undefined" && item != "unknown"
-                : item != "unavailable" && item != "undefined" && item != "unknown"
-        }
+    getSimpleData_old(deviceStates) {
         if (deviceStates && deviceStates.length) {
             deviceStates.forEach((states) => {
-                const _entityId = states[0].entity_id
-                const _entity = this.dataInfo.entity_items[_entityId]
+                const _entityId = states[0].entity_id,
+                    _entity = this.dataInfo.entity_items[_entityId] || null
                 this._setEntityServiceDataInformation(_entity)
-                if (_entityId) {
-                    const _fld = _entity.attribute
+                if (_entity) {
                     const _factor = _entity.factor || 1.0
-                    states = _fld
-                        ? states.filter((item) => validItem(item.attributes[_fld], _entity.ignoreZero))
+                    states = _entity.field
+                        ? states.filter((item) => validItem(item.attributes[_entity.field], _entity.ignoreZero))
                         : states.filter((item) => validItem(item.state, _entity.ignoreZero))
-                    const _values = states.map((item) => (_fld ? item.attributes[_fld] * _factor : item.state * _factor))
+
+                    const _values = states.map((item) =>
+                        _entity.field ? item.attributes[_entity.field] * _factor : item.state * _factor
+                    )
+
                     if (_entity.datascales.useStatistics) {
                         _itemdata.statistics = {
                             current: _entity.state,
@@ -122,8 +122,56 @@ class DataProvider {
                             avg: arrStatistics.mean(_values)
                         }
                     }
+                    /**
+                     * update the entity
+                     */
                     _entity.datascales.data_count = _values.length
                     _entity.state = arrStatistics[_entity.datascales.aggregate](_values)
+                } else {
+                    console.error(`Sensordata ${_entity} not found !`)
+                }
+            })
+        }
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.PROFILER.DATAPROVIDER.elapsed = msToTime(performance.now() - this.DEBUGDATA.PROFILER.DATAPROVIDER.start)
+        }
+        return true
+    }
+    /**
+     * get simple data for the entities
+     * calculates the state data from the history devicestates
+     * based on the aggreation methode.
+     * @param {*} deviceStates
+     */
+    getSimpleData(deviceStates) {
+        if (deviceStates && deviceStates.length) {
+            deviceStates.forEach((states) => {
+                const _entityId = states[0].entity_id,
+                    _entity = this.dataInfo.entity_items[_entityId]
+                this._setEntityServiceDataInformation(_entity)
+                if (_entityId && _entity) {
+                    const _factor = _entity.factor || 1.0
+                    const _values = states.map((item) =>
+                        _entity.field ? (getAttributeValue(item, _entity.field) || 0.0) * _factor : item.state * _factor
+                    )
+                    if (_entity.datascales.useStatistics) {
+                        _itemdata.statistics = {
+                            current: _entity.state,
+                            first: _values[0],
+                            last: _values[_values.length - 1],
+                            max: arrStatistics.max(_values),
+                            min: arrStatistics.min(_values),
+                            sum: arrStatistics.sum(_values),
+                            avg: arrStatistics.mean(_values)
+                        }
+                    }
+                    /**
+                     * update the entity
+                     */
+                    _entity.datascales.data_count = _values.length
+                    _entity.state = arrStatistics[_entity.datascales.aggregate](_values)
+                } else {
+                    console.error(`Sensordata ${_entity} not found !`)
                 }
             })
         }
@@ -138,30 +186,22 @@ class DataProvider {
      * @param {array} deviceStates from hass API call
      * @returns boolean
      */
-    getSeriesdata(deviceStates, chart_type) {
+    getSeriesdata(deviceStates) {
         /**
          * first check the mode
          * bar, pie and doghunut can use simple data mode
          */
-        if (this.datascales.mode.history == false) {
+        if (this.datamode === TRANSFORM_MODE.statebased) {
             if (this.DEBUGMODE) {
                 this.DEBUGDATA.PROFILER.DATAPROVIDER.mode = "simpledata"
             }
             return this.getSimpleData(deviceStates)
         }
+        /**
+         * get seriesdata for all entities
+         */
         if (this.DEBUGMODE) {
             this.DEBUGDATA.PROFILER.DATAPROVIDER.mode = "seriesdata"
-        }
-        /**
-         * validate the item state
-         * @param {*} item
-         * @param {*} ignoreZero
-         * @returns
-         */
-        function validItem(item, ignoreZero = false) {
-            return ignoreZero
-                ? item != 0 && item != "unavailable" && item != "undefined" && item != "unknown"
-                : item != "unavailable" && item != "undefined" && item != "unknown"
         }
         /**
          * dateformat
@@ -171,25 +211,11 @@ class DataProvider {
          * @returns
          */
         function formatDateLabel(datevalue, mode = "label", format = "day") {
-            /**
-             * group format must be a valid date/time format
-             * otherwise the timeseries do not work
-             */
-            const groupFormats = {
-                millisecond: "yyyy/m/d H:M:ss.l",
-                datetime: "yyyy/md/ H:M:s",
-                second: "yyyy/m/d H:M:s",
-                minute: "yyyy/m/d H:M:00",
-                hour: "yyyy/m/d H:00:00",
-                day: "yyyy/m/d",
-                month: "yyyy/m/1",
-                year: "yyyy/12/31"
-            }
-            if (mode == "group") {
-                return formatdate(datevalue, groupFormats[format] || "yyyymd")
-            }
-            return formatdate(datevalue, format)
+            return mode == "group"
+                ? datevalue.substring(0, DATEFILTERS[format].digits || DATEFILTERS["day"].digits)
+                : formatdate(datevalue, format)
         }
+
         /**
          * interate throw all devicestates and build
          * the result based on the settings (date format, aggregation)
@@ -199,36 +225,28 @@ class DataProvider {
              * all states for each entity
              */
             deviceStates.forEach((states) => {
-                const _entityId = states[0].entity_id
-                const _entity = this.dataInfo.entity_items[_entityId]
+                const _entityId = states[0].entity_id,
+                    _entity = this.dataInfo.entity_items[_entityId]
                 if (_entityId) {
-                    const _fld = _entity.attribute
                     const _factor = _entity.factor || 1.0
                     this._setEntityServiceDataInformation(_entity)
                     if (!_entity.hasOwnProperty("ignoreZero")) _entity.ignoreZero = false
-                    /**
-                     * first build the group and returns the series data
-                     */
+                    _entity.datascales.states_count = states.length
                     let _data = []
-                    states = _fld
-                        ? states.filter((item) => validItem(item.attributes[_fld], _entity.ignoreZero))
-                        : states.filter((item) => validItem(item.state, _entity.ignoreZero))
                     states.forEach(function (row) {
                         const _index = formatDateLabel(row.last_changed, "group", _entity.datascales.unit)
-                        let _val = SERIESDEFAULT_VALUE
-                        _val =
-                            _fld && row.attributes && _fld in row.attributes
-                                ? _safeParseFloat(row.attributes[_fld])
-                                : _safeParseFloat(row.state)
-                        _val = _val * _factor
-                        _data[_index] = _data[_index] || []
-                        _data[_index]["data"] = _data[_index]["data"] || []
-                        _data[_index]["localedate"] = formatDateLabel(
-                            row.last_changed,
-                            "label",
-                            _entity.datascales.format || _entity.datascales.unit
-                        )
-                        _data[_index]["data"].push(_safeParseFloat(_val))
+                        let _val = _entity.field ? +getAttributeValue(row, _entity.field) : +row.state
+                        if (validItem(_val, _entity.ignoreZero)) {
+                            _val = _val * _factor
+                            _data[_index] = _data[_index] || []
+                            _data[_index]["data"] = _data[_index]["data"] || []
+                            _data[_index]["localedate"] = formatDateLabel(
+                                row.last_changed,
+                                "label",
+                                _entity.datascales.format || _entity.datascales.unit
+                            )
+                            _data[_index]["data"].push(_safeParseFloat(_val))
+                        }
                     })
                     /**
                      * build the series data based on the grouped data series

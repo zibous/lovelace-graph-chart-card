@@ -408,7 +408,11 @@ class ChartCard extends HTMLElement {
         const content = document.createElement("div")
         content.setAttribute("class", "card-content")
         content.id = this.id + "-view"
-        content.style.height = cssAttr(this.card_height)
+        if (this.chart_showdetails && this.chart_showdetails.visible == true) {
+            //content.style.height = cssAttr(this.card_height)
+        } else {
+            content.style.height = cssAttr(this.card_height)
+        }
 
         /**
          * ha-card icon and title
@@ -478,6 +482,9 @@ class ChartCard extends HTMLElement {
             this.detailData.setAttribute("class", "card-detail-view")
             this.detailData.id = this.id + "detail-info"
             this.currentData.setAttribute("data-view", this.detailData.id)
+            if (this.chart_showdetails.visible == true) {
+                this.detailData.setAttribute("style", "margin:0 !important;")
+            }
         } else {
             content.style.maxHeight = cssAttr(this.card_height)
         }
@@ -530,23 +537,17 @@ class ChartCard extends HTMLElement {
      * all registrated entities for this chart
      */
     getEntities() {
-        const _entities = this._config.entities || []
-        if (!_entities || _entities.length === 0) return
-        /**
-         * remove filterlist items
-         * only entity items skip options
-         */
-        const _filterlist = this._config.entities.filter((x) => x.entity_filter != undefined)
-        const _entitylist = this._config.entities.filter((x) => x.entity != undefined)
-        /**
-         * check filterlist and merge this
-         */
-        if (this._hass && this._hass.states && _filterlist && _filterlist.length) {
-            const _hass_states = this._hass.states
-            const _filterEntities = filter(_hass_states, _filterlist)
-            return [..._entitylist, ..._filterEntities]
-        }
-        return _entities
+        let _entitiesItems = JSON.parse(JSON.stringify(this._config.entities))
+        if (!_entitiesItems || _entitiesItems.length === 0) return
+        _entitiesItems.forEach((item) => {
+            if (item.entity) {
+                const t = item.entity.split(".")
+                item.id = `${t[0]}.${t[1]}`
+            }else{
+                item.id = "OD-" + Math.floor(Math.random() * 1000)
+            }
+        })
+        return _entitiesItems
     }
 
     /**
@@ -571,26 +572,26 @@ class ChartCard extends HTMLElement {
         }
 
         if (this.chart_type.isChartType("line") && this.datascales.range === 0) {
-            this.datascales.range = 24
-            this.datascales.unit = "hour"
+            this.datascales.range = 48
+            this.datascales.unit = DSC_UNITS[0]
             this.datascales.format = this.datascales.format || this.datascales.unit
         }
 
         if (this.datascales.range) {
-            this.datascales.unit = this.datascales.unit || "day"
-            this.datascales.format = this.datascales.format || "day"
+            this.datascales.unit = this.datascales.unit || DSC_UNITS[0]
+            this.datascales.format = this.datascales.format || DSC_UNITS[0]
             this.datascales.ignoreZero = this.datascales.ignoreZero || true
-            this.datascales.aggregate = this.datascales.aggregate || "last"
+            this.datascales.aggregate = this.datascales.aggregate || DSC_RANGES[0]
         }
 
         if (this.datascales.unit && DSC_UNITS.includes(this.datascales.unit) == false) {
             this.datascales.range = 24
-            this.datascales.unit = "day"
+            this.datascales.unit = DSC_UNITS[0]
             this.datascales.format = this.datascales.format || this.datascales.unit
         }
 
         if (this.datascales.aggregate && DSC_RANGES.includes(this.datascales.aggregate.toLowerCase()) == false) {
-            this.datascales.aggregate = "last"
+            this.datascales.aggregate = DSC_RANGES[0]
         }
 
         this.datascales.factor = this.datascales.factor || 1.0
@@ -665,12 +666,6 @@ class ChartCard extends HTMLElement {
              * default do not show the state
              */
             this.chart_showstate = this._config.showstate || false
-            this.chart_showstate = this.chart_showstate === true ? "right" : this.chart_showstate
-            if (this.chart_showstate) {
-                if (!STATE_POS.includes(this.chart_showstate.toLowerCase())) {
-                    this.chart_showstate = false
-                }
-            }
 
             /**
              * detail settings
@@ -748,7 +743,6 @@ class ChartCard extends HTMLElement {
                     this.chart_showstate = false
                 }
             }
-            this.chart_showstate = this.chart_showstate == true ? "right" : this.chart_showstate
 
             /**
              * create the card and apply the chartjs config
@@ -773,6 +767,7 @@ class ChartCard extends HTMLElement {
              */
             this.entity_options = null
             this.entity_items = new Entities(null)
+
             for (const entity of _entities) {
                 if (entity.options) {
                     /**
@@ -783,7 +778,7 @@ class ChartCard extends HTMLElement {
                     /**
                      * hass entity
                      */
-                    const h = this.hassEntities.find((x) => x.entity_id === entity.entity)
+                    const h = this.hassEntities.find((x) => x.entity_id === entity.id)
                     if (h) {
                         /**
                          * create new item
@@ -814,8 +809,22 @@ class ChartCard extends HTMLElement {
                             item.state = item.state * item.datascales.factor
                             item.factor = item.datascales.factor
                             item.ignoreZero = item.ignoreZero || this.datascales.ignoreZero
+
+                            /**
+                             * handling the item attribute
+                             * item.id:     sensor name --> sensor.thermometer
+                             * item.entity: sensor name + attribute (optional) --> sensor.thermometer.attributes.temperature
+                             */
+                            item.useAttribute = false
+                            if (item.entity != item.id) {
+                                item.field = item.entity.slice(item.id.length+1)
+                                item.state = (getAttributeValue(h, item.field) || 0.0) * item.factor
+                                item.useAttribute = true
+                            }
                             if (item.attribute) {
-                                item.state = (h.attributes[item.attribute] || 0.0) * item.factor
+                                item.field = `attributes.${item.attribute}`
+                                item.state = (getAttributeValue(h, item.field) || 0.0) * item.factor
+                                item.useAttribute = true
                             }
                             item.chart = this.chart_type
                             /**
@@ -876,7 +885,6 @@ class ChartCard extends HTMLElement {
          */
         this.selectedTheme = hass.selectedTheme || { theme: "system", dark: false }
         if (this.theme && this.theme.dark !== this.selectedTheme.dark) {
-            // theme has changed
             this.theme = this.selectedTheme
             this._getThemeSettings()
             if (this.graphChart) {
@@ -890,6 +898,7 @@ class ChartCard extends HTMLElement {
          * get the list of all entities
          */
         const _entities = this.getEntities()
+
         if (!_entities) {
             console.error(this.chart_type, "No valid entities found, check your settings...")
             return
@@ -899,7 +908,7 @@ class ChartCard extends HTMLElement {
          * An object list containing the states of all entities in Home Assistant.
          * The key is the entity_id, the value is the state object.
          */
-        this.hassEntities = _entities.map((x) => hass.states[x.entity]).filter((notUndefined) => notUndefined !== undefined)
+        this.hassEntities = _entities.map((x) => hass.states[x.id]).filter((notUndefined) => notUndefined !== undefined)
 
         /**
          * check if we have valid entities and skip if we can'nt find the
@@ -1050,13 +1059,13 @@ class ChartCard extends HTMLElement {
 
                 /**
                  * remove skip initial state when fetching not-cached data (slow)
-                 * significant_changes_only to only return significant state changes.
-                 * minimal_response to only return last_changed and state for
-                 * states other than the first and last state (much faster).
-                 * disable minimal_response this if alias (attribute) fields is used...
+                 * 1. significant_changes_only to only return significant state changes.
+                 * 2. minimal_response to only return last_changed and state for
+                 *    states other than the first and last state (much faster).
+                 * 3. disable minimal_response this if alias (attribute) fields is used...
                  */
                 this.dataInfo.options = "&skip_initial_state"
-                this.dataInfo.options += `&significant_changes_only=${this.dataInfo.useAlias ? 1 : 0}`
+                // this.dataInfo.options += `&significant_changes_only=${this.dataInfo.useAlias ? 1 : 0}`
                 if (!this.dataInfo.useAlias) this.dataInfo.options += "&minimal_response"
 
                 /**
@@ -1103,7 +1112,7 @@ class ChartCard extends HTMLElement {
          */
         if (this.currentData && this.chart_showstate && data) {
             let _visible = "margin:0;line-height:1.2em"
-            _html.push(`<div class="state-view-data ${this.chart_showstate}">`)
+            _html.push(`<div class="state-view-data right">`)
             for (const item of data) {
                 let _style = ' style="' + _visible + ";color:" + item.color + '"'
                 _html.push('<div class="stateitem" id="' + item.name + '"' + _style + '">')
@@ -1144,14 +1153,14 @@ class ChartCard extends HTMLElement {
                 if (this.chart_showdetails.title_min && this.chart_showdetails.title_max != "")
                     _html.push(`<th align="right">${this.chart_showdetails.title_max}</th>`)
 
-                _html.push(`<th align="right">${this.chart_showdetails.title_current}</th>`)
+                _html.push(`<th align="right">${this.chart_showdetails.title_current || "current"}</th>`)
 
                 _html.push(`<th>${this.chart_showdetails.title_timestamp || "Timestamp"}</th>`)
                 _html.push("</tr>")
                 _statdata.forEach((item) => {
                     _html.push("<tr>")
                     _html.push(
-                        '<td><span style="font-size:4em;color:' +
+                        '<td><span style="font-size:3.25em;color:' +
                             item.color +
                             ';vertical-align:top;padding-right:8px">&bull;</span>' +
                             item.name +
@@ -1233,11 +1242,9 @@ class ChartCard extends HTMLElement {
                 this.DEBUGDATA.PROFILER.GETHASSDATA.elapsed = msToTime(
                     performance.now() - this.DEBUGDATA.PROFILER.GETHASSDATA.start
                 )
-
                 /**
                  * set the start for the PROFILER.GETBUCKETDATA
                  */
-
                 this.DEBUGDATA.PROFILER.GETBUCKETDATA = {
                     start: performance.now()
                 }
@@ -1277,9 +1284,17 @@ class ChartCard extends HTMLElement {
                 debugdata: this.DEBUGDATA
             })
             /**
-             * create the seriesdata
+             * check the data provider mode
              */
-            if (dataprovider.getSeriesdata(stateHistories, this.chart_type) == false) {
+            if (CT_DATASCALEMODES[this.chart_type.toLowerCase()].multiseries == true) {
+                dataprovider.datamode = this.chartconfig.options.multiseries ? TRANSFORM_MODE.seriesdata : TRANSFORM_MODE.statebased
+            } else {
+                dataprovider.datamode = TRANSFORM_MODE.seriesdata
+            }
+            /**
+             * get the seriesdata based on the dataprovider mode
+             */
+            if (dataprovider.getSeriesdata(stateHistories) == false) {
                 if (this.DEBUGMODE) {
                     this.DEBUGDATA.API.DATA = stateHistories
                     this.DEBUGDATA.API.ERROR = "Transform Historydata failed!"

@@ -1,8 +1,7 @@
 /** ----------------------------------------------------------
 
   	chart data builder
-  
-  	TODO: this is not final, try to find a optimized methode
+    Prepares the data for the chartjs  
   
  * ----------------------------------------------------------*/
 
@@ -419,7 +418,6 @@ class chartData {
                     hitRadius: 22,
                     backgroundColor: _attr.backgroundColor || DEFAULT_COLORS[27 + r * 5],
                     borderColor: _attr.borderColor || DEFAULT_COLORS[27 + r * 5]
-                    // TODO: min, max, avg values ???
                 }
                 if (this.entity_options) {
                     _options = { ..._options, ...this.entity_options }
@@ -568,26 +566,42 @@ class chartData {
                     this.graphData = this.createHistoryScatterData()
                     break
                 case "bar":
-                case "horizontalbar_":
+                case "horizontalbar":
                     if (this.entity_options && this.entity_options.mode && this.entity_options.mode.history) {
+                        /**
+                         * create aggregated state chart
+                         */
                         this.graphData = this.createHistoryChartData()
                     } else {
+                        /**
+                         * create state based chart
+                         */
                         this.graphData = this.createChartData()
                     }
                     break
                 case "pie":
-                    if (this.entity_options && this.entity_options.mode && this.entity_options.mode.history) {
+                case "doughnut":
+                    /**
+                     * check multiseries
+                     */
+                    if (
+                        this.card_config &&
+                        this.card_config.chartOptions &&
+                        this.card_config.chartOptions.multiseries === true &&
+                        this.entity_options &&
+                        this.entity_options.mode &&
+                        this.entity_options.mode.history
+                    ) {
                         this.graphData = this.createHistoryChartData()
                     } else {
                         this.entity_options.mode = CT_DATASCALEMODES[this.card_config.chart]
                         this.graphData = this.createChartData()
                     }
                     break
-                case "doughnut":
-                    this.entity_options.mode = CT_DATASCALEMODES[this.card_config.chart]
-                    this.graphData = this.createChartData()
-                    break
                 default:
+                    /**
+                     * default is usde for all other charts
+                     */
                     this.graphData = this.createHistoryChartData()
                     break
             }

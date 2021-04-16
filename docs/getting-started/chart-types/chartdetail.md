@@ -33,6 +33,7 @@
     title_max: Größter Wert
     title_current: Aktuell
     title_timestamp: Aktualisiert am
+    visible: true
   ## -----------------------------  
   chartOptions:
     plugins:
@@ -81,3 +82,4 @@
 <br>
 
 <hr>
+

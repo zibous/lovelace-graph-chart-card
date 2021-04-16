@@ -23,7 +23,7 @@ import "/hacsfiles/chart-card/chart-min.js?module"
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "v2.0.5/v3.1.0",
+    version: "v2.1.0/v3.1.0",
     chartjs: Chart.version || "v3.1.0",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
@@ -43,23 +43,23 @@ const CT_BARCHARTS = ["bar", "horizontalbar"]
 const CT_SHOWLEGEND = ["pie", "doughnut", "polararea", "line"]
 const CT_AVIABLETYPES = ["line", "radar", "bar", "horizontalbar", "pie", "doughnut", "polararea", "bubble", "scatter"]
 const CT_DATASCALEMODES = {
-    disabled: { history: false, timescale: false, timeaxis: false },
-    category: { history: true, timescale: true, timeaxis: false },
-    time: { history: true, timescale: true, timeaxis: true },
+    disabled: { history: false, timescale: false, timeaxis: false, multiseries: false },
+    category: { history: true, timescale: true, timeaxis: false, multiseries: false },
+    time: { history: true, timescale: true, timeaxis: true, multiseries: false },
     // chart defaults
-    bar: { history: false, timescale: false, timeaxis: false },
-    horizontalbar: { history: false, timescale: false, timeaxis: false },
-    line: { history: true, timescale: true, timeaxis: true },
-    pie: { history: false, timescale: false, timeaxis: false },
-    doughnut: { history: false, timescale: false, timeaxis: false },
+    bar: { history: false, timescale: false, timeaxis: false, multiseries: false },
+    horizontalbar: { history: false, timescale: false, timeaxis: false, multiseries: false },
+    line: { history: true, timescale: true, timeaxis: true, multiseries: false },
+    // multiline charts
+    pie: { history: false, timescale: false, timeaxis: false, multiseries: true },
+    doughnut: { history: false, timescale: false, timeaxis: false, multiseries: true },
     // simple charts
-    polararea: { history: false, timescale: false, timeaxis: false },
-    scatter: { history: false, timescale: false, timeaxis: false },
-    radar: { history: false, timescale: false, timeaxis: false },
-    bubble: { history: false, timescale: false, timeaxis: false }
+    polararea: { history: false, timescale: false, timeaxis: false, multiseries: false },
+    scatter: { history: false, timescale: false, timeaxis: false, multiseries: false },
+    radar: { history: false, timescale: false, timeaxis: false, multiseries: false },
+    bubble: { history: false, timescale: false, timeaxis: false, multiseries: false }
 }
 
-const STATE_POS = ["left", "right", "center"]
 const LOADERFILES = [
     "audio",
     "ball-triangle",
@@ -74,8 +74,8 @@ const LOADERFILES = [
     "tail-spin",
     "three-dots"
 ]
-const DSC_UNITS = ["second", "minute", "hour", "day", "month", "year"]
-const DSC_RANGES = ["max", "min", "range", "midrange", "mean", "sum", "last", "first"]
+const DSC_UNITS = ["day", "second", "minute", "hour", "month", "year"]
+const DSC_RANGES = ["last", "max", "min", "range", "midrange", "mean", "sum", "first"]
 const API_DATAMODE = {
     history: 1,
     statemode: 2
@@ -85,6 +85,16 @@ const TRANSFORM_MODE = {
     statebased: 1, // entity.state based on aggregation
     datalabel: 2, // data.array label.array
     seriesdata: 3 // data.x and data.y
+}
+
+const DATEFILTERS = {
+    year: { digits: 4, format: "yyyy" },
+    month: { digits: 7, format: "yyyy-mm" },
+    day: { digits: 10, format: "yyyy-mm-dd" },
+    hour: { digits: 13, format: "yyyy-mm-dd H" },
+    minute: { digits: 16, format: "yyyy-mm-dd H:M" },
+    second: { digits: 19, format: "yyyy-mm-dd H:M:s" },
+    millisecond: { digits: 23, format: "yyyy-mm-dd H:M:s.l" }
 }
 
 /**

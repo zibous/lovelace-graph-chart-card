@@ -27,8 +27,7 @@
   "scripts": {
     "deploy": "gulp",
     "release": "gulp release",
-    "test": "node /Users/ps_mac/appslab/lovelace-graph-chart-card/tests/ha/ha-dataprovider.js",
-    "dataprovider": "node /Users/ps_mac/appslab/lovelace-graph-chart-card/testcases/dataprovider/class-dataprovider.js"
+    "test": "node /Users/ps_mac/appslab/lovelace-graph-chart-card/tests/testcases/dataprovider/hass-test4.js"
   },
   "devDependencies": {
     "benchtest": "^2.0.7",

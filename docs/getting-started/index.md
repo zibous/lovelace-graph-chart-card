@@ -55,8 +55,8 @@ The following card options are possible. If these are set, then overwrite or ext
 | icon          | string   | None | **Optional**, sets a custom icon from any of the available mdi icons. |
 | height         | integer  | 240         | **Optional**, set a custom height in Pixels for the card. |
 | **chart**      | string   | bar          | Sets the used chart type: `bar`, `horizontalBar`, `line`, `pie` , `doughnut`, `polarArea`, `radar`, `bubble`,`scatter` |
-| showstate         | string  | top, left,center,right    | **Optional**, shows the current state for the selected entity. Only if `datascales` is used |
-| showdetails         | boolean  | false         | **Optional**, shows the state details for the selected entity. Only if `datascales` is used |
+| showstate         | boolean | false        | **Optional**, shows the current state for the selected entity. Only if `datascales` is used. |
+| showdetails         | object | None  | **Optional**, shows the state details for the selected entity. Only if `datascales` is used |
 | cardtimestamp  | boolean  | false         | **Optional**, if true  -  shows the timestamp for the last card update from the Homeassistant API Call |
 | loader         | string  |  `three-dots`        | **Optional**, sets the loader animation. you can use `audio`, `ball-triangle`, `bars`, `circles` , `grid`, `hearts`, `oval`, `pfuff`,`rings`,`spinning-circles`,`tail-spin`,`three-dots`. Displays the selected icon while the data is loading/updating. |
 | debug   | boolean   |   false       | **Optional**, if true, additional informations (data details, performace, settings.) will be printed on the browser's developer console. |
@@ -94,7 +94,7 @@ If Datascales are used, the data from the history is determined as time series d
 | format     | string   | none | **Optional** overwrites the default date/time format.|
 | factor         | number   | 1.00 | **Optional**, Caclulate your entity data in any way you like: `state.value * factor` |
 | ignoreZero     | boolean   | false | **Optional**, true: Values with Null or 0.00 values will be ignored |
-| aggregate     | boolean   | last | **Optional**, Aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min` |
+| aggregate     | boolean   | last | **Optional**, Aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min`,`range`, `midrange` |
 | mode | String | Optional | Default based on Chart Type, **optional** `category` (category axis ), `time` (Time Cartesian Axis) |
 
 
@@ -213,7 +213,7 @@ Entities Section contains all sensors and the settings (optional) for the data t
 | unit           | string   | entity unit-of-messuement | **Optional**, Text -  override the unit of the sensor |
 | factor         | number   | 1.00 | **Optional**, Caclulate your entity data in any way you like: `state.value * factor` |
 | ignoreZero     | boolean   | false | **Optional**, true: Values with Null or 0.00 values will be ignored |
-| aggregate     | string | last | **Optional**, Aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min` |
+| aggregate     | string | last | **Optional**, Aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min`,`range`, `midrange` |
 |            |         |                           |                                                              |
 
 <br>
@@ -224,7 +224,7 @@ Entities Section contains all sensors and the settings (optional) for the data t
 | unit           | string   | entity unit-of-messuement | **Optional**, Text -  override the unit of the sensor |
 | factor         | number   | 1.00 | **Optional**, Caclulate your entity data in any way you like: `state.value * factor` |
 | ignoreZero     | boolean   | false | **Optional**, true: Values with Null or 0.00 values will be ignored  |
-| aggregate     | boolean   | last | **Optional**, Aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min` |
+| aggregate     | boolean   | last | **Optional**, Aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min`,`range`, `midrange` |
 
 <br>
 

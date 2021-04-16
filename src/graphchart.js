@@ -92,7 +92,7 @@ class graphChart {
         this.loader = config.loader // the loading animation
         this.DEBUGMODE = config.debugmode || 0 // internal debugging enabled
         this.DEBUGDATA = config.debugdata
-        
+
         /**
          * all class based properties
          */
@@ -125,10 +125,6 @@ class graphChart {
         let _options = {
             hoverOffset: 8,
             layout: {},
-            // interaction: {
-            //     mode: "nearest",
-            //     intersect: false
-            // },
             chartArea: {
                 backgroundColor: "transparent"
             },
@@ -147,25 +143,23 @@ class graphChart {
                 }
             }
         }
-
+        /**
+         * check enable gradient colors for state charts or
+         */
         if (this.graphData.config.gradient === true && this.graphData.config.mode === "simple") {
-            /**
-             * enable gradient colors for state charts
-             */
             _options.gradientcolor = {
                 color: true,
                 type: this.chart_type
             }
         }
+        /**
+         * check enable gradient colors for data series chart
+         */
         if (gradient && this.graphData.config.gradient) {
-            /**
-             * enable gradient colors for data series chart
-             */
             _options.plugins = {
                 gradient
             }
         }
-
         /**
          * check secondary axis
          * this.graphData.config holds the configruation data
@@ -203,7 +197,6 @@ class graphChart {
                 _options.scales = _scaleOptions
             }
         }
-
         /**
          * bubble axis label based on the data settings
          *
@@ -244,7 +237,6 @@ class graphChart {
                 }
             }
         }
-
         /**
          * special case for timescales to translate the date format
          */
@@ -264,7 +256,6 @@ class graphChart {
                 callback: xAxisFormat
             }
         }
-
         /**
          * case barchart segment
          * TODO: better use a plugin for this feature.
@@ -308,52 +299,29 @@ class graphChart {
                 }
             }
         }
-
         /**
          * disable bubble legend
          */
-        if (this.chart_type.isChartType("bubble")) {            
+        if (this.chart_type.isChartType("bubble")) {
             _options.plugins.legend = {
                 display: false
             }
         }
-
-        
-        if (this.chart_type.isChartType("polararea")) {    
-            _options.elements = {
-                arc: {
-                    backgroundColor: function (context) {
-                        let c = colors[context.dataIndex]
-                        if (!c) {
-                            return
-                        }
-                        if (context.active) {
-                            c = helpers.getHoverColor(c)
-                        }
-                        const mid = helpers.color(c).desaturate(0.2).darken(0.2).rgbString()
-                        const start = helpers.color(c).lighten(0.2).rotate(270).rgbString()
-                        const end = helpers.color(c).lighten(0.1).rgbString()
-                        return createRadialGradient3(context, start, mid, end)
-                    }
-                }
-            }
-        }
-
         /**
-         * just for testing pi multiple series
+         * multiseries for pie and doughnut charts
          */
         if (this.graphData.config.multiseries === true) {
             _options.plugins.legend = {
                 labels: {
                     generateLabels: function (chart) {
-                        const original = Chart.overrides.pie.plugins.legend.labels.generateLabels
-                        const labelsOriginal = original.call(this, chart)
-                        var datasetColors = chart.data.datasets.map(function (e) {
+                        const original = Chart.overrides.pie.plugins.legend.labels.generateLabels,
+                            labelsOriginal = original.call(this, chart)
+                        let datasetColors = chart.data.datasets.map(function (e) {
                             return e.backgroundColor
                         })
                         datasetColors = datasetColors.flat()
                         labelsOriginal.forEach((label) => {
-                            label.datasetIndex = (label.index - (label.index % 2)) / 2
+                            label.datasetIndex = label.index
                             label.hidden = !chart.isDatasetVisible(label.datasetIndex)
                             label.fillStyle = datasetColors[label.index]
                         })
@@ -370,13 +338,12 @@ class graphChart {
             _options.plugins.tooltip = {
                 callbacks: {
                     label: function (context) {
-                        const labelIndex = context.datasetIndex + context.dataIndex
-                        return context.chart.data.labels[labelIndex] + ": " + context.formattedValue
+                        const labelIndex = context.datasetIndex
+                        return `${context.chart.data.labels[labelIndex]}: ${context.formattedValue} ${context.dataset.unit || ""}`
                     }
                 }
             }
         }
-
         /**
          * preset cart current config
          */
@@ -387,7 +354,6 @@ class graphChart {
             },
             options: _options
         }
-
         /**
          * merge default with chart config options
          * this.chartconfig.options see yaml config
@@ -410,13 +376,10 @@ class graphChart {
     sendJSON(url, chartdata) {
         // Creating a XHR object
         let xhr = new XMLHttpRequest()
-
         // open a connection
         xhr.open("POST", url, true)
-
         // Set the request header i.e. which type of content you are sending
         xhr.setRequestHeader("Content-Type", "application/json")
-
         // Create a state change callback
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
@@ -424,11 +387,9 @@ class graphChart {
                 console.info("sendJson", this.responseText)
             }
         }
-
         // Converting JSON data to string
         var data = JSON.stringify(chartdata)
         console.info(data)
-
         // Sending data with the request
         xhr.send(data)
     }
@@ -452,7 +413,6 @@ class graphChart {
                      */
                     return
                 }
-
                 /**
                  * append the data for the current chart settings
                  */
@@ -463,7 +423,6 @@ class graphChart {
                 if (this.graphData.data.labels) {
                     graphOptions.data.labels = this.graphData.data.labels
                 }
-
                 /**
                  * Chart declaration
                  */
@@ -525,7 +484,6 @@ class graphChart {
                                 })
                             }
                         }
-
                         if (this.chart) {
                             /**
                              * be shure that no chart exits before create..
@@ -533,15 +491,15 @@ class graphChart {
                             this.chart.destroy()
                             this.chart = null
                         }
-
                         if (this.DEBUGMODE) {
                             this.DEBUGDATA.CHARD = {}
                             this.DEBUGDATA.CHARD.cart3Options = graphOptions
                         }
-
+                        /**
+                         * create new chart and render the content
+                         */
                         this.chart = new window.Chart3(this.ctx, graphOptions)
                         this.graphDataSets = this.graphData.data.datasets
-
                         if (this.DEBUGMODE) {
                             this.DEBUGDATA.CHARD = {
                                 chartOptions: graphOptions,
@@ -551,7 +509,6 @@ class graphChart {
                                 chartGraphdata: this.graphData.config
                             }
                         }
-
                         if (this.chart) {
                             this.chart_ready = true
                         }

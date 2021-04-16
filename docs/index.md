@@ -154,6 +154,7 @@ YAML Structure for `custom:chart-card`
     title_max: '{text: table-header}'
     title_current: '{text: table-header}'
     title_timestamp: '{text: table-header}'
+    visible: {boolean: true|false}
   loader: '{text: audio|ball-triangle|bars|circles|grid|hearts|'
            'oval|pfuff|rings|spinning-circles|tail-spin|three-dots}'
   update_interval: {integer: secunds}  
