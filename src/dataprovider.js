@@ -211,9 +211,30 @@ class DataProvider {
          * @returns
          */
         function formatDateLabel(datevalue, mode = "label", format = "day") {
-            return mode == "group"
-                ? datevalue.substring(0, DATEFILTERS[format].digits || DATEFILTERS["day"].digits)
-                : formatdate(datevalue, format)
+            /**
+             * group format must be a valid date/time format
+             * otherwise the timeseries do not work
+             */
+             const groupFormats = {
+                millisecond: "yyyy/m/d H:M:ss.l",
+                datetime: "yyyy/md/ H:M:s",
+                second: "yyyy/m/d H:M:s",
+                minute: "yyyy/m/d H:M:00",
+                hour: "yyyy/m/d H:00:00",
+                day: "yyyy/m/d",
+                month: "yyyy/m/1",
+                year: "yyyy/12/31"
+            }
+            if (mode == "group") {
+                return formatdate(datevalue, groupFormats[format] || groupFormats['day'])
+            }
+            return formatdate(datevalue, format)
+            // return mode == "group"
+            //     ? datevalue.substring(0, DATEFILTERS[format].digits || DATEFILTERS["day"].digits)
+            //     : formatdate(datevalue, format)
+            // return mode == "group"
+            //     ? datevalue.substring(0, DATEFILTERS[format].digits || DATEFILTERS["day"].digits)
+            //     : formatdate(datevalue, format)
         }
 
         /**

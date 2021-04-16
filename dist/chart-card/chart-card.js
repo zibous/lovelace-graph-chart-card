@@ -95,10 +95,10 @@ const TRANSFORM_MODE = {
     datalabel: 2, // data.array label.array
     seriesdata: 3 // data.x and data.y
 }
-
+// "2021-04-14T15:44:47.212168+00:00"
 const DATEFILTERS = {
     year: { digits: 4, format: "yyyy" },
-    month: { digits: 7, format: "yyyy-mm" },
+    month: { digits: 7, format: "yyyy-mm"},
     day: { digits: 10, format: "yyyy-mm-dd" },
     hour: { digits: 13, format: "yyyy-mm-dd H" },
     minute: { digits: 16, format: "yyyy-mm-dd H:M" },
@@ -713,7 +713,7 @@ class ChartCard extends HTMLElement {
             if (item.entity) {
                 const t = item.entity.split(".")
                 item.id = `${t[0]}.${t[1]}`
-            }else{
+            } else {
                 item.id = "OD-" + Math.floor(Math.random() * 1000)
             }
         })
@@ -749,7 +749,7 @@ class ChartCard extends HTMLElement {
 
         if (this.datascales.range) {
             this.datascales.unit = this.datascales.unit || DSC_UNITS[0]
-            this.datascales.format = this.datascales.format || DSC_UNITS[0]
+            this.datascales.format = this.datascales.format || this.datascales.unit
             this.datascales.ignoreZero = this.datascales.ignoreZero || true
             this.datascales.aggregate = this.datascales.aggregate || DSC_RANGES[0]
         }
@@ -987,7 +987,7 @@ class ChartCard extends HTMLElement {
                              */
                             item.useAttribute = false
                             if (item.entity != item.id) {
-                                item.field = item.entity.slice(item.id.length+1)
+                                item.field = item.entity.slice(item.id.length + 1)
                                 item.state = (getAttributeValue(h, item.field) || 0.0) * item.factor
                                 item.useAttribute = true
                             }
@@ -1314,18 +1314,20 @@ class ChartCard extends HTMLElement {
                 _html.push("<tr>")
                 _html.push(`<th width="20%"><b>${this.chart_showdetails.title_sensor || "Statitics"}</b></th>`)
 
-                if (this.chart_showdetails.title_min && this.chart_showdetails.title_mean != "")
+                if (this.chart_showdetails.title_mean && this.chart_showdetails.title_mean != "")
                     _html.push(`<th align="right">${this.chart_showdetails.title_mean}</th>`)
 
                 if (this.chart_showdetails.title_min && this.chart_showdetails.title_min != "")
                     _html.push(`<th align="right">${this.chart_showdetails.title_min}</th>`)
 
-                if (this.chart_showdetails.title_min && this.chart_showdetails.title_max != "")
+                if (this.chart_showdetails.title_max && this.chart_showdetails.title_max != "")
                     _html.push(`<th align="right">${this.chart_showdetails.title_max}</th>`)
 
                 _html.push(`<th align="right">${this.chart_showdetails.title_current || "current"}</th>`)
 
-                _html.push(`<th>${this.chart_showdetails.title_timestamp || "Timestamp"}</th>`)
+                if (this.chart_showdetails.title_timestamp && this.chart_showdetails.title_timestamp != "")
+                    _html.push(`<th>${this.chart_showdetails.title_timestamp || "Timestamp"}</th>`)
+
                 _html.push("</tr>")
                 _statdata.forEach((item) => {
                     _html.push("<tr>")
@@ -1351,7 +1353,10 @@ class ChartCard extends HTMLElement {
                     _html.push(
                         "<td align='right'>" + _formatNumber(this.chart_locale, item.current || 0.0) + " " + item.unit + "</td>"
                     )
-                    _html.push("<td>" + localDatetime(item.timestamp, this.chart_locale) + "</span>")
+                    
+                    if (this.chart_showdetails.title_timestamp && this.chart_showdetails.title_timestamp != "")
+                        _html.push("<td>" + localDatetime(item.timestamp, this.chart_locale) + "</span>")
+
                     _html.push("</tr>")
                 })
                 _html.push("</table></div><br/>")
@@ -2608,9 +2613,30 @@ class DataProvider {
          * @returns
          */
         function formatDateLabel(datevalue, mode = "label", format = "day") {
-            return mode == "group"
-                ? datevalue.substring(0, DATEFILTERS[format].digits || DATEFILTERS["day"].digits)
-                : formatdate(datevalue, format)
+            /**
+             * group format must be a valid date/time format
+             * otherwise the timeseries do not work
+             */
+             const groupFormats = {
+                millisecond: "yyyy/m/d H:M:ss.l",
+                datetime: "yyyy/md/ H:M:s",
+                second: "yyyy/m/d H:M:s",
+                minute: "yyyy/m/d H:M:00",
+                hour: "yyyy/m/d H:00:00",
+                day: "yyyy/m/d",
+                month: "yyyy/m/1",
+                year: "yyyy/12/31"
+            }
+            if (mode == "group") {
+                return formatdate(datevalue, groupFormats[format] || groupFormats['day'])
+            }
+            return formatdate(datevalue, format)
+            // return mode == "group"
+            //     ? datevalue.substring(0, DATEFILTERS[format].digits || DATEFILTERS["day"].digits)
+            //     : formatdate(datevalue, format)
+            // return mode == "group"
+            //     ? datevalue.substring(0, DATEFILTERS[format].digits || DATEFILTERS["day"].digits)
+            //     : formatdate(datevalue, format)
         }
 
         /**

@@ -86,10 +86,10 @@ const TRANSFORM_MODE = {
     datalabel: 2, // data.array label.array
     seriesdata: 3 // data.x and data.y
 }
-
+// "2021-04-14T15:44:47.212168+00:00"
 const DATEFILTERS = {
     year: { digits: 4, format: "yyyy" },
-    month: { digits: 7, format: "yyyy-mm" },
+    month: { digits: 7, format: "yyyy-mm"},
     day: { digits: 10, format: "yyyy-mm-dd" },
     hour: { digits: 13, format: "yyyy-mm-dd H" },
     minute: { digits: 16, format: "yyyy-mm-dd H:M" },

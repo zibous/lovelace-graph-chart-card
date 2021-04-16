@@ -9171,14 +9171,17 @@ function minMaxDecimation(data, start, count, availableWidth) {
   }
   return decimated;
 }
+function cleanDecimatedDataset(dataset) {
+  if (dataset._decimated) {
+    const data = dataset._data;
+    delete dataset._decimated;
+    delete dataset._data;
+    Object.defineProperty(dataset, 'data', {value: data});
+  }
+}
 function cleanDecimatedData(chart) {
   chart.data.datasets.forEach((dataset) => {
-    if (dataset._decimated) {
-      const data = dataset._data;
-      delete dataset._decimated;
-      delete dataset._data;
-      Object.defineProperty(dataset, 'data', {value: data});
-    }
+    cleanDecimatedDataset(dataset);
   });
 }
 function getStartAndCountOfVisiblePointsSimplified(meta, points) {
@@ -9228,6 +9231,7 @@ var plugin_decimation = {
       }
       let {start, count} = getStartAndCountOfVisiblePointsSimplified(meta, data);
       if (count <= 4 * availableWidth) {
+        cleanDecimatedDataset(dataset);
         return;
       }
       if (isNullOrUndef(_data)) {
@@ -10358,6 +10362,9 @@ const positioners = {
     };
   },
   nearest(items, eventPosition) {
+    if (!items.length) {
+      return false;
+    }
     let x = eventPosition.x;
     let y = eventPosition.y;
     let minDistance = Number.POSITIVE_INFINITY;
@@ -11102,9 +11109,9 @@ class Tooltip extends Element {
     return changed;
   }
   _positionChanged(active, e) {
-    const me = this;
-    const position = positioners[me.options.position].call(me, active, e);
-    return me.caretX !== position.x || me.caretY !== position.y;
+    const {caretX, caretY, options} = this;
+    const position = positioners[options.position].call(this, active, e);
+    return position !== false && (caretX !== position.x || caretY !== position.y);
   }
 }
 Tooltip.positioners = positioners;

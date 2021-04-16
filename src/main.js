@@ -543,7 +543,7 @@ class ChartCard extends HTMLElement {
             if (item.entity) {
                 const t = item.entity.split(".")
                 item.id = `${t[0]}.${t[1]}`
-            }else{
+            } else {
                 item.id = "OD-" + Math.floor(Math.random() * 1000)
             }
         })
@@ -579,7 +579,7 @@ class ChartCard extends HTMLElement {
 
         if (this.datascales.range) {
             this.datascales.unit = this.datascales.unit || DSC_UNITS[0]
-            this.datascales.format = this.datascales.format || DSC_UNITS[0]
+            this.datascales.format = this.datascales.format || this.datascales.unit
             this.datascales.ignoreZero = this.datascales.ignoreZero || true
             this.datascales.aggregate = this.datascales.aggregate || DSC_RANGES[0]
         }
@@ -817,7 +817,7 @@ class ChartCard extends HTMLElement {
                              */
                             item.useAttribute = false
                             if (item.entity != item.id) {
-                                item.field = item.entity.slice(item.id.length+1)
+                                item.field = item.entity.slice(item.id.length + 1)
                                 item.state = (getAttributeValue(h, item.field) || 0.0) * item.factor
                                 item.useAttribute = true
                             }
@@ -1144,18 +1144,20 @@ class ChartCard extends HTMLElement {
                 _html.push("<tr>")
                 _html.push(`<th width="20%"><b>${this.chart_showdetails.title_sensor || "Statitics"}</b></th>`)
 
-                if (this.chart_showdetails.title_min && this.chart_showdetails.title_mean != "")
+                if (this.chart_showdetails.title_mean && this.chart_showdetails.title_mean != "")
                     _html.push(`<th align="right">${this.chart_showdetails.title_mean}</th>`)
 
                 if (this.chart_showdetails.title_min && this.chart_showdetails.title_min != "")
                     _html.push(`<th align="right">${this.chart_showdetails.title_min}</th>`)
 
-                if (this.chart_showdetails.title_min && this.chart_showdetails.title_max != "")
+                if (this.chart_showdetails.title_max && this.chart_showdetails.title_max != "")
                     _html.push(`<th align="right">${this.chart_showdetails.title_max}</th>`)
 
                 _html.push(`<th align="right">${this.chart_showdetails.title_current || "current"}</th>`)
 
-                _html.push(`<th>${this.chart_showdetails.title_timestamp || "Timestamp"}</th>`)
+                if (this.chart_showdetails.title_timestamp && this.chart_showdetails.title_timestamp != "")
+                    _html.push(`<th>${this.chart_showdetails.title_timestamp || "Timestamp"}</th>`)
+
                 _html.push("</tr>")
                 _statdata.forEach((item) => {
                     _html.push("<tr>")
@@ -1181,7 +1183,10 @@ class ChartCard extends HTMLElement {
                     _html.push(
                         "<td align='right'>" + _formatNumber(this.chart_locale, item.current || 0.0) + " " + item.unit + "</td>"
                     )
-                    _html.push("<td>" + localDatetime(item.timestamp, this.chart_locale) + "</span>")
+                    
+                    if (this.chart_showdetails.title_timestamp && this.chart_showdetails.title_timestamp != "")
+                        _html.push("<td>" + localDatetime(item.timestamp, this.chart_locale) + "</span>")
+
                     _html.push("</tr>")
                 })
                 _html.push("</table></div><br/>")
