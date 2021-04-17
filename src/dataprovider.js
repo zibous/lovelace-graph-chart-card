@@ -69,7 +69,7 @@ class DataProvider {
                 let _itemdata = {
                     x: new Date(row[0]).getTime(),
                     localedate: row[1].localedate,
-                    y: arrStatistics[_entity.datascales.aggregate](_values)
+                    y: arrStatistics[_entity.aggregate || _entity.datascales.aggregate](_values)
                 }
                 if (_entity.datascales.useStatistics) {
                     _itemdata.statistics = {
@@ -137,6 +137,7 @@ class DataProvider {
         }
         return true
     }
+    
     /**
      * get simple data for the entities
      * calculates the state data from the history devicestates
@@ -215,7 +216,7 @@ class DataProvider {
              * group format must be a valid date/time format
              * otherwise the timeseries do not work
              */
-             const groupFormats = {
+            const groupFormats = {
                 millisecond: "yyyy/m/d H:M:ss.l",
                 datetime: "yyyy/md/ H:M:s",
                 second: "yyyy/m/d H:M:s",
@@ -226,7 +227,7 @@ class DataProvider {
                 year: "yyyy/12/31"
             }
             if (mode == "group") {
-                return formatdate(datevalue, groupFormats[format] || groupFormats['day'])
+                return formatdate(datevalue, groupFormats[format] || groupFormats["day"])
             }
             return formatdate(datevalue, format)
             // return mode == "group"

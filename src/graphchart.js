@@ -278,7 +278,8 @@ class graphChart {
                     filter: (legendItem, data) => {
                         return data.datasets[legendItem.datasetIndex].tooltip !== false
                     }
-                }
+                },
+                display: false
             }
             _options.plugins.tooltip.callbacks = {
                 label: (chart) => {

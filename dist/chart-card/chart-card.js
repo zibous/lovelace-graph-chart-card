@@ -32,8 +32,8 @@ import "/hacsfiles/chart-card/chart-min.js?module"
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "v2.1.0/v3.1.0",
-    chartjs: Chart.version || "v3.1.0",
+    version: "v2.1.0/v3.1.1",
+    chartjs: Chart.version || "v3.1.1",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
 }
@@ -246,17 +246,18 @@ style.innerHTML = `
         top:12px;
         right:20px;
         background-color:transparent;
+        max-width: 15%;
         z-index:100;
     }
     .state-view-data{
         font-weight:400;
         margin:0;
         cursor:pointer;
-        height:4.5em;
+        height:3.85em;
         overflow:auto;
     }
     .state-view-value{
-        font-size:2.0em;
+        font-size:1.85em;
         line-height:1.2em;
         text-align:right;
         margin:0;
@@ -269,11 +270,15 @@ style.innerHTML = `
         vertical-align:top
     } 
     .state-view-name{
-        border:none;
-        font-size:0.85em;
-        text-align:center;
-        margin:0;
-        line-height:2em
+        border: none;
+        font-size: 0.65em;
+        text-align: center;
+        margin: 0;
+        line-height: 2em;
+        width: 95%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     } 
     .card-detail-view{
         margin-top: 1.925em;
@@ -303,6 +308,9 @@ style.innerHTML = `
     .card-detail-table th{
         padding: 0 6px;
         font-weight:400;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .card-detail-table td{
         padding: 0 6px;
@@ -615,9 +623,6 @@ class ChartCard extends HTMLElement {
         this.ctx = canvas.getContext("2d")
         canvas.id = this.canvasId
         let _canavasOffset = 10
-        if (this.showstate && this.showstate === "center") {
-            _canavasOffset = 60
-        }
         canvas.height = this.card_height - _canavasOffset
         canvas.style.height = cssAttr(this.card_height - _canavasOffset)
         canvas.style.maxHeight = cssAttr(this.card_height - _canavasOffset)
@@ -906,11 +911,10 @@ class ChartCard extends HTMLElement {
              * showstate not possible for bubble and scatter or
              * on simple state charts
              */
-            if (CT_NOSHOWSTATES.includes(this.chart_type.toLocaleLowerCase())) {
-                this.chart_showstate = false
-            } else {
-                if (this.datascales.range === 0 && this.chart_showstate) {
+            if (this.chart_showstate) {
+                if (this.datascales.range === 0 || CT_NOSHOWSTATES.includes(this.chart_type.toLocaleLowerCase())) {
                     this.chart_showstate = false
+                    this.showdetails = false
                 }
             }
 
@@ -979,7 +983,6 @@ class ChartCard extends HTMLElement {
                             item.state = item.state * item.datascales.factor
                             item.factor = item.datascales.factor
                             item.ignoreZero = item.ignoreZero || this.datascales.ignoreZero
-
                             /**
                              * handling the item attribute
                              * item.id:     sensor name --> sensor.thermometer
@@ -995,6 +998,20 @@ class ChartCard extends HTMLElement {
                                 item.field = `attributes.${item.attribute}`
                                 item.state = (getAttributeValue(h, item.field) || 0.0) * item.factor
                                 item.useAttribute = true
+                            }
+                            /**
+                             * scale to settings for the current entity
+                             */
+                            if (item.target_value && isNumeric(item.target_value)) {
+                                item.current = item.state
+                                item.uom = item.unit
+                                item.state = this.entity_items.calcItemValue({
+                                    value: item.state,
+                                    factor: item.factor || 1.0,
+                                    target_value: item.target_value
+                                })
+                            } else {
+                                item.state = _safeParseFloat(item.state)
                             }
                             item.chart = this.chart_type
                             /**
@@ -1192,7 +1209,7 @@ class ChartCard extends HTMLElement {
                  */
                 this.DEBUGDATA.PROFILER.GETHASSDATA = {
                     start: performance.now()
-                }
+                }                
                 this.DEBUGDATA.PROFILER.GETBUCKETDATA = {
                     start: performance.now()
                 }
@@ -1287,14 +1304,12 @@ class ChartCard extends HTMLElement {
                 let _style = ' style="' + _visible + ";color:" + item.color + '"'
                 _html.push('<div class="stateitem" id="' + item.name + '"' + _style + '">')
                 _html.push(
-                    '<p class="state-view-value" style="color:' +
-                        item.color +
-                        ';">' +
-                        _formatNumber(this.chart_locale, item.current || 0.0) +
-                        "<span>" +
-                        item.unit +
-                        "</span></p>"
+                    `<p class="state-view-value" style="color:${item.color}">${_formatNumber(
+                        this.chart_locale,
+                        item.current || 0.0
+                    )}<span>${item.unit || ""}</span></p>`
                 )
+
                 _html.push('<p class="state-view-name">' + item.name + "</p>")
                 _html.push("</div>")
             }
@@ -1353,7 +1368,7 @@ class ChartCard extends HTMLElement {
                     _html.push(
                         "<td align='right'>" + _formatNumber(this.chart_locale, item.current || 0.0) + " " + item.unit + "</td>"
                     )
-                    
+
                     if (this.chart_showdetails.title_timestamp && this.chart_showdetails.title_timestamp != "")
                         _html.push("<td>" + localDatetime(item.timestamp, this.chart_locale) + "</span>")
 
@@ -1408,6 +1423,9 @@ class ChartCard extends HTMLElement {
      * @param {*} stateHistories
      */
     _buildGraphData(stateHistories, mode) {
+        /**
+         * check debugmode for developers
+         */
         if (this.DEBUGMODE) {
             this.DEBUGDATA.API.datamode = mode == API_DATAMODE.history ? "History" : "Current"
             if (mode == API_DATAMODE.history) {
@@ -1417,6 +1435,7 @@ class ChartCard extends HTMLElement {
                 this.DEBUGDATA.PROFILER.GETHASSDATA.elapsed = msToTime(
                     performance.now() - this.DEBUGDATA.PROFILER.GETHASSDATA.start
                 )
+                this.DEBUGDATA.PROFILER.HISTORYDATA = stateHistories
                 /**
                  * set the start for the PROFILER.GETBUCKETDATA
                  */
@@ -1450,7 +1469,9 @@ class ChartCard extends HTMLElement {
             this.dataInfo.loading = false
             return null
         }
-
+        /**
+         * API Mode: HISTORY DATA
+         */
         if (mode == API_DATAMODE.history) {
             const dataprovider = new DataProvider({
                 datainfo: this.dataInfo,
@@ -1669,6 +1690,19 @@ class Entities {
         return count != 0
     }
     /**
+     * get the entity data value
+     * @param {*} itemdata
+     * @returns number
+     */
+    calcItemValue(itemdata) {
+        let _v = +itemdata.value || 0.00
+        _v = _v * itemdata.factor
+        if (itemdata.target_value && isNumeric(itemdata.target_value)) {
+            _v = (itemdata.value / itemdata.target_value) * 100.0
+        }
+        return _safeParseFloat(_v) || 0.0
+    }
+    /**
      * check if we get new data from Homeassistant
      * @param {*} hassEntities
      * @returns boolean
@@ -1679,11 +1713,19 @@ class Entities {
             const _entityList = this.getEntitieslist()
             for (let entity of _entityList) {
                 const h = hassEntities.find((x) => x.entity_id === entity.entity)
-                entity.laststate = entity.state || 0.00
+                entity.laststate = entity.state || 0.0
                 entity.update = false
                 if (h && entity.last_changed !== h.last_changed && entity.state !== h.state) {
                     entity.last_changed = h.last_changed
-                    entity.state = h.state
+                    entity.state = this.calcItemValue({
+                        value: entity.useAttribute ? getAttributeValue(h, entity.field) : h.state,
+                        factor: entity.factor || 1.0,
+                        target_value: entity.target_value
+                    })
+                    if (entity.target_value && isNumeric(entity.target_value)) {
+                        entity.unit = "%"
+                        entity.current = h.state
+                    }
                     entity.update = true
                     hasChanged = true
                 }
@@ -2471,7 +2513,7 @@ class DataProvider {
                 let _itemdata = {
                     x: new Date(row[0]).getTime(),
                     localedate: row[1].localedate,
-                    y: arrStatistics[_entity.datascales.aggregate](_values)
+                    y: arrStatistics[_entity.aggregate || _entity.datascales.aggregate](_values)
                 }
                 if (_entity.datascales.useStatistics) {
                     _itemdata.statistics = {
@@ -2539,6 +2581,7 @@ class DataProvider {
         }
         return true
     }
+    
     /**
      * get simple data for the entities
      * calculates the state data from the history devicestates
@@ -2617,7 +2660,7 @@ class DataProvider {
              * group format must be a valid date/time format
              * otherwise the timeseries do not work
              */
-             const groupFormats = {
+            const groupFormats = {
                 millisecond: "yyyy/m/d H:M:ss.l",
                 datetime: "yyyy/md/ H:M:s",
                 second: "yyyy/m/d H:M:s",
@@ -2628,7 +2671,7 @@ class DataProvider {
                 year: "yyyy/12/31"
             }
             if (mode == "group") {
-                return formatdate(datevalue, groupFormats[format] || groupFormats['day'])
+                return formatdate(datevalue, groupFormats[format] || groupFormats["day"])
             }
             return formatdate(datevalue, format)
             // return mode == "group"
@@ -3648,7 +3691,8 @@ class graphChart {
                     filter: (legendItem, data) => {
                         return data.datasets[legendItem.datasetIndex].tooltip !== false
                     }
-                }
+                },
+                display: false
             }
             _options.plugins.tooltip.callbacks = {
                 label: (chart) => {

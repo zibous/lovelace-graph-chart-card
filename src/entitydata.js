@@ -60,6 +60,19 @@ class Entities {
         return count != 0
     }
     /**
+     * get the entity data value
+     * @param {*} itemdata
+     * @returns number
+     */
+    calcItemValue(itemdata) {
+        let _v = +itemdata.value || 0.00
+        _v = _v * itemdata.factor
+        if (itemdata.target_value && isNumeric(itemdata.target_value)) {
+            _v = (itemdata.value / itemdata.target_value) * 100.0
+        }
+        return _safeParseFloat(_v) || 0.0
+    }
+    /**
      * check if we get new data from Homeassistant
      * @param {*} hassEntities
      * @returns boolean
@@ -70,11 +83,19 @@ class Entities {
             const _entityList = this.getEntitieslist()
             for (let entity of _entityList) {
                 const h = hassEntities.find((x) => x.entity_id === entity.entity)
-                entity.laststate = entity.state || 0.00
+                entity.laststate = entity.state || 0.0
                 entity.update = false
                 if (h && entity.last_changed !== h.last_changed && entity.state !== h.state) {
                     entity.last_changed = h.last_changed
-                    entity.state = h.state
+                    entity.state = this.calcItemValue({
+                        value: entity.useAttribute ? getAttributeValue(h, entity.field) : h.state,
+                        factor: entity.factor || 1.0,
+                        target_value: entity.target_value
+                    })
+                    if (entity.target_value && isNumeric(entity.target_value)) {
+                        entity.unit = "%"
+                        entity.current = h.state
+                    }
                     entity.update = true
                     hasChanged = true
                 }

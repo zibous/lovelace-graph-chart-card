@@ -92,7 +92,7 @@ If Datascales are used, the data from the history is determined as time series d
 | range          | integer   | 72 | **Optional**, Sets the range for the data series in hours. Used to calculate the range to get the bucket data form Homeassistent. End date is the current timestamp and the Start date is: `currentTimestamp.setHours(-range)`or `new currentTimestamp.setMinutes(-range` if the range < 1.00. |
 | unit           | string   | hour | **Optional**, `second`, `minute`, `hour`, `day`, `month`, `year`. It builds entity states over `unit` period of time. The `unit` is used to calculate the ticks for the `Time Cartesian Axis`. |
 | format     | string   | none | **Optional** overwrites the default date/time format.|
-| factor         | number   | 1.00 | **Optional**, Caclulate your entity data in any way you like: `state.value * factor` |
+| factor         | number   | 1.00 | **Optional**, Caclulate your entity data in any way you like: `state.value * factor`. Scale value by order of magnitude (e.g. convert Watts to kilo Watts), use negative value to scale down. |
 | ignoreZero     | boolean   | false | **Optional**, true: Values with Null or 0.00 values will be ignored |
 | aggregate     | boolean   | last | **Optional**, Aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min`,`range`, `midrange` |
 | mode | String | Optional | Default based on Chart Type, **optional** `category` (category axis ), `time` (Time Cartesian Axis) |
@@ -211,9 +211,9 @@ Entities Section contains all sensors and the settings (optional) for the data t
 | Property   | Type     | Default     | Description |
 | -------------- | -------- | ----------- |------------ |
 | unit           | string   | entity unit-of-messuement | **Optional**, Text -  override the unit of the sensor |
-| factor         | number   | 1.00 | **Optional**, Caclulate your entity data in any way you like: `state.value * factor` |
+| factor         | number   | 1.00 | **Optional**, caclulate your entity data in any way you like: `state.value * factor`.Scale value by order of magnitude (e.g. convert Watts to kilo Watts), use negative value to scale down. |
 | ignoreZero     | boolean   | false | **Optional**, true: Values with Null or 0.00 values will be ignored |
-| aggregate     | string | last | **Optional**, Aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min`,`range`, `midrange` |
+| aggregate     | string | last | **Optional**, aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min`,`range`, `midrange` |
 |            |         |                           |                                                              |
 
 <br>
@@ -222,9 +222,11 @@ Entities Section contains all sensors and the settings (optional) for the data t
 | Property   | Type     | Default     | Description |
 | -------------- | -------- | ----------- |------------ |
 | unit           | string   | entity unit-of-messuement | **Optional**, Text -  override the unit of the sensor |
-| factor         | number   | 1.00 | **Optional**, Caclulate your entity data in any way you like: `state.value * factor` |
+| factor         | number   | 1.00 | **Optional**, caclulate your entity data in any way you like: `state.value * factor`. Scale value by order of magnitude (e.g. convert Watts to kilo Watts), use negative value to scale down. |
 | ignoreZero     | boolean   | false | **Optional**, true: Values with Null or 0.00 values will be ignored  |
-| aggregate     | boolean   | last | **Optional**, Aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min`,`range`, `midrange` |
+| aggregate     | boolean   | last | **Optional**, aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min`,`range`, `midrange` |
+| target_value | number | None | **Optional**, calculates the state value: `(state.value/target_value.value)*100`. Unit is set to `%` |
+| style | Object | None | ... see Entity Style samples. Additional info see: https://www.chartjs.org/docs/latest/configuration/elements.html |
 
 <br>
 
