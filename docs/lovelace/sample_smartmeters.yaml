@@ -1,0 +1,322 @@
+views:
+  - title: Energie Verbrauch
+    icon: 'mdi:counter'
+    id: energie_usage
+    panel: true
+    path: energieverbrauch
+    cards:
+      - type: 'custom:cards-layout'
+        toolbar:
+          backgroundcolor: '#F2F1EF'
+          iconcolor: '#FE5A1E'
+          visible: true
+        header:
+          title: Smartmeter
+          icon: 'mdi:home'
+          iconcolor: '#FE5A1E'
+          style: >-
+            background-image:
+            url('/hacsfiles/cards-layout/assets/ha-header-powersource.png');
+            background-color: #F2F1EF; color: #FE5A1E;
+        page:
+          title: Übersicht
+          icon: 'mdi:view-agenda'
+          description: >-
+            Auswertungen Energie-Verbrauchmessung der Geschosse, Räume und
+            Verbraucher.
+          width: 95%
+          style: >-
+            color:"#FFFFFF"; background: linear-gradient(to top, #676665,
+            #D0CFCD);
+        content:
+          - row:
+              - columns: null
+                title: Verbrauch der Geschosse
+                width: 100%
+                entities:
+                  - type: 'custom:chart-card'
+                    title: Energieverbrauch
+                    icon: 'mdi:counter'
+                    chart: bar
+                    height: 420
+                    showstate: false
+                    update_interval: 30
+                    datascales:
+                      range: 120
+                      unit: hour
+                      mode: time
+                      ignoreZero: true
+                      aggregate: sum
+                      factor: 0.1
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: true
+                      scales:
+                        x:
+                          alignToPixels: true
+                          stacked: true
+                          grid:
+                            display: false
+                        'y':
+                          stacked: true
+                          title:
+                            display: true
+                            text: Energie kWh
+                    entities:
+                      - options:
+                          unit: kWh
+                      - entity: sensor.energieverbrauch_erdgeschoss
+                      - entity: sensor.energieverbrauch_wohngeschoss
+                      - entity: sensor.energieverbrauch_obergeschoss
+                      - entity: sensor.energieverbrauch_dachgeschoss
+                  - type: 'custom:chart-card'
+                    title: Energieverbrauch Räume
+                    icon: 'mdi:counter'
+                    chart: bar
+                    height: 420
+                    showstate: false
+                    update_interval: 30
+                    datascales:
+                      range: 120
+                      unit: hour
+                      mode: time
+                      ignoreZero: true
+                      aggregate: sum
+                      factor: 0.1
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: false
+                      scales:
+                        x:
+                          alignToPixels: true
+                          stacked: true
+                          grid:
+                            display: false
+                        'y':
+                          stacked: true
+                          title:
+                            display: true
+                            text: Energie kWh
+                    entities:
+                      - options:
+                          unit: kWh
+                      - entity: sensor.energieverbrauch_bad
+                      - entity: sensor.energieverbrauch_buro
+                      - entity: sensor.energieverbrauch_fitnessstudio
+                      - entity: sensor.energieverbrauch_gang_eg
+                      - entity: sensor.energieverbrauch_gang_og
+                      - entity: sensor.energieverbrauch_gang_wg
+                      - entity: sensor.energieverbrauch_garage
+                      - entity: sensor.energieverbrauch_heizung
+                      - entity: sensor.energieverbrauch_kuche
+                      - entity: sensor.energieverbrauch_unbekannt
+                      - entity: sensor.energieverbrauch_vorratsraum
+                      - entity: sensor.energieverbrauch_waschraum
+                      - entity: sensor.energieverbrauch_wohnzimmer
+                      - entity: sensor.energieverbrauch_zahlerschrank
+                      - entity: sensor.verbrauch_bad
+                      - entity: sensor.verbrauch_buro
+                      - entity: sensor.verbrauch_fitnessstudio
+                      - entity: sensor.verbrauch_gang_eg
+                      - entity: sensor.verbrauch_gang_og
+                      - entity: sensor.verbrauch_gang_wg
+                      - entity: sensor.verbrauch_garage
+                      - entity: sensor.verbrauch_heizung
+                      - entity: sensor.verbrauch_kuche
+                      - entity: sensor.verbrauch_unbekannt
+                      - entity: sensor.verbrauch_vorratsraum
+                      - entity: sensor.verbrauch_waschraum
+                      - entity: sensor.verbrauch_wohnzimmer
+                      - entity: sensor.verbrauch_zahlerschrank
+                  - type: 'custom:chart-card'
+                    title: Verbrauch pro Gerät
+                    icon: 'mdi:counter'
+                    chart: bar
+                    height: 420
+                    showstate: false
+                    update_interval: 30
+                    datascales:
+                      range: 24
+                      unit: hour
+                      mode: time
+                      ignoreZero: true
+                      factor: 0.1
+                      aggregate: sum
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: false
+                      scales:
+                        x:
+                          alignToPixels: true
+                          stacked: true
+                          grid:
+                            display: false
+                        'y':
+                          stacked: true
+                          title:
+                            display: true
+                            text: Energie kWh
+                    entities:
+                      - options:
+                          unit: kWh
+                      - entity: sensor.s01
+                      - entity: sensor.s02
+                      - entity: sensor.s03
+                      - entity: sensor.s04
+                      - entity: sensor.s05
+                      - entity: sensor.s06
+                      - entity: sensor.s29
+                      - entity: sensor.s30
+                      - entity: sensor.s31
+                      - entity: sensor.s32
+                      - entity: sensor.s34
+                      - entity: sensor.s36
+                      - entity: sensor.s37
+                      - entity: sensor.s07
+                      - entity: sensor.s08
+                      - entity: sensor.s09
+                      - entity: sensor.s10
+                      - entity: sensor.s11
+                      - entity: sensor.s12
+                      - entity: sensor.s13
+                      - entity: sensor.s14
+                      - entity: sensor.s15
+                      - entity: sensor.s35
+                      - entity: sensor.s16
+                      - entity: sensor.s17
+                      - entity: sensor.s18
+                      - entity: sensor.s19
+                      - entity: sensor.s20
+                      - entity: sensor.s25
+                      - entity: sensor.s21
+                      - entity: sensor.s22
+                      - entity: sensor.s33
+                      - entity: sensor.s23
+                      - entity: sensor.s24
+                      - entity: sensor.s26
+                      - entity: sensor.s27
+                      - entity: sensor.s28
+              - columns: null
+                title: Aktueller Verbrauch Geschosse / Verbraucher
+                width: 50%
+                entities:
+                  - type: 'custom:chart-card'
+                    title: Erdgeschoss
+                    icon: 'mdi:counter'
+                    chart: bar
+                    height: 320
+                    debug: true
+                    datascales:
+                      ignoreZero: true
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: false
+                      scales:
+                        x:
+                          alignToPixels: true
+                          grid:
+                            display: false
+                          ticks:
+                            display: true
+                        'y':
+                          title:
+                            display: true
+                            text: Energie kWh
+                          max: 200
+                    entities:
+                      - options:
+                          unit: Wh
+                      - entity: sensor.s01
+                      - entity: sensor.s02
+                      - entity: sensor.s03
+                      - entity: sensor.s04
+                      - entity: sensor.s05
+                      - entity: sensor.s06
+                      - entity: sensor.s29
+                      - entity: sensor.s30
+                      - entity: sensor.s31
+                      - entity: sensor.s32
+                      - entity: sensor.s34
+                      - entity: sensor.s36
+                      - entity: sensor.s37
+                  - type: 'custom:chart-card'
+                    title: Wohngeschoss
+                    icon: 'mdi:counter'
+                    chart: bar
+                    height: 320
+                    datascales:
+                      ignoreZero: true
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: false
+                      scales:
+                        x:
+                          alignToPixels: true
+                          grid:
+                            display: false
+                          ticks:
+                            display: true
+                            minRotation: 25
+                        'y':
+                          title:
+                            display: true
+                            text: Energie Wh
+                          max: 200
+                    entities:
+                      - options:
+                          unit: Wh
+                      - entity: sensor.s07
+                      - entity: sensor.s08
+                      - entity: sensor.s09
+                      - entity: sensor.s10
+                      - entity: sensor.s11
+                      - entity: sensor.s12
+                      - entity: sensor.s13
+                      - entity: sensor.s14
+                      - entity: sensor.s15
+                      - entity: sensor.s35
+                  - type: 'custom:chart-card'
+                    title: Ober- & Dachgeschoss
+                    icon: 'mdi:counter'
+                    chart: bar
+                    height: 320
+                    datascales:
+                      ignoreZero: true
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: false
+                      scales:
+                        x:
+                          alignToPixels: true
+                          grid:
+                            display: false
+                          ticks:
+                            display: true
+                        'y':
+                          title:
+                            display: true
+                            text: Energie Wh
+                          max: 200
+                    entities:
+                      - options:
+                          unit: Wh
+                      - entity: sensor.s16
+                      - entity: sensor.s17
+                      - entity: sensor.s18
+                      - entity: sensor.s19
+                      - entity: sensor.s20
+                      - entity: sensor.s25
+                      - entity: sensor.s21
+                      - entity: sensor.s22
+                      - entity: sensor.s33
+                      - entity: sensor.s23
+                      - entity: sensor.s24
+                      - entity: sensor.s26
+                      - entity: sensor.s27
+                      - entity: sensor.s28

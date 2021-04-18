@@ -65,7 +65,7 @@ class Entities {
      * @returns number
      */
     calcItemValue(itemdata) {
-        let _v = +itemdata.value || 0.00
+        let _v = +itemdata.value || 0.0
         _v = _v * itemdata.factor
         if (itemdata.target_value && isNumeric(itemdata.target_value)) {
             _v = (itemdata.value / itemdata.target_value) * 100.0
@@ -192,6 +192,23 @@ class Entities {
             return this.getAttribute("state")
         }
         return this.items[name].state
+    }
+    /**
+     * get chartdata for simple charts
+     */
+    getChartLabelAndData() {
+        let labels = [],
+            data = [],
+            colors = []
+        const _itmList = this.getEntitieslist()
+        _itmList.forEach((item) => {
+            if (item.ignoreZero ? item.state !== 0 : true) {
+                labels.push(item.name)
+                data.push(item.state)
+                if (item.style) colors.push(item.style.color || item.style.backgroundColor)
+            }
+        })
+        return { labels: labels, colors: colors, data: data }
     }
     /**
      * get all entity id's for the registrated entities

@@ -198,7 +198,9 @@ class chartData {
          * entityOptions : global entities options
          */
         if (!this.entity_items.isValid()) return null
-        const _data = this.entity_items.getData()
+        // const _data = this.entity_items.getData()
+
+        const _data = this.entity_items.getChartLabelAndData()
 
         if (_data.length === 0) {
             console.error("Create Chart Data, no Data present !")
@@ -228,7 +230,7 @@ class chartData {
          * all entity labels
          * add dataset entities
          */
-        _graphData.data.labels = this.entity_items.getNames()
+        _graphData.data.labels = _data.labels //this.entity_items.getNames()
         _graphData.data.datasets[0] = _defaultDatasetConfig
         _graphData.data.datasets[0].label = this.card_config.title || ""
         /**
@@ -251,7 +253,7 @@ class chartData {
         /**
          * custom colors from the entities
          */
-        let entityColors = this.entity_items.getColors()
+        let entityColors = _data.colors //this.entity_items.getColors()
 
         if (this.entity_options && this.entity_options.gradient != undefined) {
             _graphData.config.gradient = true
@@ -273,13 +275,13 @@ class chartData {
                 /**
                  * get backgroundcolor from DEFAULT_COLORS
                  */
-                entityColors = DEFAULT_COLORS.slice(1, _data.length + 1)
+                entityColors = DEFAULT_COLORS.slice(1, _data.data.length + 1)
                 _graphData.data.datasets[0].backgroundColor = entityColors
                 _graphData.data.datasets[0].borderWidth = 0
                 _graphData.data.datasets[0].showLine = false
             }
         }
-        _graphData.data.datasets[0].data = _data
+        _graphData.data.datasets[0].data = _data.data
         _graphData.config.segmentbar = false
 
         /**

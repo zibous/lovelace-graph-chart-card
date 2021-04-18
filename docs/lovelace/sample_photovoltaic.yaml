@@ -1,0 +1,188 @@
+views:
+  - title: Energie Report
+    icon: 'mdi:counter'
+    id: energie_report
+    panel: true
+    path: energiereport
+    cards:
+      - type: 'custom:cards-layout'
+        toolbar:
+          backgroundcolor: '#366484'
+          iconcolor: '#FFFFFF'
+          visible: true
+        header:
+          title: Stromverbrauch & -Produktion
+          icon: 'mdi:counter'
+          iconcolor: '#FFFFFF'
+          style: >-
+            background-image:
+            url('/hacsfiles/cards-layout/assets/ha-header-house.png');
+            background-color: #366484; color: #FFFFFF;
+        page:
+          title: Übersicht
+          icon: 'mdi:view-agenda'
+          iconcolor: '#FFFFFF'
+          description: Austellung Stromverbrauchsdaten - Messung Smartmeter
+          width: 95%
+          style: >-
+            color: #FFFFFF; background: linear-gradient(to bottom, #366484,
+            #182848);
+        content:
+          - row:
+              - columns: null
+                width: 100%
+                entities:
+                  - type: 'custom:chart-card'
+                    title: Energie Überschuss und Verbrauch
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: bar
+                    showstate: true
+                    update_interval: 30
+                    datascales:
+                      range: 744
+                      unit: hour
+                      mode: time
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: true
+                      scales:
+                        x:
+                          alignToPixels: true
+                          stacked: true
+                        'y':
+                          title:
+                            display: true
+                            text: Produktion kWh
+                    entities:
+                      - entity: sensor.energy_production_t1
+                        name: Überschuss T1
+                        unit: kWh
+                        factor: 1
+                        aggregate: sum
+                        style:
+                          backgroundColor: '#f2c404'
+                      - entity: sensor.energy_production_t2
+                        name: Übeschuss T2
+                        unit: kWh
+                        factor: 1
+                        aggregate: sum
+                        style:
+                          backgroundColor: '#e6bf61'
+                      - entity: sensor.energy_consumption_ht
+                        name: Verbrauch HT
+                        unit: kWh
+                        factor: -1
+                        aggregate: sum
+                        style:
+                          backgroundColor: '#f04633'
+                      - entity: sensor.energy_consumption_nt
+                        name: Verbrauch NT
+                        unit: kWh
+                        ignoreZero: true
+                        factor: -1
+                        aggregate: sum
+                        style:
+                          backgroundColor: '#f67166'
+                  - type: 'custom:chart-card'
+                    title: Anteil der Eigennutzung
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: bar
+                    showstate: false
+                    debug: true
+                    update_interval: 30
+                    datascales:
+                      range: 744
+                      unit: hour
+                      mode: time
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: false
+                      scales:
+                        x:
+                          alignToPixels: true
+                        'y':
+                          min: 0
+                          max: 100
+                          title:
+                            display: true
+                            text: Anteil
+                    entities:
+                      - entity: sensor.energy_production
+                        name: Nutzungsanteil
+                        unit: '%'
+                        ignoreZero: true
+                        factor: 100
+                        aggregate: max
+                        style:
+                          backgroundColor: '#8cac2c'
+          - row:
+              - columns: null
+                width: 50%
+                entities:
+                  - type: 'custom:chart-card'
+                    title: Energieproduktion
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: bar
+                    showstate: false
+                    update_interval: 30
+                    datascales:
+                      range: 744
+                      unit: hour
+                      mode: time
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: false
+                      scales:
+                        x:
+                          alignToPixels: true
+                        'y':
+                          title:
+                            display: true
+                            text: Produktion kWh
+                    entities:
+                      - entity: sensor.kostal_watt_aktuell
+                        name: Energieproduktion
+                        unit: kWh
+                        ignoreZero: true
+                        factor: 0.001
+                        aggregate: max
+                        style:
+                          backgroundColor: '#fcec34'
+                  - type: 'custom:chart-card'
+                    title: Energieverbrauch
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: bar
+                    showstate: false
+                    debug: true
+                    update_interval: 30
+                    datascales:
+                      range: 744
+                      unit: hour
+                      mode: time
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: false
+                      scales:
+                        x:
+                          alignToPixels: true
+                        'y':
+                          title:
+                            display: true
+                            text: Verbrauch kWh
+                    entities:
+                      - entity: sensor.verbrauch_gesamt
+                        name: Verbrauch
+                        unit: kWh
+                        ignoreZero: true
+                        factor: 0.01
+                        aggregate: max
+                        style:
+                          backgroundColor: '#FF8066'
