@@ -289,6 +289,10 @@ class graphChart {
                     return `${chart.formattedValue} ${chart.dataset.unit || ""}`
                 }
             }
+            _options.interaction = {
+                intersect: false,
+                mode: "index"
+            }
         } else {
             /**
              * callbacks for tooltip
@@ -298,6 +302,10 @@ class graphChart {
                     label: formatToolTipLabel,
                     title: formatToolTipTitle
                 }
+            }
+            _options.interaction = {
+                intersect: true,
+                mode: "point"
             }
         }
         /**

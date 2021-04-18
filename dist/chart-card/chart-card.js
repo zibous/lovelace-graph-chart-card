@@ -960,7 +960,7 @@ class ChartCard extends HTMLElement {
                         let item = this.entity_items.getEntity(entity.entity) || Object.assign({}, entity)
                         if (h.attributes) {
                             if (item.name === undefined) item.name = h.attributes.friendly_name || item.name
-                            item.unit = h.attributes.unit_of_measurement || item.unit || ""
+                            item.unit = item.unit || h.attributes.unit_of_measurement || ""
                         }
                         /**
                          * add this the entities list
@@ -1209,7 +1209,7 @@ class ChartCard extends HTMLElement {
                  */
                 this.DEBUGDATA.PROFILER.GETHASSDATA = {
                     start: performance.now()
-                }                
+                }
                 this.DEBUGDATA.PROFILER.GETBUCKETDATA = {
                     start: performance.now()
                 }
@@ -3702,6 +3702,10 @@ class graphChart {
                     return `${chart.formattedValue} ${chart.dataset.unit || ""}`
                 }
             }
+            _options.interaction = {
+                intersect: false,
+                mode: "index"
+            }
         } else {
             /**
              * callbacks for tooltip
@@ -3711,6 +3715,10 @@ class graphChart {
                     label: formatToolTipLabel,
                     title: formatToolTipTitle
                 }
+            }
+            _options.interaction = {
+                intersect: true,
+                mode: "point"
             }
         }
         /**
