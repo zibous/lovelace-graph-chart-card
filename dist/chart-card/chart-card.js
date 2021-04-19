@@ -2557,55 +2557,6 @@ class DataProvider {
         _entity.datascales.data_count = _entity.seriesdata.data.length
         return _entity.datascales.data_count
     }
-
-    /**
-     * get simple data for the entities
-     * calculates the state data from the history devicestates
-     * based on the aggreation methode.
-     * @param {*} deviceStates
-     */
-    getSimpleData_old(deviceStates) {
-        if (deviceStates && deviceStates.length) {
-            deviceStates.forEach((states) => {
-                const _entityId = states[0].entity_id,
-                    _entity = this.dataInfo.entity_items[_entityId] || null
-                this._setEntityServiceDataInformation(_entity)
-                if (_entity) {
-                    const _factor = _entity.factor || 1.0
-                    states = _entity.field
-                        ? states.filter((item) => validItem(item.attributes[_entity.field], _entity.ignoreZero))
-                        : states.filter((item) => validItem(item.state, _entity.ignoreZero))
-
-                    const _values = states.map((item) =>
-                        _entity.field ? item.attributes[_entity.field] * _factor : item.state * _factor
-                    )
-
-                    if (_entity.datascales.useStatistics) {
-                        _itemdata.statistics = {
-                            current: _entity.state,
-                            first: _values[0],
-                            last: _values[_values.length - 1],
-                            max: arrStatistics.max(_values),
-                            min: arrStatistics.min(_values),
-                            sum: arrStatistics.sum(_values),
-                            avg: arrStatistics.mean(_values)
-                        }
-                    }
-                    /**
-                     * update the entity
-                     */
-                    _entity.datascales.data_count = _values.length
-                    _entity.state = arrStatistics[_entity.datascales.aggregate](_values)
-                } else {
-                    console.error(`Sensordata ${_entity} not found !`)
-                }
-            })
-        }
-        if (this.DEBUGMODE) {
-            this.DEBUGDATA.PROFILER.DATAPROVIDER.elapsed = msToTime(performance.now() - this.DEBUGDATA.PROFILER.DATAPROVIDER.start)
-        }
-        return true
-    }
     
     /**
      * get simple data for the entities
@@ -2625,6 +2576,7 @@ class DataProvider {
                         _entity.field ? (getAttributeValue(item, _entity.field) || 0.0) * _factor : item.state * _factor
                     )
                     if (_entity.datascales.useStatistics) {
+                        let _itemdata = {} 
                         _itemdata.statistics = {
                             current: _entity.state,
                             first: _values[0],
