@@ -288,7 +288,8 @@ style.innerHTML = `
         opacity:0.5;
     }   
     .card-detail-view h2{
-        margin-left: 0.5em
+        margin-left: 0.5em;
+        font-size: 1.25em;
     }
     .card-detail-table{
         margin: 0 auto;
@@ -652,13 +653,15 @@ class ChartCard extends HTMLElement {
         /**
          * ha-card detail data
          */
-        if (this.chart_showdetails) {
+        if (this.showdetails && this.chart_showdetails) {
             this.detailData = document.createElement("div")
             this.detailData.setAttribute("class", "card-detail-view")
             this.detailData.id = this.id + "detail-info"
-            this.currentData.setAttribute("data-view", this.detailData.id)
-            if (this.chart_showdetails.visible == true) {
-                this.detailData.setAttribute("style", "margin:0 !important;")
+            if (this.detailData.id) {
+                this.detailData.setAttribute("data-view", this.detailData.id)
+                if (this.chart_showdetails.visible == true) {
+                    this.detailData.setAttribute("style", "margin:0 !important;")
+                }
             }
         } else {
             content.style.maxHeight = cssAttr(this.card_height)
@@ -669,7 +672,7 @@ class ChartCard extends HTMLElement {
          */
         content.appendChild(canvas)
         if (this.loader) content.append(this.loader)
-        if (this.chart_showdetails && this.detailData) {
+        if (this.showdetails && this.detailData) {
             content.append(this.detailData)
         }
         card.appendChild(content)
@@ -843,20 +846,22 @@ class ChartCard extends HTMLElement {
             this.chart_showstate = this._config.showstate || false
 
             /**
-             * detail settings
+             * check detail settings
              */
-            this.chart_showdetails = this._config.showdetails || false
-            this.chart_showdetails =
-                (this.chart_showdetails.title_mean ||
-                    "" + this.chart_showdetails.title_min ||
-                    "" + this.chart_showdetails.title_max ||
-                    "") != ""
-
+            this.showdetails = false
+            this.chart_showdetails = Object.assign({}, this._config.showdetails)
+            if (this._config.showdetails) {
+                this.showdetails =
+                    [
+                        this.chart_showdetails.title_mean || "",
+                        this.chart_showdetails.title_min || "",
+                        this.chart_showdetails.title_max || ""
+                    ].join("") !== ""
+            }
             /**
              * detail optional theme and loader
              * default is spinning-circles, lovelace config can overwrite the default
              */
-            this.chart_showdetails = this._config.showdetails
             this.chart_themesettings = this._config.theme || null
             this.loaderart = this._config.loader || "three-dots"
 
@@ -1319,7 +1324,7 @@ class ChartCard extends HTMLElement {
         /**
          * SHOW DETAIL DATA
          */
-        if (this.currentData && this.detailData && data) {
+        if (this.chart_showdetails && this.detailData && data) {
             const _statdata = this.entity_items.getStatisticData()
             if (_statdata) {
                 _html = []
@@ -1338,7 +1343,8 @@ class ChartCard extends HTMLElement {
                 if (this.chart_showdetails.title_max && this.chart_showdetails.title_max != "")
                     _html.push(`<th align="right">${this.chart_showdetails.title_max}</th>`)
 
-                _html.push(`<th align="right">${this.chart_showdetails.title_current || "current"}</th>`)
+                if (this.chart_showdetails.title_current && this.chart_showdetails.title_current != "")
+                    _html.push(`<th align="right">${this.chart_showdetails.title_current || "current"}</th>`)
 
                 if (this.chart_showdetails.title_timestamp && this.chart_showdetails.title_timestamp != "")
                     _html.push(`<th>${this.chart_showdetails.title_timestamp || "Timestamp"}</th>`)
@@ -1353,7 +1359,7 @@ class ChartCard extends HTMLElement {
                             item.name +
                             "</td>"
                     )
-                    if (this.chart_showdetails.title_min && this.chart_showdetails.title_mean != "")
+                    if (this.chart_showdetails.title_mean && this.chart_showdetails.title_mean != "")
                         _html.push(
                             "<td align='right'>" + _formatNumber(this.chart_locale, item.mean || 0.0) + " " + item.unit + "</td>"
                         )
@@ -1361,13 +1367,15 @@ class ChartCard extends HTMLElement {
                         _html.push(
                             "<td align='right'>" + _formatNumber(this.chart_locale, item.min || 0.0) + " " + item.unit + "</td>"
                         )
-                    if (this.chart_showdetails.title_min && this.chart_showdetails.title_max != "")
+                    if (this.chart_showdetails.title_max && this.chart_showdetails.title_max != "")
                         _html.push(
                             "<td align='right'>" + _formatNumber(this.chart_locale, item.max || 0.0) + " " + item.unit + "</td>"
                         )
-                    _html.push(
-                        "<td align='right'>" + _formatNumber(this.chart_locale, item.current || 0.0) + " " + item.unit + "</td>"
-                    )
+
+                    if (this.chart_showdetails.title_current && this.chart_showdetails.title_current != "")    
+                        _html.push(
+                            "<td align='right'>" + _formatNumber(this.chart_locale, item.current || 0.0) + " " + item.unit + "</td>"
+                        )
 
                     if (this.chart_showdetails.title_timestamp && this.chart_showdetails.title_timestamp != "")
                         _html.push("<td>" + localDatetime(item.timestamp, this.chart_locale) + "</span>")
@@ -1566,7 +1574,7 @@ class ChartCard extends HTMLElement {
         this._renderCardTimestamp()
 
         if (mode === API_DATAMODE.history) {
-            if (this.chart_showstate) {
+            if (this.chart_showstate || this.showdetails) {
                 let _data = this.graphData.data.datasets.map(function (item) {
                     return {
                         name: item.label || "",
@@ -3318,6 +3326,9 @@ class chartData {
                 if (_entityOptions.backgroundColor === undefined) {
                     _options.backgroundColor = DEFAULT_COLORS[_graphData.config.series]
                     _options.borderColor = DEFAULT_COLORS[_graphData.config.series]
+                }else{
+                    _options.backgroundColor = _options.backgroundColor || _options.backgroundColor || _options.color
+                    _options.borderColor = _options.borderColor || _options.backgroundColor  || _options.color
                 }
             }
 

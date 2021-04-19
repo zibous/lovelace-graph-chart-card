@@ -507,6 +507,9 @@ class chartData {
                 if (_entityOptions.backgroundColor === undefined) {
                     _options.backgroundColor = DEFAULT_COLORS[_graphData.config.series]
                     _options.borderColor = DEFAULT_COLORS[_graphData.config.series]
+                }else{
+                    _options.backgroundColor = _options.backgroundColor || _options.backgroundColor || _options.color
+                    _options.borderColor = _options.borderColor || _options.backgroundColor  || _options.color
                 }
             }
 

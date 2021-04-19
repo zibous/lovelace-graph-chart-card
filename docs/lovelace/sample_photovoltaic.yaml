@@ -31,6 +31,37 @@ views:
           - row:
               - columns: null
                 width: 100%
+                icon: 'mdi:counter'
+                title: Stromzähler Anzeige
+                description: >-
+                  Anzeige des Hoch- und Niedertarifes für den Überschuss und
+                  Verbrauch der Energie. Aktueller Status des Stromzählers.
+                entities:
+                  - type: 'custom:simple-card'
+                    mode: buttons
+                    entities:
+                      - entity: sensor.energy_consumption_meter_ht
+                        name: HT-Tarif 1.8.1
+                      - entity: sensor.energy_consumption_meter_nt
+                        name: NT-Tarif 1.8.2
+                      - entity: sensor.energy_production_meter_t1
+                        name: HT-Tarif 2.8.1
+                      - entity: sensor.energy_production_meter_t2
+                        name: NT-Tarif 2.8.2
+                      - entity: sensor.mt174_status
+                        name: Uhrzeit
+                      - entity: sensor.energy_notused
+                        name: Energie ungenützt
+                      - entity: sensor.energy_netto_ratio
+                        name: Energienutzung
+          - row:
+              - columns: null
+                width: 100%
+                icon: 'mdi:counter'
+                title: Aktuelle Produktion vs. Überschuss
+                description: >-
+                  Aktuelle Anzeige des Hoch- und Niedertarifes für der
+                  Produktion und Verbrauch der Energie.
                 entities:
                   - type: 'custom:chart-card'
                     title: Energie Überschuss und Verbrauch
@@ -43,6 +74,15 @@ views:
                       range: 744
                       unit: hour
                       mode: time
+                    showdetails:
+                      title: Detaildaten Energie
+                      title_sensor: Tarif
+                      title_mean: Durchschnitt
+                      title_min: Kleinster Wert
+                      title_max: Größter Wert
+                      title_current: Aktuell
+                      title_timestamp: Aktualisiert am
+                      visible: true
                     chartOptions:
                       plugins:
                         legend:
@@ -51,20 +91,28 @@ views:
                         x:
                           alignToPixels: true
                           stacked: true
+                          grid:
+                            display: true
+                            color: transparent
+                            drawTicks: true
+                            tickColor: '#f2c404'
+                          ticks:
+                            major:
+                              enabled: true
                         'y':
                           title:
                             display: true
                             text: Produktion kWh
                     entities:
                       - entity: sensor.energy_production_t1
-                        name: Überschuss T1
+                        name: Überschuss HT
                         unit: kWh
                         factor: 1
                         aggregate: sum
                         style:
                           backgroundColor: '#f2c404'
                       - entity: sensor.energy_production_t2
-                        name: Übeschuss T2
+                        name: Übeschuss NT
                         unit: kWh
                         factor: 1
                         aggregate: sum
@@ -85,46 +133,110 @@ views:
                         aggregate: sum
                         style:
                           backgroundColor: '#f67166'
+          - row:
+              - columns: null
+                width: 50%
+                entities:
+                  - type: 'custom:simple-card'
+                    subtitle: Einspeisung
+                    mode: buttons
+                    entities:
+                      - entity: sensor.energy_production_t1
+                        name: Überschuss HT
+                      - entity: sensor.energy_production_t2
+                        name: Überschuss NT
+                      - entity: sensor.energy_production
+                        name: Überschuss
+                  - type: 'custom:simple-card'
+                    subtitle: Bezug
+                    mode: buttons
+                    entities:
+                      - entity: sensor.energy_consumption_ht
+                        name: Verbrauch HT
+                      - entity: sensor.energy_consumption_nt
+                        name: Verbrauch NT
+                      - entity: sensor.energy_consumption
+                        name: Verbrauch
+          - row:
+              - columns: null
+                width: 100%
+                title: 'Aktuelle Energieausnützung, Produktion & Verbrauch'
+                description: >-
+                  Auswertung der Energieausnützung (Frei vergügbar bzw.
+                  ungenützt), Energieproduktion der Photovoltaikanlage,
+                  Verbrauch gesamt für den definierten Zeitraum.
+                entities:
                   - type: 'custom:chart-card'
-                    title: Anteil der Eigennutzung
+                    title: Verfügbar
                     icon: 'mdi:counter'
                     height: 360
                     chart: bar
-                    showstate: false
-                    debug: true
+                    showstate: true
                     update_interval: 30
+                    debug: true
                     datascales:
-                      range: 744
-                      unit: hour
-                      mode: time
+                      range: 12
+                      unit: second
+                      mode: category
+                      ignoreZero: true
                     chartOptions:
                       plugins:
                         legend:
-                          display: false
+                          display: true
+                          position: top
                       scales:
                         x:
                           alignToPixels: true
-                        'y':
-                          min: 0
-                          max: 100
+                          grid:
+                            display: true
+                            color: transparent
+                            drawTicks: true
+                            tickColor: '#f2c404'
+                        left:
                           title:
                             display: true
-                            text: Anteil
+                            text: kWh
+                            color: '#d9534f'
+                          ticks:
+                            autoSkip: true
+                            maxTicksLimit: 12
+                        right:
+                          title:
+                            display: true
+                            text: Ausschöpfung %
+                            color: 'rgb(59, 179, 195)'
+                          gridLines:
+                            drawOnChartArea: false
                     entities:
                       - entity: sensor.energy_production
-                        name: Nutzungsanteil
-                        unit: '%'
+                        name: Verfügbar
+                        unit: kw
                         ignoreZero: true
-                        factor: 100
+                        factor: 1
                         aggregate: max
                         style:
-                          backgroundColor: '#8cac2c'
+                          yAxisID: left
+                          fill: true
+                          gradient:
+                            colors:
+                              - '#d9534f'
+                              - '#fd5217'
+                              - '#ff0000'
+                      - entity: sensor.energy_netto_ratio
+                        name: Ausschöpfung
+                        style:
+                          type: line
+                          fill: true
+                          yAxisID: right
+                          backgroundColor: 'rgba(59, 179, 195,0.25)'
+                          borderColor: 'rgba(59, 179, 195,0.75)'
+                          borderWidth: 1
           - row:
               - columns: null
                 width: 50%
                 entities:
                   - type: 'custom:chart-card'
-                    title: Energieproduktion
+                    title: Produktion
                     icon: 'mdi:counter'
                     height: 360
                     chart: bar
@@ -134,6 +246,12 @@ views:
                       range: 744
                       unit: hour
                       mode: time
+                    showdetails:
+                      title: Detaildaten Produktion
+                      title_sensor: Kostal
+                      title_min: Kleinster Wert
+                      title_max: Größter Wert
+                      visible: true
                     chartOptions:
                       plugins:
                         legend:
@@ -141,10 +259,16 @@ views:
                       scales:
                         x:
                           alignToPixels: true
+                          grid:
+                            display: true
+                            color: transparent
+                            drawTicks: true
+                            tickColor: '#f2c404'
                         'y':
                           title:
                             display: true
                             text: Produktion kWh
+                            color: '#fcec34'
                     entities:
                       - entity: sensor.kostal_watt_aktuell
                         name: Energieproduktion
@@ -155,17 +279,22 @@ views:
                         style:
                           backgroundColor: '#fcec34'
                   - type: 'custom:chart-card'
-                    title: Energieverbrauch
+                    title: Verbrauch
                     icon: 'mdi:counter'
                     height: 360
                     chart: bar
                     showstate: false
-                    debug: true
                     update_interval: 30
                     datascales:
                       range: 744
                       unit: hour
                       mode: time
+                    showdetails:
+                      title: Detaildaten Verbrauch
+                      title_sensor: Gesamt
+                      title_min: Kleinster Wert
+                      title_max: Größter Wert
+                      visible: true
                     chartOptions:
                       plugins:
                         legend:
@@ -173,10 +302,16 @@ views:
                       scales:
                         x:
                           alignToPixels: true
+                          grid:
+                            display: true
+                            color: transparent
+                            drawTicks: true
+                            tickColor: '#f2c404'
                         'y':
                           title:
                             display: true
                             text: Verbrauch kWh
+                            color: '#FF8066'
                     entities:
                       - entity: sensor.verbrauch_gesamt
                         name: Verbrauch
@@ -186,3 +321,77 @@ views:
                         aggregate: max
                         style:
                           backgroundColor: '#FF8066'
+          - row:
+              - columns: null
+                width: 50%
+                icon: 'mdi:counter'
+                entities:
+                  - type: 'custom:simple-card'
+                    mode: buttons
+                    subtitle: Überschuss pro Tag
+                    entities:
+                      - entity: sensor.energy_production_day_t1
+                        name: Produktion HT
+                      - entity: sensor.energy_production_day_t2
+                        name: Produktion NT
+                      - entity: sensor.energy_production_day
+                        name: Produktion
+                  - type: 'custom:simple-card'
+                    mode: buttons
+                    subtitle: Verbrauch pro Tag
+                    entities:
+                      - entity: sensor.energy_consumption_day_ht
+                        name: Verbrauch HT
+                      - entity: sensor.energy_consumption_day_nt
+                        name: Verbrauch NT
+                      - entity: sensor.energy_consumption_day
+                        name: Verbrauch
+          - row:
+              - columns: null
+                width: 50%
+                title: null
+                entities:
+                  - type: 'custom:simple-card'
+                    subtitle: Überschuss pro Monat
+                    mode: buttons
+                    entities:
+                      - entity: sensor.energy_production_month_t1
+                        name: Überschuss HT
+                      - entity: sensor.energy_production_month_t2
+                        name: Überschuss NT
+                      - entity: sensor.energy_production_month
+                        name: Überschuss
+                  - type: 'custom:simple-card'
+                    subtitle: Verbrauch pro Monat
+                    mode: buttons
+                    entities:
+                      - entity: sensor.energy_consumption_month_ht
+                        name: Verbrauch HT
+                      - entity: sensor.energy_consumption_month_nt
+                        name: Verbrauch NT
+                      - entity: sensor.energy_consumption_month
+                        name: Verbrauch
+              - columns: null
+                width: 50%
+                title: null
+                entities:
+                  - type: 'custom:simple-card'
+                    subtitle: Überschuss pro Jahr
+                    mode: buttons
+                    entities:
+                      - entity: sensor.energy_production_year_t1
+                        name: Überschuss HT
+                      - entity: sensor.energy_production_year_t2
+                        name: Überschuss NT
+                      - entity: sensor.energy_production_year
+                        name: Überschuss
+                  - type: 'custom:simple-card'
+                    subtitle: Verbrauch pro Jahr
+                    mode: buttons
+                    entities:
+                      - entity: sensor.energy_consumption_year_ht
+                        name: Verbrauch HT
+                      - entity: sensor.energy_consumption_year_nt
+                        name: Verbrauch NT
+                      - entity: sensor.energy_consumption_year
+                        name: Verbrauch
