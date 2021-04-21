@@ -138,7 +138,7 @@ views:
                 width: 50%
                 entities:
                   - type: 'custom:simple-card'
-                    subtitle: Einspeisung
+                    subtitle: Aktuelle Einspeisung
                     mode: buttons
                     entities:
                       - entity: sensor.energy_production_t1
@@ -148,7 +148,7 @@ views:
                       - entity: sensor.energy_production
                         name: Überschuss
                   - type: 'custom:simple-card'
-                    subtitle: Bezug
+                    subtitle: Aktueller Bezug
                     mode: buttons
                     entities:
                       - entity: sensor.energy_consumption_ht

@@ -32,11 +32,60 @@ views:
                 width: 100%
                 entities:
                   - type: 'custom:chart-card'
+                    title: Wasserverbrauch ㎥ / Tag
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: line
+                    debug: true
+                    showstate: true
+                    showdetails:
+                      title_sensor: Messwert
+                      title_mean: Durchschnitt / Tag
+                      title_max: Größter Wert
+                      title_current: Letzter Wert
+                      visible: true
+                    datascales:
+                      mode: time
+                    chartOptions:
+                      plugins:
+                        legend:
+                          position: top
+                          display: true
+                      scales:
+                        x:
+                          grid:
+                            display: false
+                        'y':
+                          suggestedMin: 0
+                          suggestedMax: 8
+                          grid:
+                            display: true
+                          title:
+                            display: true
+                            text: Verbrauch ㎥
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: wasser
+                        unit: ㎥
+                        datasource:
+                          influxdb: >-
+                            https://influxdb.local/query?db=home_assistant&epoch=ms
+                          query: >-
+                            SELECT sum("value") FROM "㎥" WHERE ("entity_id" =
+                            'max_m3_day') AND time > now() -180d GROUP BY
+                            time(1d) fill(null)
+                          token: YWRtaWdAYmVlcDRCb3Nz
+                        name: Wasserverbrauch
+                        style:
+                          backgroundColor: 'rgba(58,165,231,0.75)'
+                          fill: true
+                          borderWidth: 1
+                          order: 1
+                  - type: 'custom:chart-card'
                     title: Ausschöpfungsrate
                     icon: 'mdi:waves'
                     height: 360
                     chart: bar
-                    debug: true
                     showstate: true
                     chartOptions:
                       segmented: true

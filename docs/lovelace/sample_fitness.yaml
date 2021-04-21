@@ -39,16 +39,75 @@ views:
                 width: 100%
                 entities:
                   - type: 'custom:chart-card'
+                    title: Gewicht & Fettfreie Masse
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: line
+                    debug: true
+                    update_interval: 600
+                    datascales:
+                      mode: time
+                    chartOptions:
+                      plugins:
+                        legend:
+                          position: top
+                          display: true
+                      scales:
+                        x:
+                          alignToPixels: true
+                          title:
+                            text: Zeitraum 6 Monate
+                            display: true
+                          grid:
+                            display: false
+                        'y':
+                          title:
+                            display: true
+                            text: kg
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: gewicht
+                        unit: kg
+                        datasource:
+                          influxdb: >-
+                            https://influxdb.local/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT mean("weight") FROM "miscale_peter" WHERE
+                            time > now() -180d GROUP BY time(1d) fill(null)
+                          token: YWRtaWdAYmVlcDRCb3Nz
+                        name: Gewicht
+                        style:
+                          backgroundColor: 'rgba(2, 117, 216,0.70)'
+                          fill: true
+                          borderWidth: 1
+                          order: 1
+                      - entity: sensor.date_time
+                        dataid: fettmasse
+                        datasource:
+                          influxdb: >-
+                            https://influxdb.local/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT mean("lbm") FROM "miscale_peter" WHERE time >
+                            now() -180d GROUP BY time(1d)  fill(null)
+                          token: YWRtaWdAYmVlcDRCb3Nz
+                        name: Fettfreie Masse
+                        unit: kg
+                        style:
+                          backgroundColor: 'rgba(217, 83, 79, 0.90)'
+                          fill: true
+                          borderWidth: 1
+                          order: 0
+                  - type: 'custom:chart-card'
                     title: Zusammenfassung der Ergebnisse
                     icon: 'mdi:scale'
                     height: 360
                     chart: line
                     datascales:
-                      range: 144
+                      range: 92
                       unit: day
                       mode: time
+                      aggregate: max
                       ignoreZero: true
-                    debug: true
                     showstate: true
                     showdetails:
                       title: Zusammenfassung
@@ -58,6 +117,7 @@ views:
                       title_max: Größter Wert
                       title_current: Aktuell
                       title_timestamp: Aktualisiert am
+                      visible: true
                     options:
                       plugins:
                         legend:
@@ -89,7 +149,8 @@ views:
                         style:
                           yAxisID: left
                           type: line
-                          borderColor: rgba(241,196,15,0.85)
+                          backgroundColor: 'rgb(241,196,15)'
+                          borderColor: 'rgb(241,196,15)'
                       - entity: sensor.peter_gewicht
                         unit: kg
                         style:
@@ -315,3 +376,121 @@ views:
                         unit: kg/m²
                       - entity: sensor.peter_bmi
                         aggregate: max
+                  - type: 'custom:chart-card'
+                    title: Körperfett Anteile
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: line
+                    debug: true
+                    update_interval: 600
+                    datascales:
+                      mode: time
+                    chartOptions:
+                      plugins:
+                        legend:
+                          position: top
+                          display: true
+                      scales:
+                        x:
+                          alignToPixels: true
+                          title:
+                            text: Zeitraum 30 Tage
+                            display: true
+                          grid:
+                            display: false
+                        'y':
+                          title:
+                            display: true
+                            text: '% Anteil'
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: bodyfat
+                        unit: '%'
+                        datasource:
+                          influxdb: >-
+                            https://influxdb.local/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT mean("fat") FROM "miscale_peter" WHERE time >
+                            now() -30d GROUP BY time(1d) fill(null)
+                          token: YWRtaWdAYmVlcDRCb3Nz
+                        name: Körperfett
+                        style:
+                          backgroundColor: 'rgba(239, 90,40,0.70)'
+                          fill: true
+                          borderWidth: 1
+                          order: 1
+                      - entity: sensor.date_time
+                        dataid: visceral
+                        datasource:
+                          influxdb: >-
+                            https://influxdb.local/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT mean("visceral") FROM "miscale_peter" WHERE
+                            time > now() -30d GROUP BY time(1d)  fill(null)
+                          token: YWRtaWdAYmVlcDRCb3Nz
+                        name: Viszerales Fett
+                        unit: '%'
+                        style:
+                          backgroundColor: 'rgba(254, 115, 131, 0.90)'
+                          fill: true
+                          borderWidth: 1
+                          order: 0
+                  - type: 'custom:chart-card'
+                    title: Muskeln / Eiweis
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: line
+                    debug: true
+                    update_interval: 600
+                    datascales:
+                      mode: time
+                    chartOptions:
+                      plugins:
+                        legend:
+                          position: top
+                          display: true
+                      scales:
+                        x:
+                          alignToPixels: true
+                          title:
+                            text: Zeitraum 30 Tage
+                            display: true
+                          grid:
+                            display: false
+                        'y':
+                          title:
+                            display: true
+                            text: '% Anteil'
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: muscle
+                        unit: '%'
+                        datasource:
+                          influxdb: >-
+                            https://influxdb.local/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT mean("muscle") FROM "miscale_peter" WHERE
+                            time > now() -30d GROUP BY time(1d) fill(null)
+                          token: YWRtaWdAYmVlcDRCb3Nz
+                        name: Muskeln
+                        style:
+                          backgroundColor: 'rgba(250, 135,20,0.70)'
+                          fill: true
+                          borderWidth: 1
+                          order: 1
+                      - entity: sensor.date_time
+                        dataid: visceral
+                        datasource:
+                          influxdb: >-
+                            https://influxdb.local/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT mean("protein") FROM "miscale_peter" WHERE
+                            time > now() -30d GROUP BY time(1d)  fill(null)
+                          token: YWRtaWdAYmVlcDRCb3Nz
+                        name: Eiweis
+                        unit: '%'
+                        style:
+                          backgroundColor: 'rgba(234, 184, 57, 0.90)'
+                          fill: true
+                          borderWidth: 1
+                          order: 0

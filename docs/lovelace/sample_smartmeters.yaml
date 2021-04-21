@@ -226,7 +226,6 @@ views:
                           title:
                             display: true
                             text: Energie kWh
-                          max: 200
                     entities:
                       - options:
                           unit: Wh
@@ -266,7 +265,6 @@ views:
                           title:
                             display: true
                             text: Energie Wh
-                          max: 200
                     entities:
                       - options:
                           unit: Wh
