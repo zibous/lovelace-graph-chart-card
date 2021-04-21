@@ -58,6 +58,76 @@ views:
               - columns: null
                 width: 100%
                 icon: 'mdi:counter'
+                title: Auswertung Photovoltaik Leistung
+                description: >-
+                  Auswertung Photovoltaik Ertrag (Produktion bei
+                  Sonnenlichtanteil).
+                entities:
+                  - type: 'custom:chart-card'
+                    title: Photovoltaik Ertrag
+                    icon: 'mdi:counter'
+                    height: 360
+                    chart: bar
+                    debug: true
+                    datascales:
+                      mode: time
+                    chartOptions:
+                      plugins:
+                        legend:
+                          position: top
+                          display: true
+                        scales:
+                          x:
+                            title:
+                              display: true
+                              text: Solar-Energie
+                          left:
+                            title:
+                              display: true
+                              text: kWh
+                          right:
+                            title:
+                              display: true
+                              text: Lux
+                            gridLines:
+                              drawOnChartArea: false
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: kostalWh
+                        unit: kWh
+                        datasource:
+                          influxdb: >-
+                            https://influxdb.local/query?db=home_assistant&epoch=ms
+                          query: >-
+                            SELECT sum("value")*0.001 FROM "Wh" WHERE
+                            ("entity_id" = 'kostal_watt_aktuell') AND time >
+                            now() -240d GROUP BY time(1d) fill(null)
+                          token: YWRtaWdAYmVlcDRCb3Nz
+                        name: Photovoltaik
+                        style:
+                          yAxisID: left
+                          backgroundColor: 'rgb(243, 180, 53,0.75)'
+                      - entity: sensor.date_time
+                        dataid: lux
+                        datasource:
+                          influxdb: >-
+                            https://influxdb.local/query?db=home_assistant&epoch=ms
+                          query: >-
+                            SELECT mean("value") FROM "Lux" WHERE time > now()
+                            -240d GROUP BY time(1d) fill(null)
+                          token: YWRtaWdAYmVlcDRCb3Nz
+                        name: Sonnenlicht
+                        unit: Lux
+                        style:
+                          type: line
+                          yAxisID: right
+                          backgroundColor: 'rgba(233, 227, 144)'
+                          fill: true
+                          borderWidth: 1
+          - row:
+              - columns: null
+                width: 100%
+                icon: 'mdi:counter'
                 title: Aktuelle Produktion vs. Überschuss
                 description: >-
                   Aktuelle Anzeige des Hoch- und Niedertarifes für der
