@@ -1,4 +1,6 @@
 # Lovelace - graph-chartjs-card
+<br>
+
 ## PIE Charts
 
 Pie charts are probably the most commonly used charts. They are divided into segments, the arc of each segment shows the proportional value of each piece of data.

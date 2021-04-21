@@ -1,4 +1,6 @@
 # Lovelace - graph-chartjs-card
+<br>
+
 ## Horizontal Bar Charts
 
 A horizontal bar chart is a variation on a vertical bar chart. It is sometimes used to show trend data, and the comparison of multiple data sets side by side. To achieve this you will have to set the `chart` property to `horizontalBar` and thus will show vertical bars.

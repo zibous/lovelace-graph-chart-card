@@ -1,4 +1,6 @@
 # Lovelace - graph-chartjs-card
+<br>
+
 ## Mixed Chart Types
 
 With graph-chartjs-card, it is possible to create mixed charts that are a combination of two or more different chart types. A common example is a bar chart that also includes a line dataset. When creating a mixed chart, we specify the chart type on each entity (dataset).

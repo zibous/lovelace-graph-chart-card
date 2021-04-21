@@ -88,7 +88,7 @@ class DataProvider {
         _entity.datascales.data_count = _entity.seriesdata.data.length
         return _entity.datascales.data_count
     }
-    
+
     /**
      * get simple data for the entities
      * calculates the state data from the history devicestates
@@ -107,7 +107,7 @@ class DataProvider {
                         _entity.field ? (getAttributeValue(item, _entity.field) || 0.0) * _factor : item.state * _factor
                     )
                     if (_entity.datascales.useStatistics) {
-                        let _itemdata = {} 
+                        let _itemdata = {}
                         _itemdata.statistics = {
                             current: _entity.state,
                             first: _values[0],
@@ -201,7 +201,7 @@ class DataProvider {
             deviceStates.forEach((states) => {
                 const _entityId = states[0].entity_id,
                     _entity = this.dataInfo.entity_items[_entityId]
-                if (_entityId) {
+                if (_entity && _entityId) {
                     const _factor = _entity.factor || 1.0
                     this._setEntityServiceDataInformation(_entity)
                     if (!_entity.hasOwnProperty("ignoreZero")) _entity.ignoreZero = false

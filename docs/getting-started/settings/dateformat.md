@@ -1,5 +1,7 @@
 # Lovelace - graph-chartjs-card
 
+<br>
+
 ## Date Format
 
 And here are the named masks provided by default (you can easily change these or add your own):

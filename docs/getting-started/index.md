@@ -1,10 +1,10 @@
 # Lovelace - graph-chartjs-card
 
-
+<br>
 
 ## Getting started
 
-
+<br>
 
 ### Minimal configuration
 
@@ -208,6 +208,9 @@ Entities Section contains all sensors and the settings (optional) for the data t
 <br>
 
 #####  - Entities Options
+
+With these settings you can set the type of chart elements settings for all entities.
+
 | Property   | Type     | Default     | Description |
 | -------------- | -------- | ----------- |------------ |
 | unit           | string   | entity unit-of-messuement | **Optional**, Text -  override the unit of the sensor |
@@ -227,10 +230,27 @@ Entities Section contains all sensors and the settings (optional) for the data t
 | aggregate     | boolean   | last | **Optional**, aggregate method for the datascale unit: `first`, `last`, `sum`, `mean`, `max`, `min`,`range`, `midrange` |
 | target_value | number | None | **Optional**, calculates the state value: `(state.value/target_value.value)*100`. Unit is set to `%` |
 | style | Object | None | ... see Entity Style samples. Additional info see: https://www.chartjs.org/docs/latest/configuration/elements.html |
+| dataid     | string   | None | **Optional**,  |
+| datasource     | object   | None | **Optional**, |
+
+<br>
+
+##### - Entity Datasource
+
+If the data source is set, the data from the influx database is used for the graphical representations, otherwise it is obtained from the home assistant history database.
+
+| Property | Type   | Default | Description                                                  |
+| -------- | ------ | ------- | ------------------------------------------------------------ |
+| influxdb | string | None    | **Connection** to INFLUXDB: `https://hostname/influxdb/query?db=home_assistant&epoch=ms)` |
+| query    | string | None    | **INFLUXDB SQL** statement. `SELECT sum("value")*0.001 FROM "Wh" WHERE("entity_id" = 'kostal_watt_aktuell') AND time > now() -14d GROUP BY time(1d) fill(null)` |
+| token    | string | None    | **Authorization** for Influxdb Connection. **btoa**(`${username}:${password}`)`. Get the token form the Browsers Console. |
 
 <br>
 
 ###### - Entity Style samples
+
+With these settings you can set the type of chart elements settings.
+
 | Property   | Type     | Default     | Description |
 | -------------- | -------- | ----------- |------------ |
 | backgroundColor| string   | default color | **Optional**, HEX, RGB, RGBA String  |

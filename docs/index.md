@@ -1,5 +1,7 @@
 # Lovelace - graph-chartjs-card
 
+<br>
+
 This is higly customizable graph card for [Home-Assistant](https://www.home-assistant.io/)'s Lovelace UI.
 
 Graph ChartJS Chart `Version 2.0.2` for Home Assistant -  Visualize your data in different ways- `BAR`, `HORIZONTALBAR` ,`SEGMENTEDBAR`, `PIE`, `DOUGHNUT`, `LINE`,`RADAR`,`SCATTR`,`BUBBLE` - ; each of them animated and customisable. Respects the set Homeassistant `locale` for numbers and dates
@@ -219,6 +221,12 @@ YAML Structure for `custom:chart-card`
       style: ## see chart.js documentation
         backgroundColor: '{text: HEX|RGB|RGBA color}'
 
+    - entity: '{text: entity-id}'
+      dataid: '{text: unique id}'
+      datasource:        
+        influxdb: '{text: influxdb connection}'
+        query: '{text: influxdb SQL statement}'
+        token: '{text: btoa(user:passwort)}'
 ```
 
 <br>

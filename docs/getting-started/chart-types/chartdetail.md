@@ -1,4 +1,6 @@
 # Lovelace - graph-chartjs-card
+<br>
+
 ## Chart Detaildata
 
 

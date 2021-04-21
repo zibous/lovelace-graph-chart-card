@@ -810,6 +810,11 @@ class ChartCard extends HTMLElement {
                             /**
                              * item data scales
                              */
+                            if (item.dataid && item.datasource && item.datasource.influxdb) {
+                                this.datascales.range = this.datascales.range || 24
+                                this.datascales.unit = this.datascales.unit || DSC_UNITS[0]
+                                item.datascales = this.datascales || {}
+                            }
                             item.datascales = this.datascales
                             item.datascales.ignoreZero = this.datascales.ignoreZero || item.ignoreZero || false
                             item.datascales.aggregate = item.aggregate || this.datascales.aggregate || "last"
@@ -849,6 +854,8 @@ class ChartCard extends HTMLElement {
                                 item.state = _safeParseFloat(item.state)
                             }
                             item.chart = this.chart_type
+                            item.dataready = false
+
                             /**
                              * add the item to the entity_items
                              */
@@ -1055,64 +1062,87 @@ class ChartCard extends HTMLElement {
 
             if (this.datascales.range > 0) {
                 /**
-                 * start date, time and end date
+                 * check if we have entities...
                  */
-                this.dataInfo.time = new Date().getTime()
-                this.dataInfo.time_start = new Date()
-
-                if (this.datascales.range < 1.0) {
-                    this.dataInfo.time_start.setMinutes(this.dataInfo.time_start.getMinutes() - this.datascales.range * 60)
-                    this.dataInfo.range = `${this.datascales.range * 60} min`
-                } else {
-                    if (["day", "month", "year"].includes(this.datascales.unit) == true) {
-                        this.dataInfo.time_start.setHours(-this.datascales.range, 0, 0, 0)
-                    } else {
-                        this.dataInfo.time_start.setHours(this.dataInfo.time_start.getHours() - this.datascales.range)
-                    }
-                    this.dataInfo.range = `unit: ${this.datascales.unit}, range: ${this.datascales.range} h`
-                }
-
-                this.dataInfo.time_end = new Date()
                 this.dataInfo.entities = this.entity_items.getEntityIdsAsString()
                 this.dataInfo.entity_items = this.entity_items.items
                 this.dataInfo.useAlias = this.entity_items.useAliasFields()
-                this.dataInfo.ISO_time_start = this.dataInfo.time_start.toISOString()
-                this.dataInfo.ISO_time_end = this.dataInfo.time_end.toISOString()
-
-                /**
-                 * remove skip initial state when fetching not-cached data (slow)
-                 * 1. significant_changes_only to only return significant state changes.
-                 * 2. minimal_response to only return last_changed and state for
-                 *    states other than the first and last state (much faster).
-                 * 3. disable minimal_response this if alias (attribute) fields is used...
-                 */
-                this.dataInfo.options = "&skip_initial_state"
-                // this.dataInfo.options += `&significant_changes_only=${this.dataInfo.useAlias ? 1 : 0}`
-                if (!this.dataInfo.useAlias) this.dataInfo.options += "&minimal_response"
-
-                /**
-                 * simple param check
-                 */
-                if (this.dataInfo.param == `${this.dataInfo.time_end}:${this.dataInfo.entities}`) {
-                    console.warn("Data allready loaded...")
-                    return
-                }
-                this.dataInfo.param = `${this.dataInfo.time_end}:${this.dataInfo.entities}`
-
-                /**
-                 * build the api url
-                 */
-                this.dataInfo.url = `history/period/${this.dataInfo.ISO_time_start}?end_time=${this.dataInfo.ISO_time_end}&filter_entity_id=${this.dataInfo.entities}${this.dataInfo.options}`
-                if (this.dataInfo.url !== this.dataInfo.prev_url) {
+                if (this.dataInfo.entities != "") {
                     /**
-                     * get the history data
+                     * start date, time and end date
                      */
-                    this.dataInfo.loading = true
-                    const prom = this._hass.callApi("GET", this.dataInfo.url).then(
-                        (stateHistory) => this._buildGraphData(stateHistory, API_DATAMODE.history),
-                        () => null
-                    )
-                    this.dataInfo.prev_url = this.dataInfo.url
+                    this.dataInfo.time = new Date().getTime()
+                    this.dataInfo.time_start = new Date()
+                    if (this.datascales.range < 1.0) {
+                        this.dataInfo.time_start.setMinutes(this.dataInfo.time_start.getMinutes() - this.datascales.range * 60)
+                        this.dataInfo.range = `${this.datascales.range * 60} min`
+                    } else {
+                        if (["day", "month", "year"].includes(this.datascales.unit) == true) {
+                            this.dataInfo.time_start.setHours(-this.datascales.range, 0, 0, 0)
+                        } else {
+                            this.dataInfo.time_start.setHours(this.dataInfo.time_start.getHours() - this.datascales.range)
+                        }
+                        this.dataInfo.range = `unit: ${this.datascales.unit}, range: ${this.datascales.range} h`
+                    }
+                    this.dataInfo.time_end = new Date()
+                    this.dataInfo.ISO_time_start = this.dataInfo.time_start.toISOString()
+                    this.dataInfo.ISO_time_end = this.dataInfo.time_end.toISOString()
+
+                    /**
+                     * remove skip initial state when fetching not-cached data (slow)
+                     * 1. significant_changes_only to only return significant state changes.
+                     * 2. minimal_response to only return last_changed and state for
+                     *    states other than the first and last state (much faster).
+                     * 3. disable minimal_response this if alias (attribute) fields is used...
+                     */
+                    this.dataInfo.options = "&skip_initial_state"
+                    // this.dataInfo.options += `&significant_changes_only=${this.dataInfo.useAlias ? 1 : 0}`
+                    if (!this.dataInfo.useAlias) this.dataInfo.options += "&minimal_response"
+
+                    /**
+                     * simple param check
+                     */
+                    if (this.dataInfo.param == `${this.dataInfo.time_end}:${this.dataInfo.entities}`) {
+                        console.warn("Data allready loaded...")
+                        return
+                    }
+                    this.dataInfo.param = `${this.dataInfo.time_end}:${this.dataInfo.entities}`
+
+                    /**
+                     * build the api url
+                     */
+                    this.dataInfo.url = `history/period/${this.dataInfo.ISO_time_start}?end_time=${this.dataInfo.ISO_time_end}&filter_entity_id=${this.dataInfo.entities}${this.dataInfo.options}`
+                    if (this.dataInfo.url !== this.dataInfo.prev_url) {
+                        /**
+                         * get the history data
+                         */
+                        this.dataInfo.loading = true
+                        const prom = this._hass.callApi("GET", this.dataInfo.url).then(
+                            (stateHistory) => this._buildGraphData(stateHistory, API_DATAMODE.history),
+                            () => null
+                        )
+                        this.dataInfo.prev_url = this.dataInfo.url
+                    }
+                } else {
+                    if (this.DEBUGMODE) {
+                        this.DEBUGDATA.INFLUXDB
+                        this.DEBUGDATA.PROFILER.INFLUXDB = {
+                            start: performance.now()
+                        }
+                        this.DEBUGDATA.INFLUXDB = {
+                            url: "",
+                            authorization: false,
+                            count: 0,
+                            status: "init"
+                        }
+                    }
+                    const _itemlist = this.entity_items.getEntitieslist()
+                    _itemlist.forEach((item) => {
+                        this.DEBUGDATA.PROFILER.INFLUXDB.start = performance.now()
+                        if (item.datasource) {
+                            this._buildGraphDataInfluxDB(item)
+                        }
+                    })
                 }
             } else {
                 /**
@@ -1202,7 +1232,7 @@ class ChartCard extends HTMLElement {
                             "<td align='right'>" + _formatNumber(this.chart_locale, item.max || 0.0) + " " + item.unit + "</td>"
                         )
 
-                    if (this.chart_showdetails.title_current && this.chart_showdetails.title_current != "")    
+                    if (this.chart_showdetails.title_current && this.chart_showdetails.title_current != "")
                         _html.push(
                             "<td align='right'>" + _formatNumber(this.chart_locale, item.current || 0.0) + " " + item.unit + "</td>"
                         )
@@ -1244,6 +1274,7 @@ class ChartCard extends HTMLElement {
                 if (this.DEBUGDATA.PROFILER.GETSTATEDATA) delete this.DEBUGDATA.PROFILER.GETSTATEDATA.start
                 if (this.DEBUGDATA.PROFILER.CHART && this.DEBUGDATA.PROFILER.CHART.start) delete this.DEBUGDATA.PROFILER.CHART.start
                 if (this.DEBUGDATA.PROFILER.DATAPROVIDER) delete this.DEBUGDATA.PROFILER.DATAPROVIDER.start
+                //if (this.DEBUGDATA.PROFILER.INFLUXDB) delete this.DEBUGDATA.PROFILER.INFLUXDB.start
             }
             console.info(
                 `%cDEBUGDATA ${this.chart_type.toUpperCase()} ${appinfo.name} ${appinfo.version}:`,
@@ -1251,6 +1282,121 @@ class ChartCard extends HTMLElement {
                 this.DEBUGDATA
             )
         }
+    }
+
+    /**
+     * get the data for the current entity from the datasource
+     * @param {*} item
+     */
+    _buildGraphDataInfluxDB(item) {
+        if (!item.datasource.influxdb || !item.datasource.query) return
+        /**
+         * first build the params
+         */
+        const params = {
+            host: item.datasource.influxdb || null,
+            query: item.datasource.query || null,
+            token: item.datasource.token || ""
+        }
+        params.url = encodeURI(params.host + "&q=" + params.query)
+        params.authorization = params.token != ""
+
+        if (this.DEBUGMODE) {
+            this.DEBUGDATA.INFLUXDB.url = params.url
+            this.DEBUGDATA.INFLUXDB.authorization = params.token != ""
+            this.DEBUGDATA.INFLUXDB.count = 0
+        }
+        /**
+         * get data from influxdb
+         * @param {*} params
+         */
+        function _getInfluxData(params) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest()
+                xhr.open("GET", params.url)
+                if (params.authorization) xhr.setRequestHeader("Authorization", "Basic " + params.token)
+                xhr.withCredentials = false
+                xhr.responseType = "json"
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState < 4) {
+                        return
+                    }
+                    if (xhr.status !== 200) {
+                        reject(xhr.response)
+                    }
+                    if (xhr.readyState === 4) {
+                        resolve(xhr.response)
+                    }
+                }
+                xhr.send()
+            })
+        }
+        /**
+         * build the seriesdata
+         */
+        _getInfluxData(params)
+            .then((data) => {
+                // data.results[0].series[0].name
+                // data.results[0].series[0].columns
+                // data.results[0].series[0].values
+                if (data && data.results[0]) {
+                    if (data.results[0].series) {
+                        item.dbfields = data.results[0].series[0].columns
+                        item.seriesdata = item.seriesdata || []
+                        item.seriesdata.data = item.seriesdata.data || []
+                        item.seriesdata.data = data.results[0].series[0].values.map((row) => ({
+                            x: row[0],
+                            y: row[1],
+                            localedate: formatdate(row[0], item.datascales.format)
+                        }))
+                        // if (item.datascales.useStatistics) {
+                        //     item.statistics = {
+                        //         current: item.state,
+                        //         first: item.seriesdata.data[0],
+                        //         last: item.seriesdata.data[item.seriesdata.data - 1],
+                        //         max: arrStatistics.max(item.seriesdata.data),
+                        //         min: arrStatistics.min(item.seriesdata.data),
+                        //         sum: arrStatistics.sum(item.seriesdata.data),
+                        //         avg: arrStatistics.mean(item.seriesdata.data)
+                        //     }
+                        // }
+                        item.datascales.data_count = item.seriesdata.data.length
+                        if (item.datascales.data_count) this._buildGraphData(null, API_DATAMODE.database)
+                        if (this.DEBUGMODE) this.DEBUGDATA.INFLUXDB.count = item.datascales.data_count
+                    }
+                    if (this.DEBUGMODE) this.DEBUGDATA.INFLUXDB.status = "No Error, all well done..."
+                    if (this.DEBUGMODE)
+                        this.DEBUGDATA.PROFILER.INFLUXDB.elapsed = msToTime(
+                            performance.now() - this.DEBUGDATA.PROFILER.INFLUXDB.start
+                        )
+                } else {
+                    // no data
+                    if (this.DEBUGMODE) this.DEBUGDATA.INFLUXDB.status = "No Error, but no data found!"
+                    if (this.DEBUGMODE)
+                        this.DEBUGDATA.PROFILER.INFLUXDB.elapsed = msToTime(
+                            performance.now() - this.DEBUGDATA.PROFILER.INFLUXDB.start
+                        )
+                }
+            })
+            .catch((error) => {
+                /**
+                 * Oh no, something bad happened!
+                 */
+                if (this.DEBUGMODE) {
+                    this.DEBUGDATA.PROFILER.INFLUXDB.elapsed = msToTime(performance.now() - this.DEBUGDATA.PROFILER.INFLUXDB.start)
+                    this.DEBUGDATA.INFLUXDB.status = "Fatal Error: " + error
+                    this._renderDebugInfo()
+                }
+                console.error("Dataprovider.getInfluxDbData", {
+                    card: this.card_title,
+                    entitiy: item.name,
+                    errormessage: error,
+                    connection: item.datasource.influxdb,
+                    query: item.datasource.query,
+                    token: item.datasource.token
+                })
+                throw error
+            })
     }
 
     /**
@@ -1354,11 +1500,11 @@ class ChartCard extends HTMLElement {
             debugdata: this.DEBUGDATA
         })
 
-        if (mode === API_DATAMODE.history) {
-            this.graphData = _chartData.getHistoryGraphData()
+        if (mode === API_DATAMODE.statemode) {
+            this.graphData = _chartData.getCurrentGraphData()
             this.lastUpdate = new Date().toISOString()
         } else {
-            this.graphData = _chartData.getCurrentGraphData()
+            this.graphData = _chartData.getHistoryGraphData()
             this.lastUpdate = new Date().toISOString()
         }
 

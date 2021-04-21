@@ -14,9 +14,9 @@ class chartData {
      * @param {*} config
      */
     constructor(config) {
-        this.card_config = config.card_config
-        this.entity_options = config.entityOptions
-        this.entity_items = config.entity_items
+        this.card_config = config.card_config       // current card config
+        this.entity_options = config.entityOptions  // global entity options for all
+        this.entity_items = config.entity_items     // all entities
         this.DEBUGMODE = config.debugmode
         this.data_pointStyles = CT_DATAPOINTSTYLE
         this.indicators = {
@@ -458,7 +458,7 @@ class chartData {
              * current selected entity
              */
             const _entity = this.entity_items.items[id]
-            let _entityOptions = { ...this.entity_items.getOptions(_entity.entity) }
+            let _entityOptions = { ...this.entity_items.getOptions(id) }
 
             /**
              * default Dataset Properties

@@ -1,5 +1,7 @@
 # Lovelace - graph-chartjs-card
 
+<br>
+
 ## Developer Debug- & Profiledata
 
 <br>

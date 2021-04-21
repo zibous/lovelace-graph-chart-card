@@ -23,7 +23,7 @@ import "/hacsfiles/chart-card/chart-min.js?module"
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "v2.1.0/v3.1.1",
+    version: "v2.1.2/v3.1.1",
     chartjs: Chart.version || "v3.1.1",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
@@ -78,7 +78,8 @@ const DSC_UNITS = ["day", "second", "minute", "hour", "month", "year"]
 const DSC_RANGES = ["last", "max", "min", "range", "midrange", "mean", "sum", "first"]
 const API_DATAMODE = {
     history: 1,
-    statemode: 2
+    statemode: 2,
+    database: 3
 }
 const SERIESDEFAULT_VALUE = 0.0 // default value if missing data
 const TRANSFORM_MODE = {
