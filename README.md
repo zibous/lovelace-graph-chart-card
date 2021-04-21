@@ -4,7 +4,7 @@
 
 This is higly customizable graph card for [Home-Assistant](https://www.home-assistant.io/)'s Lovelace UI.
 
-Graph ChartJS Chart `Version 2.0.2` for Home Assistant -  Visualize your data in different ways- `BAR`, `HORIZONTALBAR` ,`SEGMENTEDBAR`, `PIE`, `DOUGHNUT`, `LINE`,`RADAR`,`SCATTR`,`BUBBLE` - ; each of them animated and customisable. Respects the set Homeassistant `locale` for numbers and dates.
+Graph ChartJS Chart `Version 2.1.2` for Home Assistant -  Visualize your data in different ways- `BAR`, `HORIZONTALBAR` ,`SEGMENTEDBAR`, `PIE`, `DOUGHNUT`, `LINE`,`RADAR`,`SCATTR`,`BUBBLE` - ; each of them animated and customisable. Respects the set Homeassistant `locale` for numbers and dates.
 
 It is based on [chart.js](https://chartjs.org) and offers most of the features of the library - datasource `home-assitant history` or `influx database queries`.
 
