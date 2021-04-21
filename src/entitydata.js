@@ -14,12 +14,11 @@ class Entities {
      * @param {objec} entity
      */
     addEntity(entity) {
-        if(entity.dataid){
+        if (entity.dataid) {
             this.items[entity.dataid] = entity
-        }else{
+        } else {
             this.items[entity.id] = entity
         }
-        
     }
     _getDataFromInfluxDb() {}
     /**
@@ -228,7 +227,7 @@ class Entities {
      * datasource ...
      */
     checkDataSouresItems() {
-        return Object.keys(this.items).filter((item) => this.items[item].datasource != undefined)        
+        return Object.keys(this.items).filter((item) => this.items[item].datasource != undefined)
     }
     /**
      * get entities id's as string
@@ -236,7 +235,7 @@ class Entities {
      */
     getEntityIdsAsString() {
         const d = Object.keys(this.items)
-            .filter((item) => this.items[item].datasource == undefined)
+            .filter((item) => this.items[item].datasource == undefined && this.items[item].stateOnly == false)
             .map((item) => this.items[item].id)
         return [...new Set(d)].join(",")
     }

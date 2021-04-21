@@ -994,6 +994,7 @@ class ChartCard extends HTMLElement {
                             item.state = item.state * item.datascales.factor
                             item.factor = item.datascales.factor
                             item.ignoreZero = item.ignoreZero || this.datascales.ignoreZero
+                            item.stateOnly = item.stateOnly || false
                             /**
                              * handling the item attribute
                              * item.id:     sensor name --> sensor.thermometer
@@ -1520,19 +1521,25 @@ class ChartCard extends HTMLElement {
                             y: row[1],
                             localedate: formatdate(row[0], item.datascales.format)
                         }))
-                        // if (item.datascales.useStatistics) {
-                        //     item.statistics = {
-                        //         current: item.state,
-                        //         first: item.seriesdata.data[0],
-                        //         last: item.seriesdata.data[item.seriesdata.data - 1],
-                        //         max: arrStatistics.max(item.seriesdata.data),
-                        //         min: arrStatistics.min(item.seriesdata.data),
-                        //         sum: arrStatistics.sum(item.seriesdata.data),
-                        //         avg: arrStatistics.mean(item.seriesdata.data)
-                        //     }
-                        // }
                         item.datascales.data_count = item.seriesdata.data.length
-                        if (item.datascales.data_count) this._buildGraphData(null, API_DATAMODE.database)
+                        if (item.datascales.data_count) {
+                            if (item.datascales.useStatistics) {
+                                const _data = item.seriesdata.data.filter(e => e.y !== null)
+                                item.statistics = {
+                                    current: _data[_data.length - 1].y,
+                                    first: _data[0].y,
+                                    last: _data[_data.length - 1].y,
+                                    min: _data.reduce((min, p) => (p.y < min ? p.y : min), _data[0].y),
+                                    max: _data.reduce((max, p) => (p.y > max ? p.y : max), _data[0].y),
+                                    sum: _data.reduce((n, { y }) => n + y, 0),
+                                    avg: _data.reduce((n, { y }) => n + y, 0) / _data.length
+                                }
+                                item.statistics.range = item.statistics.max - item.statistics.min
+                                item.statistics.midrange = (item.statistics.max - item.statistics.min) * 0.5
+                                item.state = item.statistics.current
+                            }
+                            this._buildGraphData(null, API_DATAMODE.database)
+                        }
                         if (this.DEBUGMODE) this.DEBUGDATA.INFLUXDB.count = item.datascales.data_count
                     }
                     if (this.DEBUGMODE) this.DEBUGDATA.INFLUXDB.status = "No Error, all well done..."
@@ -1540,6 +1547,7 @@ class ChartCard extends HTMLElement {
                         this.DEBUGDATA.PROFILER.INFLUXDB.elapsed = msToTime(
                             performance.now() - this.DEBUGDATA.PROFILER.INFLUXDB.start
                         )
+
                 } else {
                     // no data
                     if (this.DEBUGMODE) this.DEBUGDATA.INFLUXDB.status = "No Error, but no data found!"
@@ -1565,7 +1573,7 @@ class ChartCard extends HTMLElement {
                     connection: item.datasource.influxdb,
                     query: item.datasource.query,
                     token: item.datasource.token
-                })
+                })                
                 throw error
             })
     }
@@ -1720,7 +1728,7 @@ class ChartCard extends HTMLElement {
 
         this._renderCardTimestamp()
 
-        if (mode === API_DATAMODE.history) {
+        if (mode != API_DATAMODE.statemode) {
             if (this.chart_showstate || this.showdetails) {
                 let _data = this.graphData.data.datasets.map(function (item) {
                     return {
@@ -1799,12 +1807,11 @@ class Entities {
      * @param {objec} entity
      */
     addEntity(entity) {
-        if(entity.dataid){
+        if (entity.dataid) {
             this.items[entity.dataid] = entity
-        }else{
+        } else {
             this.items[entity.id] = entity
         }
-        
     }
     _getDataFromInfluxDb() {}
     /**
@@ -2013,7 +2020,7 @@ class Entities {
      * datasource ...
      */
     checkDataSouresItems() {
-        return Object.keys(this.items).filter((item) => this.items[item].datasource != undefined)        
+        return Object.keys(this.items).filter((item) => this.items[item].datasource != undefined)
     }
     /**
      * get entities id's as string
@@ -2021,7 +2028,7 @@ class Entities {
      */
     getEntityIdsAsString() {
         const d = Object.keys(this.items)
-            .filter((item) => this.items[item].datasource == undefined)
+            .filter((item) => this.items[item].datasource == undefined && this.items[item].stateOnly == false)
             .map((item) => this.items[item].id)
         return [...new Set(d)].join(",")
     }

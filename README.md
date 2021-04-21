@@ -24,10 +24,11 @@ If you find any information on this page useful, feel free to buy me a coffee:
 
 ### Manual install
 
-1. Download the [latest release](https://github.com/zibous/lovelace-graph-chart-card/releases), unzip and copy the folder `chart-card` into your `config/www/community` directory.
-  <br>
+1. Download the [latest release](https://github.com/zibous/lovelace-graph-chart-card/releases), unzip and copy the folder `chart-card` into your `config/www/community` directory or download the **latest main version** from https://github.com/zibous/lovelace-graph-chart-card/tree/main/dist/chart-card (all files) to the  `config/www/community` directory.
+  
+2. <br>
 
-2. Add a reference to `chart-card-min.js` inside your `ui-lovelace.yaml` or at the top of the *raw config editor UI*:
+3. Add a reference to `chart-card-min.js` inside your `ui-lovelace.yaml` or at the top of the *raw config editor UI*:
 
     ```yaml
     resources:
