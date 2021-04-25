@@ -59,6 +59,7 @@ function addFitter(datasetMeta, ctx, dataset, xScale, yScale) {
             ctx.setLineDash([2, 3])
         }
         ctx.beginPath()
+        ctx.lineWidth = 2.00
         ctx.moveTo(startPos, yScale.getPixelForValue(fitter.project(0)))
         ctx.lineTo(endPos, yScale.getPixelForValue(fitter.project(lastIndex)))
         ctx.strokeStyle = dataset.trendlineLinear.color || dataset.borderColor || "rgba(255, 0, 0, 0.85)"
