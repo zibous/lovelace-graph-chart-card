@@ -27,12 +27,14 @@ const settings = {
         "./src/libs/chartjs/chart.js",
         "./src/libs/chartjs/plugins/chartjs-gradient.js",
         "./src/libs/chartjs/plugins/chartjs-background.js",
+        "./src/libs/chartjs/plugins/chartjs-plugin-trendline.js",
         "./src/libs/chartjs/chartjs-adapter-date.bundle.min.js"
     ],
     libs2: [
         "./src/libs/chartjs/chart.js",
         "./src/libs/chartjs/plugins/chartjs-gradient.js",
-        "./src/libs/chartjs/plugins/chartjs-background.js"
+        "./src/libs/chartjs/plugins/chartjs-background.js",
+        "./src/libs/chartjs/plugins/chartjs-plugin-trendline.js"
     ],
     assetsfolder: "assets",
     outfile: "chart-card.js",
@@ -99,7 +101,7 @@ gulp.task("deploy", function () {
         return gulp
             .src(settings.distfolder + "/**/*")
             .pipe(gulp.dest(settings.hassfolder))
-            .pipe(gulp.dest(settings.rb3afolder))
+            //.pipe(gulp.dest(settings.rb3afolder))
             .on("error", onError)
     } else {
         return

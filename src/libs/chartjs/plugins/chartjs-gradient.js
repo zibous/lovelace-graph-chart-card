@@ -154,7 +154,7 @@
     /**
      * plugin gradient
      */
-    var plugin_gradient = {
+    window.plugin_gradient = {
         id: "gradient",
         beforeDatasetsUpdate(chart) {
             const ctx = chart.ctx

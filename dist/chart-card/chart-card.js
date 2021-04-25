@@ -1,5 +1,5 @@
 /**
- * lovelace-chart-card 2.0.1
+ * lovelace-chart-card 2.1.3
  * https://github.com/zibous/lovelace-graph-chart-card
  *
  * License: MIT
@@ -24,7 +24,8 @@
 /**
  * Chart.js  and used plugins, production use min.js
  */
-import "/hacsfiles/chart-card/chart-min.js?module"
+// import "/hacsfiles/chart-card/chart-min.js?module"
+import "/hacsfiles/chart-card/chart.js?module"
 
 /**
  * render the app-info for this custom card
@@ -32,8 +33,8 @@ import "/hacsfiles/chart-card/chart-min.js?module"
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "v2.1.2/v3.1.1",
-    chartjs: Chart.version || "v3.1.1",
+    version: "v2.1.3/v3.2.0",
+    chartjs: Chart.version || "v3.2.0",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
 }
@@ -177,7 +178,7 @@ function setChartDefaults(theme) {
 
 // ! importend to fix the collision with ha used chart.js 2.9
 window.Chart3 = Chart
-const gradient = window["chartjs-gradient"]
+const plugin_gradient = window["chartjs-gradient"]
 
 // From weather-card
 // fireEvent(this, "hass-more-info", { entityId: aqiSensor.config });
@@ -1310,7 +1311,9 @@ class ChartCard extends HTMLElement {
                     }
                     const _itemlist = this.entity_items.getEntitieslist()
                     _itemlist.forEach((item) => {
-                        this.DEBUGDATA.PROFILER.INFLUXDB.start = performance.now()
+                        if (this.DEBUGMODE) {
+                            this.DEBUGDATA.PROFILER.INFLUXDB.start = performance.now()
+                        }
                         if (item.datasource) {
                             this._buildGraphDataInfluxDB(item)
                         }
@@ -2954,9 +2957,9 @@ class chartData {
      * @param {*} config
      */
     constructor(config) {
-        this.card_config = config.card_config       // current card config
-        this.entity_options = config.entityOptions  // global entity options for all
-        this.entity_items = config.entity_items     // all entities
+        this.card_config = config.card_config // current card config
+        this.entity_options = config.entityOptions // global entity options for all
+        this.entity_items = config.entity_items // all entities
         this.DEBUGMODE = config.debugmode
         this.data_pointStyles = CT_DATAPOINTSTYLE
         this.indicators = {
@@ -2983,7 +2986,9 @@ class chartData {
                 gradient: false,
                 options: {},
                 segmentbar: false,
-                timescale: false
+                timescale: false,
+                trendline: false,
+                thresholds: false
             }
         }
     }
@@ -3447,12 +3452,23 @@ class chartData {
                 if (_entityOptions.backgroundColor === undefined) {
                     _options.backgroundColor = DEFAULT_COLORS[_graphData.config.series]
                     _options.borderColor = DEFAULT_COLORS[_graphData.config.series]
-                }else{
+                } else {
                     _options.backgroundColor = _options.backgroundColor || _options.backgroundColor || _options.color
-                    _options.borderColor = _options.borderColor || _options.backgroundColor  || _options.color
+                    _options.borderColor = _options.borderColor || _options.backgroundColor || _options.color
                 }
             }
-
+            /**
+             * check used trendline
+             */
+            if (_entityOptions.trendlineLinear) {
+                _graphData.config.trendline = true
+            }            
+            /**
+             * check used thresholds
+             */
+            if (this.card_config.chartOptions.thresholds) {
+                _graphData.config.thresholds = true
+            }
             /**
              * check secondary axis
              */
@@ -3719,9 +3735,9 @@ class graphChart {
         /**
          * check enable gradient colors for data series chart
          */
-        if (gradient && this.graphData.config.gradient) {
+        if (plugin_gradient && this.graphData.config.gradient) {
             _options.plugins = {
-                gradient
+                plugin_gradient
             }
         }
         /**
@@ -3949,7 +3965,7 @@ class graphChart {
     sendJSON(url, chartdata) {
         let xhr = new XMLHttpRequest()
         xhr.open("POST", url, true)
-        xhr.withCredentials = false;
+        xhr.withCredentials = false
         xhr.setRequestHeader("Content-Type", "application/json")
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
@@ -4020,8 +4036,14 @@ class graphChart {
                              * and the dataseries. Register all plugins
                              */
                             if (this.graphData.config.gradient) {
-                                this.ChartControl.register(gradient)
+                                this.ChartControl.register(plugin_gradient)
                             }
+                            /**
+                             * check trendline
+                             */
+                            if (this.graphData.config.trendline && window.plugin_trendline)
+                                this.ChartControl.register(window.plugin_trendline)
+
                             if (
                                 this.ChartControl &&
                                 this.chartconfig &&
@@ -4029,12 +4051,15 @@ class graphChart {
                                 this.chartconfig.options.chartArea &&
                                 this.chartconfig.options.chartArea.backgroundColor !== ""
                             ) {
+                                /**
+                                 * chart background color uses
+                                 */
                                 this.ChartControl.register({
                                     id: "chardbackground",
                                     beforeDraw: function (chart) {
                                         if (chart.config.options.chartArea && chart.config.options.chartArea.backgroundColor) {
-                                            const chartArea = chart.chartArea
-                                            const ctx = chart.ctx
+                                            const chartArea = chart.chartArea,
+                                                ctx = chart.ctx
                                             ctx.save()
                                             ctx.fillStyle = chart.config.options.chartArea.backgroundColor
                                             ctx.fillRect(
@@ -4048,7 +4073,88 @@ class graphChart {
                                     }
                                 })
                             }
+
+                            if (this.graphData.config.thresholds) {
+                                /**
+                                 * chart thresholds area
+                                 * 
+                                 * thresholds: {
+                                      linecolor: 'rgba(244, 67, 54,0.8)',                                      
+                                      backgroundColor: 'rgba(255, 87, 34,0.15)',
+                                      value: 150,
+                                      yScaleID: 'y'
+                                   }
+                                 * 
+                                 */
+                                this.ChartControl.register({
+                                    id: "thresholds",
+                                    beforeDraw: function (chart) {
+                                        const _options = chart.config.options.thresholds,
+                                            _rect = getRect(chart, _options),
+                                            ctx = chart.ctx
+
+                                        if (!_options) return
+                                        /**
+                                         * get the rect for the thresholds
+                                         * @param {*} chart
+                                         * @returns
+                                         */
+                                        function getRect(chart, _options) {
+                                            if (_options) {
+                                                const _axis = chart.scales[_options.yScaleID || _options.xScaleID],
+                                                    _dir = _options.xScaleID ? "x" : "y"
+                                                return {
+                                                    x: chart.chartArea.left,
+                                                    x2: chart.chartArea.right,
+                                                    y: _dir === "y" ? _axis.getPixelForValue(_options.value) : chart.chartArea.top,
+                                                    y2: chart.chartArea.bottom,
+                                                    w:
+                                                        _dir === "x"
+                                                            ? chart.chartArea.right - _axis.getPixelForValue(_options.value)
+                                                            : chart.chartArea.width,
+                                                    h:
+                                                        _dir === "y"
+                                                            ? chart.chartArea.bottom - _axis.getPixelForValue(_options.value)
+                                                            : chart.chartArea.height,
+                                                    width: chart.chartArea.width,
+                                                    height: chart.chartArea.height,
+                                                    axis: _dir
+                                                }
+                                            }
+                                            return null
+                                        }
+                                        /**
+                                         * render the thresholds area
+                                         */
+                                        if (_options && _rect) {
+                                            ctx.save()
+                                            const _gradient =
+                                                    _rect.axis === "y"
+                                                        ? ctx.createLinearGradient(0, 0, 0, _rect.h)
+                                                        : ctx.createLinearGradient(0, 0, _rect.w, 0),
+                                                _color = _options.backgroundColor || "rgb(249, 70, 12)"
+                                            _gradient.addColorStop(0, window.Chart3.helpers.color(_color).alpha(0.85).rgbString())
+                                            _gradient.addColorStop(1.0, window.Chart3.helpers.color(_color).alpha(0.15).rgbString())
+                                            ctx.fillStyle = _gradient
+                                            ctx.fillRect(_rect.x, _rect.y, _rect.width, _rect.h)
+                                            ctx.beginPath()
+                                            ctx.lineWidth = 1.25
+                                            ctx.strokeStyle = _color
+                                            if (_rect.axis === "y") {
+                                                ctx.moveTo(_rect.x - 5.0, _rect.y)
+                                                ctx.lineTo(_rect.x2, _rect.y)
+                                            } else {
+                                                ctx.moveTo(_rect.x, _rect.y - 5.0)
+                                                ctx.lineTo(_rect.x, _rect.y2)
+                                            }
+                                            ctx.stroke()
+                                            ctx.restore()
+                                        }
+                                    }
+                                })
+                            }
                         }
+
                         if (this.chart) {
                             /**
                              * be shure that no chart exits before create..

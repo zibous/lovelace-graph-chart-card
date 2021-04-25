@@ -4,6 +4,12 @@
 
 ## Getting started
 
+The data from the sensors can be used once from the Histroy database of the Homeassistant or queried from the InfluxDB. The Homeassistant  history database can be used for current states and small amounts of data.
+
+<br>
+
+Larger amounts of data can be obtained more quickly via the Influx database. The evaluation and provision of the data from the influx database is 10 to 50 times faster and more suitable if the number of time series is high.
+
 <br>
 
 ### Minimal configuration

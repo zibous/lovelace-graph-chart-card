@@ -1,5 +1,5 @@
 /*!
- * Chart.js v3.1.1
+ * Chart.js v3.2.0
  * https://www.chartjs.org
  * (c) 2021 Chart.js Contributors
  * Released under the MIT License
@@ -2978,6 +2978,15 @@ function getOrCreateStack(stacks, stackKey, indexValue) {
   const subStack = stacks[stackKey] || (stacks[stackKey] = {});
   return subStack[indexValue] || (subStack[indexValue] = {});
 }
+function getLastIndexInStack(stack, vScale, positive) {
+  for (const meta of vScale.getMatchingVisibleMetas('bar').reverse()) {
+    const value = stack[meta.index];
+    if ((positive && value > 0) || (!positive && value < 0)) {
+      return meta.index;
+    }
+  }
+  return null;
+}
 function updateStacks(controller, parsed) {
   const {chart, _cachedMeta: meta} = controller;
   const stacks = chart._stacks || (chart._stacks = {});
@@ -2993,6 +3002,8 @@ function updateStacks(controller, parsed) {
     const itemStacks = item._stacks || (item._stacks = {});
     stack = itemStacks[vAxis] = getOrCreateStack(stacks, key, index);
     stack[datasetIndex] = value;
+    stack._top = getLastIndexInStack(stack, vScale, true);
+    stack._bottom = getLastIndexInStack(stack, vScale, false);
   }
 }
 function getFirstScaleId(chart, axis) {
@@ -6334,7 +6345,7 @@ function needContext(proxy, names) {
   return false;
 }
 
-var version = "3.1.1";
+var version = "3.2.0";
 
 const KNOWN_POSITIONS = ['top', 'bottom', 'left', 'right', 'chartArea'];
 function positionIsHorizontal(position, axis) {
@@ -7358,9 +7369,11 @@ class BarController extends DatasetController {
       const parsed = me.getParsed(i);
       const vpixels = reset || isNullOrUndef(parsed[vScale.axis]) ? {base, head: base} : me._calculateBarValuePixels(i);
       const ipixels = me._calculateBarIndexPixels(i, ruler);
+      const stack = (parsed._stacks || {})[vScale.axis];
       const properties = {
         horizontal,
         base: vpixels.base,
+        enableBorderRadius: !stack || isFloatBar(parsed._custom) || (me.index === stack._top || me.index === stack._bottom),
         x: horizontal ? vpixels.head : ipixels.center,
         y: horizontal ? ipixels.center : vpixels.head,
         height: horizontal ? ipixels.size : undefined,
@@ -7407,8 +7420,8 @@ class BarController extends DatasetController {
   _getStackCount(index) {
     return this._getStacks(undefined, index).length;
   }
-  _getStackIndex(datasetIndex, name) {
-    const stacks = this._getStacks(datasetIndex);
+  _getStackIndex(datasetIndex, name, dataIndex) {
+    const stacks = this._getStacks(datasetIndex, dataIndex);
     const index = (name !== undefined)
       ? stacks.indexOf(name)
       : -1;
@@ -7499,14 +7512,15 @@ class BarController extends DatasetController {
     const me = this;
     const scale = ruler.scale;
     const options = me.options;
+    const skipNull = options.skipNull;
     const maxBarThickness = valueOrDefault(options.maxBarThickness, Infinity);
     let center, size;
     if (ruler.grouped) {
-      const stackCount = options.skipNull ? me._getStackCount(index) : ruler.stackCount;
+      const stackCount = skipNull ? me._getStackCount(index) : ruler.stackCount;
       const range = options.barThickness === 'flex'
         ? computeFlexCategoryTraits(index, ruler, options, stackCount)
         : computeFitCategoryTraits(index, ruler, options, stackCount);
-      const stackIndex = me._getStackIndex(me.index, me._cachedMeta.stack);
+      const stackIndex = me._getStackIndex(me.index, me._cachedMeta.stack, skipNull ? index : undefined);
       center = range.start + (range.chunk * stackIndex) + (range.chunk / 2);
       size = Math.min(maxBarThickness, range.chunk * range.ratio);
     } else {
@@ -9039,15 +9053,17 @@ function parseBorderWidth(bar, maxW, maxH) {
   };
 }
 function parseBorderRadius(bar, maxW, maxH) {
+  const {enableBorderRadius} = bar.getProps(['enableBorderRadius']);
   const value = bar.options.borderRadius;
   const o = toTRBLCorners(value);
   const maxR = Math.min(maxW, maxH);
   const skip = parseBorderSkipped(bar);
+  const enableBorder = enableBorderRadius || isObject(value);
   return {
-    topLeft: skipOrLimit(skip.top || skip.left, o.topLeft, 0, maxR),
-    topRight: skipOrLimit(skip.top || skip.right, o.topRight, 0, maxR),
-    bottomLeft: skipOrLimit(skip.bottom || skip.left, o.bottomLeft, 0, maxR),
-    bottomRight: skipOrLimit(skip.bottom || skip.right, o.bottomRight, 0, maxR)
+    topLeft: skipOrLimit(!enableBorder || skip.top || skip.left, o.topLeft, 0, maxR),
+    topRight: skipOrLimit(!enableBorder || skip.top || skip.right, o.topRight, 0, maxR),
+    bottomLeft: skipOrLimit(!enableBorder || skip.bottom || skip.left, o.bottomLeft, 0, maxR),
+    bottomRight: skipOrLimit(!enableBorder || skip.bottom || skip.right, o.bottomRight, 0, maxR)
   };
 }
 function boundingRects(bar) {
@@ -9149,6 +9165,7 @@ BarElement.defaults = {
   borderSkipped: 'start',
   borderWidth: 0,
   borderRadius: 0,
+  enableBorderRadius: true,
   pointStyle: undefined
 };
 BarElement.defaultRoutes = {
@@ -9780,16 +9797,30 @@ var plugin_filler = {
       source.fill = resolveTarget(sources, i, options.propagate);
     }
   },
-  beforeDatasetsDraw(chart, _args, options) {
+  beforeDraw(chart, _args, options) {
+    const draw = options.drawTime === 'beforeDraw';
     const metasets = chart.getSortedVisibleDatasetMetas();
     const area = chart.chartArea;
     for (let i = metasets.length - 1; i >= 0; --i) {
       const source = metasets[i].$filler;
+      if (!source) {
+        continue;
+      }
+      source.line.updateControlPoints(area);
+      if (draw) {
+        drawfill(chart.ctx, source, area);
+      }
+    }
+  },
+  beforeDatasetsDraw(chart, _args, options) {
+    if (options.drawTime !== 'beforeDatasetsDraw') {
+      return;
+    }
+    const metasets = chart.getSortedVisibleDatasetMetas();
+    for (let i = metasets.length - 1; i >= 0; --i) {
+      const source = metasets[i].$filler;
       if (source) {
-        source.line.updateControlPoints(area);
-        if (options.drawTime === 'beforeDatasetsDraw') {
-          drawfill(chart.ctx, source, area);
-        }
+        drawfill(chart.ctx, source, chart.chartArea);
       }
     }
   },
@@ -12942,7 +12973,7 @@ return Chart;
     /**
      * plugin gradient
      */
-    var plugin_gradient = {
+    window.plugin_gradient = {
         id: "gradient",
         beforeDatasetsUpdate(chart) {
             const ctx = chart.ctx
@@ -13016,3 +13047,91 @@ return Chart;
     }
     return plugin_chartbackground
 })
+
+/*!
+ * chartjs-plugin-trendline.js
+ * Version: 0.1.1
+ *
+ * Copyright 2017 Marcus Alsterfjord
+ * Released under the MIT license
+ * https://github.com/Makanz/chartjs-plugin-trendline/blob/master/README.md
+ * modified for chartjs 3.1.1 Peter Siebler
+ */
+
+/**
+ * line fitter object
+ */
+function LineFitter() {
+    this.count = 0
+    this.sumX = 0
+    this.sumX2 = 0
+    this.sumXY = 0
+    this.sumY = 0
+}
+/**
+ * line fitter object methods
+ */
+LineFitter.prototype = {
+    add: function (x, y) {
+        this.count++
+        this.sumX += x
+        this.sumX2 += x * x
+        this.sumXY += x * y
+        this.sumY += y
+    },
+    project: function (x) {
+        const det = this.count * this.sumX2 - this.sumX * this.sumX
+        const offset = (this.sumX2 * this.sumY - this.sumX * this.sumXY) / det
+        const scale = (this.count * this.sumXY - this.sumX * this.sumY) / det
+        return offset + x * scale
+    }
+}
+/**
+ * add fitter
+ * @param {*} datasetMeta 
+ * @param {*} ctx 
+ * @param {*} dataset 
+ * @param {*} xScale 
+ * @param {*} yScale 
+ */
+function addFitter(datasetMeta, ctx, dataset, xScale, yScale) {
+    if (dataset && dataset.data && dataset.data.length) {
+        const scaleisTime = xScale.options.type === "time",
+            lastIndex = dataset.data.length - 1,
+            startPos = datasetMeta.data[0].x,
+            endPos = datasetMeta.data[lastIndex].x,
+            fitter = new LineFitter()
+        dataset.data.forEach(function (data, index) {
+            fitter.add(index, scaleisTime ? data.y : data)
+        })
+        ctx.lineWidth = dataset.trendlineLinear.lineStyle || "solid"
+        if ((dataset.trendlineLinear.lineStyle || "solid") === "dotted") {
+            ctx.setLineDash([2, 3])
+        }
+        ctx.beginPath()
+        ctx.moveTo(startPos, yScale.getPixelForValue(fitter.project(0)))
+        ctx.lineTo(endPos, yScale.getPixelForValue(fitter.project(lastIndex)))
+        ctx.strokeStyle = dataset.trendlineLinear.color || dataset.borderColor || "rgba(255, 0, 0, 0.85)"
+        ctx.stroke()
+    }
+}
+/**
+ * simple trendline plugin for chartjs
+ */
+window.plugin_trendline = {
+    id: "trendline",
+    afterDatasetsDraw: function (chart) {
+        const ctx = chart.ctx
+        if (ctx) {
+            chart.data.datasets.forEach(function (dataset, index) {
+                if (dataset.trendlineLinear) {
+                    const xScale = chart.scales["x"] || chart.scales[dataset.xAxisID]
+                    const yScale = chart.scales["y"] || chart.scales[dataset.yAxisID]
+                    var datasetMeta = chart.getDatasetMeta(index)
+                    addFitter(datasetMeta, ctx, dataset, xScale, yScale)
+                }
+            })
+            ctx.setLineDash([])
+        }
+    }
+}

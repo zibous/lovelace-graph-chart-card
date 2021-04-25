@@ -14,9 +14,9 @@ class chartData {
      * @param {*} config
      */
     constructor(config) {
-        this.card_config = config.card_config       // current card config
-        this.entity_options = config.entityOptions  // global entity options for all
-        this.entity_items = config.entity_items     // all entities
+        this.card_config = config.card_config // current card config
+        this.entity_options = config.entityOptions // global entity options for all
+        this.entity_items = config.entity_items // all entities
         this.DEBUGMODE = config.debugmode
         this.data_pointStyles = CT_DATAPOINTSTYLE
         this.indicators = {
@@ -43,7 +43,9 @@ class chartData {
                 gradient: false,
                 options: {},
                 segmentbar: false,
-                timescale: false
+                timescale: false,
+                trendline: false,
+                thresholds: false
             }
         }
     }
@@ -507,12 +509,23 @@ class chartData {
                 if (_entityOptions.backgroundColor === undefined) {
                     _options.backgroundColor = DEFAULT_COLORS[_graphData.config.series]
                     _options.borderColor = DEFAULT_COLORS[_graphData.config.series]
-                }else{
+                } else {
                     _options.backgroundColor = _options.backgroundColor || _options.backgroundColor || _options.color
-                    _options.borderColor = _options.borderColor || _options.backgroundColor  || _options.color
+                    _options.borderColor = _options.borderColor || _options.backgroundColor || _options.color
                 }
             }
-
+            /**
+             * check used trendline
+             */
+            if (_entityOptions.trendlineLinear) {
+                _graphData.config.trendline = true
+            }            
+            /**
+             * check used thresholds
+             */
+            if (this.card_config.chartOptions.thresholds) {
+                _graphData.config.thresholds = true
+            }
             /**
              * check secondary axis
              */

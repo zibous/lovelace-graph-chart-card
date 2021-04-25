@@ -6,7 +6,7 @@
 
 // ! importend to fix the collision with ha used chart.js 2.9
 window.Chart3 = Chart
-const gradient = window["chartjs-gradient"]
+const plugin_gradient = window["chartjs-gradient"]
 
 // From weather-card
 // fireEvent(this, "hass-more-info", { entityId: aqiSensor.config });
@@ -1139,7 +1139,9 @@ class ChartCard extends HTMLElement {
                     }
                     const _itemlist = this.entity_items.getEntitieslist()
                     _itemlist.forEach((item) => {
-                        this.DEBUGDATA.PROFILER.INFLUXDB.start = performance.now()
+                        if (this.DEBUGMODE) {
+                            this.DEBUGDATA.PROFILER.INFLUXDB.start = performance.now()
+                        }
                         if (item.datasource) {
                             this._buildGraphDataInfluxDB(item)
                         }

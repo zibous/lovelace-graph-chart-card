@@ -1,6 +1,6 @@
 {
   "name": "lovelace-chart-card",
-  "version": "2.0.1",
+  "version": "2.1.3",
   "description": "A customizable graph card (echart based) for Home Assistant Lovelace UI",
   "homepage": "https://github.com/zibous/lovelace-graph-chart-card",
   "main": "src/main.js",
