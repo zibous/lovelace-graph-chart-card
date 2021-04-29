@@ -20,6 +20,12 @@
 ![sample4](img/layout_sample_water.png)
 <br>
 
+<br>
+## Example 5
+![sample5](img/layout_sample_consumtion.png)
+<br>
+
+
 ha-layoutcard see: https://github.com/zibous/ha-layoutcard
 simple-card see: https://github.com/zibous/ha-simple-card
 <br>
