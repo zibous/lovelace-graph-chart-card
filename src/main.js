@@ -79,12 +79,18 @@ style.innerHTML = `
         max-width: 15%;
         z-index:100;
     }
+    .card-state-view::-webkit-scrollbar,
+    .state-view-data::-webkit-scrollbar {
+        display: none;
+    }
     .state-view-data{
         font-weight:400;
         margin:0;
         cursor:pointer;
         height:3.85em;
         overflow:auto;
+        scrollbar-width: none; 
+        -ms-overflow-style: none;
     }
     .state-view-value{
         font-size:1.85em;

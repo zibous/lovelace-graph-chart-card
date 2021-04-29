@@ -1,0 +1,594 @@
+views:
+  - id: verbrauchsdaten
+    icon: 'mdi:gas-cylinder'
+    panel: true
+    path: reportdata
+    cards:
+      - type: 'custom:cards-layout'
+        toolbar:
+          backgroundcolor: '#01ADF2'
+          iconcolor: '#FFFFFF'
+          visible: true
+        header:
+          title: Verbrauch
+          icon: 'mdi:counter'
+          iconcolor: '#FFFFFF'
+          style: >-
+            background-image:
+            url('/hacsfiles/cards-layout/assets/ha-header-devices.png');
+            background-color: #01ADF2 !important; color: #0FFFFFF;
+        page:
+          title: Übersicht der Verbrauchsdaten
+          icon: 'mdi:counter'
+          icon_color: '#FFFFFF'
+          description: >
+            Auswertung Verbrauchsdaten  Strom (Überschuss & Verbrauch), Gas und
+            Wasser für die letzten Jahre...
+
+            <br/>
+          style: >-
+            color: #FFFFFF; background: radial-gradient(circle, #000000,
+            #25151d, #40233c, #533562, #594c90, #5365b0, #407fce, #0099ea,
+            #00b4f5, #00cdf9, #00e5f6, #5ffbf1);
+          width: 90%
+        content:
+          - row:
+              - column: null
+                width: 50%
+                entities:
+                  - type: 'custom:chart-card'
+                    title: Energieüberschuss / Jahr
+                    icon: 'mdi:solar-power'
+                    height: 360
+                    chart: bar
+                    update_intervall: 6000
+                    datascales:
+                      mode: category
+                      format: year
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: true
+                      scales:
+                        x:
+                          alignToPixels: true
+                          grid:
+                            display: true
+                            color: transparent
+                            drawTicks: true
+                            tickColor: '#f2c404'
+                        left:
+                          title:
+                            display: true
+                            text: Überschuss in kWh
+                            color: 'rgb(247, 230, 146)'
+                          ticks:
+                            autoSkip: true
+                            maxTicksLimit: 12
+                        right:
+                          title:
+                            display: true
+                            text: Ertrag €
+                            color: 'rgb(185, 228, 245)'
+                          gridLines:
+                            drawOnChartArea: false
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: kostal
+                        unit: kWh
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=jahresverbrauch&epoch=ms
+                          query: >-
+                            SELECT "kostal_kwh" FROM "reportdata" WHERE time >=
+                            1356908400000ms and time <= 1640991600000ms
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: Einspeisung
+                        style:
+                          backgroundColor: 'rgba(247, 230, 146,0.85)'
+                          fill: true
+                          yAxisID: left
+                          order: 1
+                      - entity: sensor.date_time
+                        dataid: kostalertrag
+                        unit: €
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=jahresverbrauch&epoch=ms
+                          query: >-
+                            SELECT "stromertrag" FROM "reportdata" WHERE time >=
+                            1356908400000ms and time <= 1640991600000ms
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: Ertrag
+                        style:
+                          backgroundColor: 'rgb(185, 228, 245)'
+                          fill: false
+                          type: line
+                          lineWidth: 2
+                          yAxisID: right
+                          order: 0
+                          trendlineLinear:
+                            color: 'rgb(243, 64, 5)'
+                            lineStyle: dotted
+                            width: 2
+                  - type: 'custom:chart-card'
+                    title: Energiebezug / Jahr
+                    icon: 'mdi:power'
+                    height: 360
+                    chart: bar
+                    update_intervall: 6000
+                    datascales:
+                      mode: category
+                      format: year
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: true
+                      scales:
+                        x:
+                          alignToPixels: true
+                          grid:
+                            display: true
+                            color: transparent
+                            drawTicks: true
+                            tickColor: '#f2c404'
+                        left:
+                          title:
+                            display: true
+                            text: Produktion in kWh
+                            color: 'rgb(247, 230, 146)'
+                          ticks:
+                            autoSkip: true
+                            maxTicksLimit: 12
+                        right:
+                          title:
+                            display: true
+                            text: Stromkosten in €
+                            color: 'rgb(185, 228, 245)'
+                          gridLines:
+                            drawOnChartArea: false
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: electric
+                        unit: Energiebezug in kWh
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT max("total_kwh") FROM "reportdata" WHERE
+                            ("tagname" = 'stromkosten') AND time >=
+                            1041289200000ms and time <= 1640905200000ms GROUP BY
+                            time(365d) fill(null)
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: Strombezug
+                        style:
+                          yAxisID: left
+                          backgroundColor: 'rgba(230, 42, 52,0.75)'
+                          fill: true
+                          order: 1
+                      - entity: sensor.date_time
+                        dataid: electric_costs
+                        unit: Kosten in €
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT max("stromkosten") FROM "reportdata" WHERE
+                            ("tagname" = 'stromkosten') AND time >=
+                            1041289200000ms and time <= 1640905200000ms GROUP BY
+                            time(365d) fill(null)
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: Strombezug
+                        style:
+                          type: line
+                          yAxisID: right
+                          backgroundColor: 'rgb(185, 228, 245)'
+                          fill: false
+                          order: 0
+                          trendlineLinear:
+                            color: 'rgb(243, 64, 5)'
+                            lineStyle: dotted
+                            width: 2
+                  - type: 'custom:chart-card'
+                    title: Gasbezug / Jahr
+                    icon: 'mdi:gas-cylinder'
+                    height: 360
+                    chart: bar
+                    update_intervall: 6000
+                    datascales:
+                      mode: category
+                      format: year
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: true
+                      scales:
+                        x:
+                          alignToPixels: true
+                          grid:
+                            display: true
+                            color: transparent
+                            drawTicks: true
+                            tickColor: '#f2c404'
+                        left:
+                          title:
+                            display: true
+                            text: Gasverbrauch in kWh
+                            color: 'rgb(251, 116, 4)'
+                          ticks:
+                            autoSkip: true
+                            maxTicksLimit: 12
+                        right:
+                          title:
+                            display: true
+                            text: Gaskosten in €
+                            color: 'rgb(185, 228, 245)'
+                          gridLines:
+                            drawOnChartArea: false
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: gas
+                        unit: kWh
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=jahresverbrauch&epoch=ms
+                          query: >-
+                            SELECT "gas_kwh" FROM "reportdata" WHERE time >=
+                            1356908400000ms and time <= 1640991600000ms
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: Gasbezug
+                        style:
+                          backgroundColor: 'rgba(251, 116, 4, 0.85)'
+                          fill: true
+                          yAxisID: left
+                          order: 1
+                      - entity: sensor.date_time
+                        dataid: gascosts
+                        unit: €
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=jahresverbrauch&epoch=ms
+                          query: >-
+                            SELECT "gaskosten" FROM "reportdata" WHERE time >=
+                            1356908400000ms and time <= 1640991600000ms
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: Gaskosten
+                        style:
+                          backgroundColor: 'rgb(185, 228, 245)'
+                          fill: false
+                          type: line
+                          lineWidth: 2
+                          yAxisID: right
+                          order: 0
+                          trendlineLinear:
+                            color: 'rgb(243, 64, 5)'
+                            lineStyle: dotted
+                            width: 2
+                  - type: 'custom:chart-card'
+                    title: Wasserbezug / Jahr
+                    icon: 'mdi:water-well-outline'
+                    height: 360
+                    chart: bar
+                    update_intervall: 6000
+                    datascales:
+                      mode: category
+                      format: year
+                    chartOptions:
+                      plugins:
+                        legend:
+                          display: true
+                      scales:
+                        x:
+                          alignToPixels: true
+                          grid:
+                            display: true
+                            color: transparent
+                            drawTicks: true
+                            tickColor: '#f2c404'
+                        left:
+                          title:
+                            display: true
+                            text: Wasserverbrauch in m3
+                            color: 'rgb(42, 156, 242)'
+                          ticks:
+                            autoSkip: true
+                            maxTicksLimit: 12
+                        right:
+                          title:
+                            display: true
+                            text: Wasserkosten in €
+                            color: 'rgb(185, 228, 245)'
+                          gridLines:
+                            drawOnChartArea: false
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: waterconsumptiom
+                        unit: m3
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=jahresverbrauch&epoch=ms
+                          query: >-
+                            SELECT "wasser_m3" FROM "reportdata" WHERE time >=
+                            1356908400000ms and time <= 1640991600000ms
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: Wasserbezug
+                        style:
+                          backgroundColor: 'rgba(42, 156, 242,0.85)'
+                          fill: true
+                          yAxisID: left
+                          order: 1
+                      - entity: sensor.date_time
+                        dataid: watercosts
+                        unit: €
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=jahresverbrauch&epoch=ms
+                          query: >-
+                            SELECT "wasserkosten" FROM "reportdata" WHERE time
+                            >= 1356908400000ms and time <= 1640991600000ms
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: Wasserkosten
+                        style:
+                          backgroundColor: 'rgb(185, 228, 245)'
+                          fill: false
+                          type: line
+                          lineWidth: 2
+                          yAxisID: right
+                          order: 0
+                          trendlineLinear:
+                            color: 'rgb(243, 64, 5)'
+                            lineStyle: dotted
+                            width: 2
+          - row:
+              - column: null
+                width: 100%
+                entities:
+                  - type: 'custom:chart-card'
+                    title: Energie
+                    icon: 'mdi:solar-power'
+                    height: 360
+                    chart: bar
+                    update_intervall: 6000
+                    datascales:
+                      mode: time
+                      format: month
+                    showdetails:
+                      title: Energie
+                      title_sensor: Tarif
+                      title_mean: Durchschnitt
+                      title_min: Kleinster Wert
+                      title_max: Größter Wert
+                      visible: true
+                    chartOptions:
+                      plugins:
+                        legend:
+                          position: top
+                          display: true
+                      scales:
+                        x:
+                          stacked: true
+                          grid:
+                            display: false
+                        'y':
+                          stacked: true
+                          grid:
+                            display: true
+                          title:
+                            display: true
+                            text: kWh
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: kostal
+                        unit: kWh
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT sum("Einspeisung") FROM "reportdata"  WHERE
+                            ("tagname" = 'monatswerte') AND time >= now()
+                            -2760d  GROUP BY time(31d) fill(null)
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: Einspeisung
+                        style:
+                          backgroundColor: 'rgba(236, 204, 28,0.85)'
+                          fill: true
+                      - entity: sensor.date_time
+                        dataid: tagstrom
+                        unit: kWh
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT -sum("Tagstrom") FROM "reportdata"  WHERE
+                            ("tagname" = 'monatswerte') AND time >= now()
+                            -2760d  GROUP BY time(31d) fill(null)
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: HT Tarif
+                        style:
+                          backgroundColor: 'rgba(230, 42, 52,0.75)'
+                          fill: true
+                      - entity: sensor.date_time
+                        dataid: nachtstrom
+                        unit: kWh
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT -sum("Nachtstrom") FROM "reportdata"  WHERE
+                            ("tagname" = 'monatswerte') AND time >= now()
+                            -2840d  GROUP BY time(31d) fill(null)
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: NT Tarif
+                        style:
+                          backgroundColor: 'rgba(196, 89, 89,0.9)'
+                          fill: true
+                  - type: 'custom:chart-card'
+                    title: Energieverbrauch
+                    icon: 'mdi:power'
+                    height: 360
+                    chart: bar
+                    update_intervall: 6000
+                    debug: true
+                    datascales:
+                      mode: time
+                      format: month
+                    showdetails:
+                      title: Energie
+                      title_sensor: Tarif
+                      title_mean: Durchschnitt
+                      title_min: Kleinster Wert
+                      title_max: Größter Wert
+                      visible: true
+                    chartOptions:
+                      plugins:
+                        legend:
+                          position: top
+                          display: true
+                      scales:
+                        x:
+                          stacked: true
+                          grid:
+                            display: false
+                        'y':
+                          stacked: true
+                          grid:
+                            display: true
+                          title:
+                            display: true
+                            text: kWh
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: tagstrom
+                        unit: kWh
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT sum("Tagstrom") FROM "reportdata"  WHERE
+                            ("tagname" = 'monatswerte') AND time >= now()
+                            -2760d  GROUP BY time(31d) fill(null)
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: HT Tarif
+                        style:
+                          backgroundColor: 'rgba(230, 42, 52,0.75)'
+                          fill: true
+                      - entity: sensor.date_time
+                        dataid: nachtstrom
+                        unit: kWh
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT sum("Nachtstrom") FROM "reportdata"  WHERE
+                            ("tagname" = 'monatswerte') AND time >= now()
+                            -2760d  GROUP BY time(31d) fill(null)
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: NT Tarif
+                        style:
+                          backgroundColor: 'rgba(196, 89, 89,0.9)'
+                          fill: true
+                  - type: 'custom:chart-card'
+                    title: Gasverbrauch
+                    icon: 'mdi:gas-cylinder'
+                    height: 360
+                    chart: line
+                    update_intervall: 6000
+                    showdetails:
+                      title_sensor: Verbrauch
+                      title_mean: Durchschnitt
+                      title_min: Kleinster Wert
+                      title_max: Größter Wert
+                      visible: true
+                    datascales:
+                      mode: time
+                      format: month
+                    chartOptions:
+                      plugins:
+                        legend:
+                          position: top
+                          display: false
+                      scales:
+                        x:
+                          grid:
+                            display: false
+                        'y':
+                          grid:
+                            display: true
+                          title:
+                            display: true
+                            text: Gas m3
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: gas
+                        unit: m3
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT sum("Gas") FROM "reportdata"  WHERE
+                            ("tagname" = 'monatswerte') AND time >= now()
+                            -2840d  GROUP BY time(30d) fill(null)
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: Gas
+                        style:
+                          backgroundColor: 'rgba(251, 116, 4,0.85)'
+                          fill: true
+                          borderWidth: 2
+                          order: 0
+                          stepped: middle
+                          trendlineLinear:
+                            color: 'rgb(255, 0, 0)'
+                            lineStyle: dotted
+                            width: 2
+                  - type: 'custom:chart-card'
+                    title: Wasserverbrauch
+                    icon: 'mdi:water-well-outline'
+                    height: 360
+                    chart: line
+                    update_intervall: 6000
+                    showdetails:
+                      title_sensor: Verbrauch
+                      title_mean: Durchschnitt
+                      title_min: Kleinster Wert
+                      title_max: Größter Wert
+                      visible: true
+                    datascales:
+                      mode: time
+                      format: month
+                    chartOptions:
+                      plugins:
+                        legend:
+                          position: top
+                          display: false
+                      scales:
+                        x:
+                          grid:
+                            display: false
+                        'y':
+                          grid:
+                            display: true
+                          title:
+                            display: true
+                            text: Wasser m3
+                    entities:
+                      - entity: sensor.date_time
+                        dataid: water
+                        unit: m3
+                        datasource:
+                          influxdb: >-
+                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                          query: >-
+                            SELECT sum("Wasser") FROM "reportdata"  WHERE
+                            ("tagname" = 'monatswerte') AND time >= now()
+                            -2840d  GROUP BY time(30d) fill(null)
+                          token: YWRtaW46YmVlcDRCb3Nz
+                        name: Wasser
+                        style:
+                          backgroundColor: 'rgba(42, 156, 242,0.85)'
+                          fill: true
+                          borderWidth: 2
+                          order: 0
+                          stepped: middle
+                          trendlineLinear:
+                            color: 'rgb(255, 0, 0)'
+                            width: 2
