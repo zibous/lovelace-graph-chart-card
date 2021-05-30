@@ -24,8 +24,8 @@ import "/hacsfiles/chart-card/chart.js?module"
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "v2.1.3/v3.2.0",
-    chartjs: Chart.version || "v3.2.0",
+    version: "v2.1.5/v3.3.1",
+    chartjs: Chart.version || "v3.3.1",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
 }

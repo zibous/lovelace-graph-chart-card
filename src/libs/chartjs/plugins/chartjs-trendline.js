@@ -12,10 +12,10 @@
      datasets: [{ 
         data: [86,114,106,106,107,111,133,221,783,2478],
         label: "Africa",
-        borderColor: "#3e95cd",
+        borderColor: "rgb(255, 0, 0)",
         fill: false,
         trendlineLinear: {
-            style: "#3e95cd",
+            color: "#3e95cd",
             lineStyle: "line",
             width: 1
         }
