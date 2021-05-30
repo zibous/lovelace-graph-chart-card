@@ -31,8 +31,6 @@
 
 - ha-layoutcard see: https://github.com/zibous/ha-layoutcard
 - simple-card see: https://github.com/zibous/ha-simple-card
-
-<br>
 - miscale see: https://github.com/zibous/ha-miscale2
 - ha-watermeter see: https://github.com/zibous/ha-watermeter
 
