@@ -20,14 +20,18 @@
 ![sample4](img/layout_sample_water.png)
 <br>
 
-<br>
 ## Example 5
-![sample5](img/layout_sample_consumtion.png)
+![sample5](img/layout_sample_consumtion2.png)
+
 <br>
 
+
+
+### Additional Components and Datasources
 
 ha-layoutcard see: https://github.com/zibous/ha-layoutcard
 simple-card see: https://github.com/zibous/ha-simple-card
+
 <br>
 miscale see: https://github.com/zibous/ha-miscale2
 ha-watermeter see: https://github.com/zibous/ha-watermeter

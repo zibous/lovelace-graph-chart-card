@@ -78,11 +78,11 @@ views:
                         unit: kWh
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=jahresverbrauch&epoch=ms
+                            https://influxdb.local/query?db=jahresverbrauch&epoch=ms
                           query: >-
                             SELECT "kostal_kwh" FROM "reportdata" WHERE time >=
                             1356908400000ms and time <= 1640991600000ms
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: Einspeisung
                         style:
                           backgroundColor: 'rgba(247, 230, 146,0.85)'
@@ -94,11 +94,11 @@ views:
                         unit: €
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=jahresverbrauch&epoch=ms
+                            https://influxdb.local/query?db=jahresverbrauch&epoch=ms
                           query: >-
                             SELECT "stromertrag" FROM "reportdata" WHERE time >=
                             1356908400000ms and time <= 1640991600000ms
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: Ertrag
                         style:
                           backgroundColor: 'rgb(185, 228, 245)'
@@ -153,13 +153,13 @@ views:
                         unit: Energiebezug in kWh
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                            https://influxdb.local/query?db=historydata&epoch=ms
                           query: >-
                             SELECT max("total_kwh") FROM "reportdata" WHERE
                             ("tagname" = 'stromkosten') AND time >=
                             1041289200000ms and time <= 1640905200000ms GROUP BY
                             time(365d) fill(null)
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: Strombezug
                         style:
                           yAxisID: left
@@ -171,13 +171,13 @@ views:
                         unit: Kosten in €
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                            https://influxdb.local/query?db=historydata&epoch=ms
                           query: >-
                             SELECT max("stromkosten") FROM "reportdata" WHERE
                             ("tagname" = 'stromkosten') AND time >=
                             1041289200000ms and time <= 1640905200000ms GROUP BY
                             time(365d) fill(null)
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: Strombezug
                         style:
                           type: line
@@ -231,11 +231,11 @@ views:
                         unit: kWh
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=jahresverbrauch&epoch=ms
+                            https://influxdb.local/query?db=jahresverbrauch&epoch=ms
                           query: >-
                             SELECT "gas_kwh" FROM "reportdata" WHERE time >=
                             1356908400000ms and time <= 1640991600000ms
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: Gasbezug
                         style:
                           backgroundColor: 'rgba(251, 116, 4, 0.85)'
@@ -247,11 +247,11 @@ views:
                         unit: €
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=jahresverbrauch&epoch=ms
+                            https://influxdb.local/query?db=jahresverbrauch&epoch=ms
                           query: >-
                             SELECT "gaskosten" FROM "reportdata" WHERE time >=
                             1356908400000ms and time <= 1640991600000ms
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: Gaskosten
                         style:
                           backgroundColor: 'rgb(185, 228, 245)'
@@ -306,11 +306,11 @@ views:
                         unit: m3
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=jahresverbrauch&epoch=ms
+                            https://influxdb.local/query?db=jahresverbrauch&epoch=ms
                           query: >-
                             SELECT "wasser_m3" FROM "reportdata" WHERE time >=
                             1356908400000ms and time <= 1640991600000ms
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: Wasserbezug
                         style:
                           backgroundColor: 'rgba(42, 156, 242,0.85)'
@@ -322,11 +322,11 @@ views:
                         unit: €
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=jahresverbrauch&epoch=ms
+                            https://influxdb.local/query?db=jahresverbrauch&epoch=ms
                           query: >-
                             SELECT "wasserkosten" FROM "reportdata" WHERE time
                             >= 1356908400000ms and time <= 1640991600000ms
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: Wasserkosten
                         style:
                           backgroundColor: 'rgb(185, 228, 245)'
@@ -382,12 +382,12 @@ views:
                         unit: kWh
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                            https://influxdb.local/query?db=historydata&epoch=ms
                           query: >-
                             SELECT sum("Einspeisung") FROM "reportdata"  WHERE
                             ("tagname" = 'monatswerte') AND time >= now()
                             -2760d  GROUP BY time(31d) fill(null)
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: Einspeisung
                         style:
                           backgroundColor: 'rgba(236, 204, 28,0.85)'
@@ -397,12 +397,12 @@ views:
                         unit: kWh
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                            https://influxdb.local/query?db=historydata&epoch=ms
                           query: >-
                             SELECT -sum("Tagstrom") FROM "reportdata"  WHERE
                             ("tagname" = 'monatswerte') AND time >= now()
                             -2760d  GROUP BY time(31d) fill(null)
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: HT Tarif
                         style:
                           backgroundColor: 'rgba(230, 42, 52,0.75)'
@@ -412,12 +412,12 @@ views:
                         unit: kWh
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                            https://influxdb.local/query?db=historydata&epoch=ms
                           query: >-
                             SELECT -sum("Nachtstrom") FROM "reportdata"  WHERE
                             ("tagname" = 'monatswerte') AND time >= now()
                             -2840d  GROUP BY time(31d) fill(null)
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: NT Tarif
                         style:
                           backgroundColor: 'rgba(196, 89, 89,0.9)'
@@ -462,12 +462,12 @@ views:
                         unit: kWh
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                            https://influxdb.local/query?db=historydata&epoch=ms
                           query: >-
                             SELECT sum("Tagstrom") FROM "reportdata"  WHERE
                             ("tagname" = 'monatswerte') AND time >= now()
                             -2760d  GROUP BY time(31d) fill(null)
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: HT Tarif
                         style:
                           backgroundColor: 'rgba(230, 42, 52,0.75)'
@@ -477,12 +477,12 @@ views:
                         unit: kWh
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                            https://influxdb.local/query?db=historydata&epoch=ms
                           query: >-
                             SELECT sum("Nachtstrom") FROM "reportdata"  WHERE
                             ("tagname" = 'monatswerte') AND time >= now()
                             -2760d  GROUP BY time(31d) fill(null)
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: NT Tarif
                         style:
                           backgroundColor: 'rgba(196, 89, 89,0.9)'
@@ -523,12 +523,12 @@ views:
                         unit: m3
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                            https://influxdb.local/query?db=historydata&epoch=ms
                           query: >-
                             SELECT sum("Gas") FROM "reportdata"  WHERE
                             ("tagname" = 'monatswerte') AND time >= now()
                             -2840d  GROUP BY time(30d) fill(null)
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: Gas
                         style:
                           backgroundColor: 'rgba(251, 116, 4,0.85)'
@@ -576,12 +576,12 @@ views:
                         unit: m3
                         datasource:
                           influxdb: >-
-                            https://zeusus.siebler.at/influxdb/query?db=historydata&epoch=ms
+                            https://influxdb.local/query?db=historydata&epoch=ms
                           query: >-
                             SELECT sum("Wasser") FROM "reportdata"  WHERE
                             ("tagname" = 'monatswerte') AND time >= now()
                             -2840d  GROUP BY time(30d) fill(null)
-                          token: YWRtaW46YmVlcDRCb3Nz
+                          token: https://influxdb.localYWRtaWdAYmVlcDRCb3Nz
                         name: Wasser
                         style:
                           backgroundColor: 'rgba(42, 156, 242,0.85)'
