@@ -101,7 +101,7 @@ gulp.task("deploy", function () {
         return gulp
             .src(settings.distfolder + "/**/*")
             .pipe(gulp.dest(settings.hassfolder))
-            .pipe(gulp.dest(settings.rb3afolder))
+            //.pipe(gulp.dest(settings.rb3afolder))
             .on("error", onError)
     } else {
         return
