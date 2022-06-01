@@ -1,6 +1,6 @@
 /** --------------------------------------------------------------------
 
-  Custom Chart Card 
+  Custom Chart Card
   based on https://github.com/sdelliot/pie-chart-card
 
   chartjs:    https://www.chartjs.org/
@@ -24,8 +24,8 @@ import "/hacsfiles/chart-card/chart.js?module"
 const appinfo = {
     name: "✓ custom:chart-card ",
     app: "chart-card",
-    version: "v2.1.6/v3.6.1",
-    chartjs: Chart.version || "v3.6.1",
+    version: "v2.2.0/v3.8.0",
+    chartjs: Chart.version || "v3.8.0",
     assets: "/hacsfiles/chart-card/assets/",
     github: "https://github.com/zibous/lovelace-graph-chart-card"
 }

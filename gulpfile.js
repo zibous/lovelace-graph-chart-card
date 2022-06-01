@@ -1,3 +1,9 @@
+/**
+ * use node v16.13.2
+ * nvm use v16.13.2
+ */
+
+
 const gulp = require("gulp")
 const concat = require("gulp-concat")
 var less = require("gulp-less")
@@ -44,8 +50,8 @@ const settings = {
     distfolder: "./dist/chart-card",
     releasefile: "chart-card.zip",
     releasefolder: "./release",
-    hassfolder: "/Volumes/zeususdata/home/homeassistant/.homeassistant/www/community/chart-card",
-    rb3afolder: "/Volumes/rb3a-data/home/homeassistant/.homeassistant/www/community/chart-card"
+    hassfolder: "/Volumes/zeususdata/home/homeassistant/.homeassistant/www/community/chart-card"
+    // rb3afolder: "/Volumes/rb3a-data/home/homeassistant/.homeassistant/www/community/chart-card"
 }
 
 // Command line option:
@@ -176,13 +182,13 @@ gulp.task("build", function () {
         .pipe(minify())
         .pipe(
             headerComment(`
-	  <%= pkg.name %> <%= pkg.version %>		
+	  <%= pkg.name %> <%= pkg.version %>
 	  <%= pkg.homepage %>
 
       License: <%= pkg.license %>
       Generated on <%= moment().format('YYYY') %>
 	  Author: <%= _.capitalize(pkg.author) %>
-	  
+
     `)
         )
         .pipe(gulp.dest(settings.distfolder))
